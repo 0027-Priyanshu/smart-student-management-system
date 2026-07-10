@@ -293,7 +293,7 @@ export default function Attendance() {
                     return (
                       <div 
                         key={studentId} 
-                        className="flex items-center justify-between p-3.5 bg-white/2 rounded-2xl border border-white/5 hover:border-white/10 transition-colors"
+                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-white/2 rounded-2xl border border-white/5 hover:border-white/10 transition-colors"
                       >
                         <div>
                           <p className="font-semibold text-xs text-white">{student.name}</p>

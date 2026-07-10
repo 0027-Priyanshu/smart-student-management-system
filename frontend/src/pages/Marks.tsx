@@ -228,7 +228,7 @@ export default function Marks() {
                 </select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Semester */}
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Semester</label>
@@ -257,7 +257,7 @@ export default function Marks() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {/* External */}
                 <div className="space-y-1 col-span-1">
                   <label className="text-[9px] font-bold uppercase tracking-wider text-gray-400">External (Max 50)</label>
@@ -323,8 +323,8 @@ export default function Marks() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-2xl border border-white/5">
-              <table className="w-full border-collapse text-left text-xs">
+            <div className="overflow-x-auto rounded-2xl border border-white/5 scrollbar-thin">
+              <table className="w-full border-collapse text-left text-xs min-w-[800px]">
                 <thead>
                   <tr className="bg-white/2 border-b border-white/5 text-gray-400 uppercase tracking-wider font-semibold">
                     <th className="px-5 py-3.5">Course</th>

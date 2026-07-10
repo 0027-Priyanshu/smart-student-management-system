@@ -104,7 +104,7 @@ export default function Login() {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="w-full max-w-md bg-[#12141c]/80 backdrop-blur-xl border border-[#8a5cf6]/20 p-8 rounded-3xl shadow-card relative z-10"
+            className="w-full max-w-md bg-[#12141c]/80 backdrop-blur-xl border border-[#8a5cf6]/20 p-6 sm:p-8 rounded-3xl shadow-card relative z-10"
           >
             <div className="text-center mb-8">
               <h2 className="text-3xl font-title font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4]">

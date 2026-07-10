@@ -139,7 +139,7 @@ export default function AiAssistant() {
     <DashboardShell title="AI Academic Assistant">
       
       {/* Dynamic Tab Switchers */}
-      <div className="flex border-b border-white/5 mb-8">
+      <div className="flex border-b border-white/5 mb-8 overflow-x-auto scrollbar-none whitespace-nowrap">
         {!isStudent && (
           <button 
             onClick={() => setActiveTab('chat')} 
@@ -183,7 +183,7 @@ export default function AiAssistant() {
             {messages.map((msg, idx) => {
               const isAI = msg.role === 'model';
               return (
-                <div key={idx} className={`flex gap-3.5 max-w-[80%] ${isAI ? 'mr-auto' : 'ml-auto flex-row-reverse'}`}>
+                <div key={idx} className={`flex gap-3.5 max-w-[90%] md:max-w-[80%] ${isAI ? 'mr-auto' : 'ml-auto flex-row-reverse'}`}>
                   <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${isAI ? 'bg-[#8a5cf6]/20 text-[#8a5cf6]' : 'bg-[#06b6d4]/20 text-[#06b6d4]'}`}>
                     {isAI ? <Bot size={16} /> : <User size={16} />}
                   </div>
@@ -196,7 +196,7 @@ export default function AiAssistant() {
               );
             })}
             {chatLoading && (
-              <div className="flex gap-3.5 mr-auto max-w-[80%] items-center">
+              <div className="flex gap-3.5 mr-auto max-w-[90%] md:max-w-[80%] items-center">
                 <div className="h-8 w-8 rounded-full bg-[#8a5cf6]/20 text-[#8a5cf6] flex items-center justify-center animate-pulse">
                   <Bot size={16} />
                 </div>
@@ -234,7 +234,7 @@ export default function AiAssistant() {
         <div className="space-y-6">
           {/* Student Selector (Admin only) */}
           {isAdmin && (
-            <div className="p-5 bg-[#12141c]/50 border border-white/5 rounded-3xl flex items-center gap-4">
+            <div className="p-5 bg-[#12141c]/50 border border-white/5 rounded-3xl flex flex-col sm:flex-row sm:items-center gap-4">
               <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Select Student</label>
               <select
                 value={selectedStudent}

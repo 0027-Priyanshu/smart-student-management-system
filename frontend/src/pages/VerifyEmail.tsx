@@ -44,7 +44,7 @@ export default function VerifyEmail() {
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-md p-8 bg-[#12141c]/40 border border-white/5 rounded-3xl backdrop-blur-md shadow-card text-center space-y-6 z-10"
+        className="w-full max-w-md p-6 sm:p-8 bg-[#12141c]/40 border border-white/5 rounded-3xl backdrop-blur-md shadow-card text-center space-y-6 z-10"
       >
         {status === 'loading' && (
           <div className="flex flex-col items-center space-y-4">

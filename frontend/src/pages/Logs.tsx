@@ -46,7 +46,7 @@ export default function Logs() {
       </p>
 
       {/* Filter and Search controls */}
-      <div className="flex flex-wrap gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <input 
           type="text" 
           placeholder="Search logs by user, event, or details..."
@@ -79,8 +79,8 @@ export default function Logs() {
         ) : filteredLogs.length === 0 ? (
           <p className="text-xs text-gray-500 italic text-center py-14">No matching audit logs found.</p>
         ) : (
-          <div className="overflow-x-auto rounded-2xl border border-white/5 bg-[#0b0c10]/20">
-            <table className="w-full border-collapse text-left text-xs">
+          <div className="overflow-x-auto rounded-2xl border border-white/5 bg-[#0b0c10]/20 scrollbar-thin">
+            <table className="w-full border-collapse text-left text-xs min-w-[700px]">
               <thead>
                 <tr className="bg-white/2 border-b border-white/5 text-gray-400 uppercase tracking-wider font-semibold">
                   <th className="px-5 py-4">Timestamp</th>

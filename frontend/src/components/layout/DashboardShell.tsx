@@ -27,7 +27,9 @@ interface DashboardShellProps {
 export default function DashboardShell({ children, title }: DashboardShellProps) {
   const { user, logout } = useAuthStore();
   const { notifications, onlineUsers, connectSocket, disconnectSocket, markAllAsRead, clearNotifications } = useSocketStore();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    return typeof window !== 'undefined' ? window.innerWidth >= 768 : true;
+  });
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const location = useLocation();
@@ -69,6 +71,87 @@ export default function DashboardShell({ children, title }: DashboardShellProps)
   return (
     <div className="flex h-screen bg-[#0b0c10] text-[#f3f4f6] font-sans overflow-hidden">
       
+      {/* Mobile Sidebar Overlay Backdrop */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsSidebarOpen(false)}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 md:hidden"
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Mobile Sidebar Drawer */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <motion.aside
+            initial={{ x: '-100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '-100%' }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className="fixed inset-y-0 left-0 w-[280px] bg-[#12141c] z-50 flex flex-col md:hidden border-r border-white/5 shadow-2xl"
+          >
+            {/* Mobile Brand */}
+            <div className="h-20 flex items-center justify-between px-6 border-b border-white/5">
+              <Link to="/dashboard" className="flex items-center gap-3" onClick={() => setIsSidebarOpen(false)}>
+                <div className="h-9 w-9 bg-gradient-to-tr from-[#8a5cf6] to-[#06b6d4] rounded-lg shadow-glow flex items-center justify-center font-bold text-white text-lg">
+                  E
+                </div>
+                <span className="font-title font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4]">
+                  EduManager
+                </span>
+              </Link>
+              <button onClick={() => setIsSidebarOpen(false)} className="text-gray-400 hover:text-white transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Mobile Nav Links */}
+            <nav className="flex-1 px-4 py-6 overflow-y-auto space-y-1.5 scrollbar-thin">
+              {allowedNavItems.map(item => {
+                const Icon = item.icon;
+                const isActive = location.pathname.startsWith(item.path);
+                return (
+                  <Link 
+                    key={item.path} 
+                    to={item.path}
+                    onClick={() => setIsSidebarOpen(false)}
+                    className={`flex items-center gap-4 px-4 py-3.5 rounded-xl font-medium transition-all duration-200 group relative ${
+                      isActive 
+                        ? 'bg-gradient-to-r from-[#8a5cf6]/10 to-transparent text-[#8a5cf6] border-l-3 border-[#8a5cf6] pl-[13px]' 
+                        : 'text-gray-400 hover:text-[#f3f4f6] hover:bg-white/3'
+                    }`}
+                  >
+                    <Icon size={20} className={isActive ? 'text-[#8a5cf6]' : 'text-gray-400 group-hover:text-white transition-colors'} />
+                    <span>{item.name}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {/* Mobile Sidebar Footer */}
+            <div className="p-4 border-t border-white/5 bg-[#0f1118]">
+              <div className="flex items-center gap-3.5 px-2 py-1.5 rounded-xl hover:bg-white/3 transition-colors cursor-pointer" onClick={() => setShowProfileMenu(!showProfileMenu)}>
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#4f46e5] to-[#8a5cf6] flex items-center justify-center font-semibold text-white">
+                  {initials}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold truncate leading-tight">{user?.name}</p>
+                  <span className="text-xs text-gray-400 font-medium truncate block">{user?.role}</span>
+                </div>
+              </div>
+              <button onClick={handleLogout} className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[#ef4444] bg-[#ef4444]/10 hover:bg-[#ef4444] hover:text-white font-semibold transition-all duration-200 text-sm">
+                <LogOut size={16} />
+                Logout
+              </button>
+            </div>
+          </motion.aside>
+        )}
+      </AnimatePresence>
+
       {/* Sidebar - Collapsible & Responsive */}
       <motion.aside 
         animate={{ width: isSidebarOpen ? 280 : 80 }}

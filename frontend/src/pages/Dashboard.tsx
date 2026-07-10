@@ -68,7 +68,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <DashboardShell title="Dashboard">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="h-32 bg-white/2 border border-white/5 rounded-3xl animate-pulse" />
           ))}
@@ -103,7 +103,7 @@ export default function Dashboard() {
     <DashboardShell title="Dashboard">
       
       {/* Metric Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-6 mb-10">
         {statCards.map((card, idx) => {
           const Icon = card.icon;
           return (

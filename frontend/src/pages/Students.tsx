@@ -357,8 +357,8 @@ export default function Students() {
         ) : students.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-20 italic">No records found matching filter criteria.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left text-xs">
+          <div className="overflow-x-auto scrollbar-thin">
+            <table className="w-full border-collapse text-left text-xs min-w-[800px]">
               <thead>
                 <tr className="bg-white/2 border-b border-white/5 text-gray-400 uppercase tracking-wider font-semibold">
                   <th className="px-6 py-4">Enrollment</th>
@@ -493,7 +493,7 @@ export default function Students() {
             )}
 
             <form onSubmit={showAddModal ? handleAddSubmit : handleEditSubmit} className="space-y-4 max-h-[420px] overflow-y-auto pr-1 scrollbar-thin">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Full Name</label>
                   <input
@@ -530,7 +530,7 @@ export default function Students() {
                 </div>
               )}
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Age</label>
                   <input
@@ -568,7 +568,7 @@ export default function Students() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Department</label>
                   <select
@@ -597,7 +597,7 @@ export default function Students() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Parent / Guardian Name</label>
                   <input

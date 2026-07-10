@@ -28,7 +28,7 @@ export const useSocketStore = create<SocketState>((set, get) => ({
   connectSocket: (user) => {
     if (get().socket) return; // Already connected
 
-    const socketInstance = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:5001');
+    const socketInstance = io(import.meta.env.VITE_SOCKET_URL || 'https://smart-student-management-system-34eo.onrender.com');
 
     socketInstance.on('connect', () => {
       console.log('🔌 Real-time Socket connected');

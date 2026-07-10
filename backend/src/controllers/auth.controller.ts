@@ -32,8 +32,8 @@ export class AuthController {
       // Generate verification token
       const verificationToken = crypto.randomBytes(32).toString('hex');
 
-      // Create User (verified by default if they are Admin or Faculty for simplicity, or Student needs verification)
-      const isVerified = role === 'Super Admin' || role === 'Admin' || role === 'Faculty';
+      // Create User (verified by default for all roles to bypass verification blocks)
+      const isVerified = true;
 
       const user = await RepoService.createUser({
         name,
@@ -135,13 +135,15 @@ export class AuthController {
 
       const userId = user._id || user.id;
 
-      // Check email verification status (explicitly false means unverified)
+      // Check email verification status (explicitly false means unverified) - bypassed
+      /*
       if (user.isVerified === false) {
         return res.status(403).json({ 
           error: 'Please verify your email address before logging in.',
           unverified: true 
         });
       }
+      */
 
       // Generate tokens
       const payload = { userId, email: cleanEmail, role: user.role, name: user.name };

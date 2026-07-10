@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5001/api',
+  baseURL: import.meta.env.VITE_API_URL || 'https://smart-student-management-system-34eo.onrender.com/api',
   headers: {
     'Content-Type': 'application/json'
   }
@@ -71,7 +71,7 @@ api.interceptors.response.use(
       }
 
       try {
-        const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5001/api'}/auth/refresh`, {
+        const res = await axios.post(`${import.meta.env.VITE_API_URL || 'https://smart-student-management-system-34eo.onrender.com/api'}/auth/refresh`, {
           refreshToken
         });
 

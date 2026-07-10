@@ -39,7 +39,7 @@ app.use(helmet({
 // CORS Configuration
 const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:5173', 'http://localhost:3000'];
+  : ['http://localhost:5173', 'http://localhost:3000', 'https://smart-student-management-system-seven.vercel.app'];
 
 app.use(cors({
   origin: (origin, callback) => {

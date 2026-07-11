@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { RepoService } from '../services/repo.service';
+import { NotificationService } from '../services/notification.service';
 
 export class ResultController {
   static async getResults(req: Request, res: Response, next: NextFunction) {
@@ -86,7 +87,17 @@ export class ResultController {
         action: 'Marks Entered',
         details: `Entered marks for student ${student?.name || studentId} in course ID: ${courseId}. Total: ${total} (Grade: ${grade})`
       });
-
+      // Trigger stub alert hook for published marks
+      if (student) {
+        const course = await RepoService.findCourseById(courseId);
+        NotificationService.triggerMarksPublishedAlert(
+          student.email,
+          student.name,
+          course?.name || 'Academic Course',
+          grade,
+          gpa
+        ).catch(err => console.error(err));
+      }
       return res.json({ message: 'Student grades saved successfully', result: logResult });
     } catch (error) {
       next(error);

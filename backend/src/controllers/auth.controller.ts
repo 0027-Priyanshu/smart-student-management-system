@@ -8,6 +8,7 @@ import {
 } from '../utils/token';
 import { sendEmail } from '../services/email.service';
 import { emitLiveUpdate } from '../config/socket';
+import { NotificationService } from '../services/notification.service';
 import crypto from 'crypto';
 
 // Temporary reset tokens in memory
@@ -63,6 +64,10 @@ export class AuthController {
           parentPhone: '0000000000',
           address: 'Not Specified'
         });
+
+        // Send registration email notification and trigger stub alerts
+        NotificationService.sendStudentRegistrationNotification(cleanEmail, name, enrollmentNo).catch(err => console.error(err));
+        NotificationService.triggerFeeReminderAlert(cleanEmail, name, 2500, '2026-08-01').catch(err => console.error(err));
       } else if (role === 'Faculty') {
         await RepoService.createFaculty({
           userId,

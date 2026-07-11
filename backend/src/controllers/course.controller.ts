@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { RepoService } from '../services/repo.service';
 import { emitLiveUpdate } from '../config/socket';
+import { NotificationService } from '../services/notification.service';
 
 export class CourseController {
   static async getCourses(req: Request, res: Response, next: NextFunction) {
@@ -175,6 +176,14 @@ export class CourseController {
 
       const updatedCourses = [...studentCourses, courseId];
       await RepoService.updateStudent(studentId, { enrolledCourses: updatedCourses });
+
+      // Send course assignment email notification
+      NotificationService.sendCourseAssignmentNotification(
+        student.email,
+        student.name,
+        course.name,
+        course.code
+      ).catch(err => console.error(err));
 
       // Log Activity
       await RepoService.createLog({

@@ -5,6 +5,7 @@ import PDFDocument from 'pdfkit';
 import { RepoService } from '../services/repo.service';
 import { uploadFile } from '../services/cloudinary.service';
 import { emitLiveUpdate } from '../config/socket';
+import { NotificationService } from '../services/notification.service';
 
 export class StudentController {
   static async getStudents(req: Request, res: Response, next: NextFunction) {
@@ -88,6 +89,10 @@ export class StudentController {
         academicHistory: academicHistory || [],
         isDeleted: false
       });
+
+      // Send registration email notification and trigger stub alerts
+      NotificationService.sendStudentRegistrationNotification(cleanEmail, name, enrollmentNo).catch(err => console.error(err));
+      NotificationService.triggerFeeReminderAlert(cleanEmail, name, 2500, '2026-08-01').catch(err => console.error(err));
 
       // Log Activity
       await RepoService.createLog({
@@ -340,6 +345,11 @@ export class StudentController {
           parentPhone: Phone?.toString() || '0000000000',
           address: Address || 'Not Specified',
           isDeleted: false
+        });
+
+        // Send registration email notification asynchronously to avoid blocking the loop
+        NotificationService.sendStudentRegistrationNotification(cleanEmail, Name, enrollmentNo).catch(err => {
+          console.error(`Failed to send bulk student notification:`, err);
         });
 
         count++;

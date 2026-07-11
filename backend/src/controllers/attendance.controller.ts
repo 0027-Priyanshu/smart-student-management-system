@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { RepoService } from '../services/repo.service';
 import { emitLiveUpdate } from '../config/socket';
+import { NotificationService } from '../services/notification.service';
 
 export class AttendanceController {
   static async getAttendance(req: Request, res: Response, next: NextFunction) {
@@ -48,6 +49,18 @@ export class AttendanceController {
       // Notify real-time counters
       emitLiveUpdate('attendance_update', { studentId, courseId, date, status });
 
+      // Trigger stub alert hook for attendance
+      if (student) {
+        const course = await RepoService.findCourseById(courseId);
+        NotificationService.triggerAttendanceAlert(
+          student.email,
+          student.name,
+          date,
+          course?.name || 'Academic Course',
+          status
+        ).catch(err => console.error(err));
+      }
+
       return res.json({ message: 'Attendance marked successfully', attendance: log });
     } catch (error) {
       next(error);
@@ -91,6 +104,18 @@ export class AttendanceController {
       });
 
       emitLiveUpdate('attendance_update', { studentId: student._id || student.id, courseId, date: today, status: 'Present' });
+
+      // Trigger stub alert hook for attendance
+      if (student) {
+        const course = await RepoService.findCourseById(courseId);
+        NotificationService.triggerAttendanceAlert(
+          student.email,
+          student.name,
+          today,
+          course?.name || 'Academic Course',
+          'Present'
+        ).catch(err => console.error(err));
+      }
 
       return res.json({ 
         message: 'Attendance scanned & recorded successfully!', 

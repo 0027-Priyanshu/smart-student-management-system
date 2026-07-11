@@ -26,6 +26,7 @@ import {
 import DashboardShell from '../components/layout/DashboardShell';
 import api from '../utils/api';
 import { useSocketStore } from '../stores/socketStore';
+import AnimatedCounter from '../components/common/AnimatedCounter';
 
 const COLORS = ['#8a5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ec4899', '#3b82f6'];
 
@@ -116,7 +117,9 @@ export default function Dashboard() {
               </div>
               <div>
                 <h3 className="text-gray-400 text-xs font-semibold uppercase tracking-wider">{card.title}</h3>
-                <p className="text-3xl font-title font-extrabold mt-1 text-white">{card.value}</p>
+                <p className="text-3xl font-title font-extrabold mt-1 text-white">
+                  <AnimatedCounter value={card.value} />
+                </p>
               </div>
             </div>
           );
@@ -148,7 +151,7 @@ export default function Dashboard() {
                   <XAxis dataKey="name" stroke="#6b7280" fontSize={11} />
                   <YAxis stroke="#6b7280" fontSize={11} />
                   <Tooltip contentStyle={{ backgroundColor: '#12141c', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '12px' }} />
-                  <Area type="monotone" dataKey="count" stroke="#8a5cf6" strokeWidth={2.5} fillOpacity={1} fill="url(#colorRegs)" />
+                  <Area type="monotone" dataKey="count" stroke="#8a5cf6" strokeWidth={2.5} fillOpacity={1} fill="url(#colorRegs)" isAnimationActive={true} />
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
@@ -171,7 +174,7 @@ export default function Dashboard() {
                   <XAxis dataKey="code" stroke="#6b7280" fontSize={11} />
                   <YAxis stroke="#6b7280" fontSize={11} />
                   <Tooltip contentStyle={{ backgroundColor: '#12141c', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '12px' }} />
-                  <Bar dataKey="count" fill="#06b6d4" radius={[6, 6, 0, 0]}>
+                  <Bar dataKey="count" fill="#06b6d4" radius={[6, 6, 0, 0]} isAnimationActive={true}>
                     {data.courseWiseData.map((_: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
@@ -205,6 +208,7 @@ export default function Dashboard() {
                     outerRadius={75}
                     paddingAngle={4}
                     dataKey="value"
+                    isAnimationActive={true}
                   >
                     {data.departmentWiseData.map((_: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

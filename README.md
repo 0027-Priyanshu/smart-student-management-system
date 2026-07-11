@@ -116,3 +116,53 @@ cd ../frontend
 npm run build
 ```
 Build outputs are gitignored (`dist/` directories) to keep the repository sanitized for professional review.
+
+---
+
+## 🔌 API Endpoint Summary
+
+Below is a summary of the backend REST API endpoints. All protected routes require a `Bearer <JWT_ACCESS_TOKEN>` authorization header.
+
+| HTTP Method | Endpoint | Access Level | Description |
+|---|---|---|---|
+| **POST** | `/api/auth/register` | Public | Registers a new user (Auto-verifies Admin/Faculty profiles) |
+| **POST** | `/api/auth/login` | Public | Authenticates credentials and returns access + refresh tokens |
+| **POST** | `/api/auth/refresh` | Public | Exchanges a refresh token for new access + refresh tokens |
+| **POST** | `/api/auth/verify-email` | Public | Verifies email token for Student accounts |
+| **POST** | `/api/auth/forgot-password` | Public | Generates password reset token and sends simulated link |
+| **POST** | `/api/auth/reset-password` | Public | Resets user password using valid token |
+| **GET** | `/api/auth/me` | Authenticated | Retrieves current user session object and profile metadata |
+| **GET** | `/api/students` | Authenticated | Retrieves paginated students matching search and filters |
+| **GET** | `/api/students/:id` | Authenticated | Fetches complete student profile details |
+| **POST** | `/api/students` | Admin / Faculty | Enrolls a new student user and profile card |
+| **PUT** | `/api/students/:id` | Admin / Faculty | Updates demographic or academic details of a student |
+| **DELETE** | `/api/students/:id` | Admin | Soft-deletes a student profile and deactivates login |
+| **POST** | `/api/students/:id/restore` | Admin | Restores a soft-deleted student profile card |
+| **POST** | `/api/students/import` | Admin | Bulk imports student directory cards from Excel worksheet |
+| **GET** | `/api/faculty` | Admin / Faculty | Retrieves all active faculty profiles |
+| **POST** | `/api/faculty` | Admin | Creates a new faculty user profile |
+| **DELETE** | `/api/faculty/:id` | Admin | Soft-deletes a faculty profile and deactivates login |
+| **GET** | `/api/courses` | Authenticated | Lists all available courses |
+| **POST** | `/api/courses` | Admin | Registers a new academic course code |
+| **DELETE** | `/api/courses/:id` | Admin | Soft-deletes a course record |
+| **POST** | `/api/courses/assign` | Admin | Enrolls a student into a course registry |
+| **GET** | `/api/attendance` | Authenticated | Fetches logs of course attendance |
+| **POST** | `/api/attendance` | Admin / Faculty | Marks attendance details for a student |
+| **POST** | `/api/attendance/scan-qr` | Student | Self-marks student present using scanned course QR payload |
+| **GET** | `/api/results/:studentId` | Authenticated | Fetches marks, GPA, and transcripts of a student |
+| **POST** | `/api/results` | Faculty | Creates or updates grade cards |
+| **GET** | `/api/logs` | Admin | Fetches system logs and Morgan HTTP audit history |
+| **POST** | `/api/ai/ask` | Authenticated | Queries Gemini performance profiling (PII masked) |
+| **POST** | `/api/ai/chat` | Authenticated | Initiates a multi-turn chat stream with Gemini companion |
+
+---
+
+## ⚠️ Known System Limitations
+
+1. **In-Memory Password Resets**:
+   - Password reset tokens are stored inside an in-memory `Map`. Restarting the backend server will invalidate pending password reset URLs.
+2. **Local Fallback Data Latency**:
+   - When MongoDB is unavailable, the backend reads and writes to a local `data/db.json` file. This format is not optimized for high-concurrency production deployments and may suffer write blocks under extreme load.
+3. **SMTP Email Timeout**:
+   - Default SMTP notification actions run via asynchronous `Promise.catch` handlers to prevent API response blocking. SMTP network dropouts will trigger warning alerts in console output logs but won't impede user interaction flows.
+

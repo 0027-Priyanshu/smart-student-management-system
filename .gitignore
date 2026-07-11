@@ -43,3 +43,4 @@ Thumbs.db
 uploads/
 logs/
 data/db.json
+*test_db.json

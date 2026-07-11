@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { AuthController } from '../controllers/auth.controller';
 import { validate } from '../middlewares/validation.middleware';
 import { authenticateJWT } from '../middlewares/auth.middleware';
+import { signupRateLimiter } from '../middlewares/rate-limit.middleware';
 import { 
   registerSchema, 
   loginSchema, 
@@ -13,7 +14,7 @@ import {
 const router = Router();
 
 // POST: /api/auth/register
-router.post('/register', validate({ body: registerSchema }), AuthController.register);
+router.post('/register', signupRateLimiter, validate({ body: registerSchema }), AuthController.register);
 
 // POST: /api/auth/login
 router.post('/login', validate({ body: loginSchema }), AuthController.login);

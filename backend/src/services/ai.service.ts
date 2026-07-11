@@ -25,7 +25,7 @@ export async function generateStudentSummary(
   attendanceRate: number,
   courses: string[]
 ): Promise<string> {
-  const prompt = `Generate a concise 3-sentence professional academic profile summary for student ${studentName}. 
+  const prompt = `Generate a concise 3-sentence professional academic profile summary for the student. 
   Grade: ${grade}, Current GPA: ${gpa}, Attendance: ${attendanceRate}%. 
   Enrolled courses: ${courses.join(', ')}. 
   Mention their current standing, focus areas, and a brief positive outlook. Keep it realistic and objective.`;
@@ -36,7 +36,12 @@ export async function generateStudentSummary(
         model: 'gemini-2.5-flash',
         contents: prompt,
       });
-      return response.text || getDefaultSummary(studentName, gpa, attendanceRate);
+      const text = response.text || '';
+      if (text) {
+        // Unmask the response locally by replacing generic references with the actual student name
+        return text.replace(/\b(the student|the Student|The student|The Student|student|Student)\b/g, studentName);
+      }
+      return getDefaultSummary(studentName, gpa, attendanceRate);
     } catch (error) {
       console.error('Gemini error generating summary, falling back:', error);
       return getDefaultSummary(studentName, gpa, attendanceRate);
@@ -67,7 +72,7 @@ export async function generateRecommendations(
     weakSubjects.push('General Curriculum Studies');
   }
 
-  const prompt = `Based on student ${studentName}'s details: GPA is ${gpa}, Attendance is ${attendanceRate}%, and weak subjects are: ${weakSubjects.join(', ')}.
+  const prompt = `Based on the student's details: GPA is ${gpa}, Attendance is ${attendanceRate}%, and weak subjects are: ${weakSubjects.join(', ')}.
   Generate exactly 3 actionable, highly specific study recommendations for this student to improve their grades. 
   Respond with exactly 3 bullet points, separated by newlines, without markdown formatting.`;
 
@@ -82,6 +87,7 @@ export async function generateRecommendations(
         .split('\n')
         .map(line => line.replace(/^-\s*/, '').replace(/^\d+\.\s*/, '').trim())
         .filter(line => line.length > 0)
+        .map(line => line.replace(/\b(the student|the Student|The student|The Student|student|Student)\b/g, studentName))
         .slice(0, 3);
       
       return {

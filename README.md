@@ -2,6 +2,11 @@
 
 EduManager is a production-ready, internship-level MERN stack application designed for universities and academies to manage student directories, course enrollments, faculty allocations, attendance tracking, and marks/results. It features role-based authorization, high-performance database indexing, centralized schema validation, Winston/Morgan audit logging, dynamic animated notifications, and built-in Google Gemini AI academic insights.
 
+🚀 **Live Deployment Links:**
+- **Live Frontend Web App (Vercel):** [smart-student-management-system-seven.vercel.app](https://smart-student-management-system-seven.vercel.app)
+- **Live Backend API Server (Render):** [https://smart-student-management-system-34eo.onrender.com](https://smart-student-management-system-34eo.onrender.com)
+- **Developer Guidelines:** [CONTRIBUTING.md](file:///Users/priyanshu/Desktop/smart-student-management-system/CONTRIBUTING.md)
+
 ---
 
 ## 🏛️ System Architecture

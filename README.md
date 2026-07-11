@@ -45,6 +45,12 @@ graph TD
 * **Search & Filters**: Multi-criteria searching and dropdown role filtering for administrative audit logs and student indexes.
 * **Responsive Dashboard**: Live metrics counting cards, responsive grids, and clean error pages for 404 and 500 status codes.
 
+### 4. Core Functional Value (Portfolio Highlights)
+* **Bulk Excel Importer & Validator**: On the Student page, administrators can bulk upload Excel files (`.xlsx`, `.xls`). The backend parses columns asynchronously, checks email uniqueness, hashes default passwords, creates database cards, and sends registration emails without locking the thread.
+* **Google Gemini Performance Companion**: Connects to `gemini-2.5-flash` with a fallback simulation. Features a local **PII Masking Filter** in `ai.service.ts` that strips student names before sending them to the AI provider, restoring them locally in-memory before rendering.
+* **Real-time Status Notifications Hub**: Integrates `Socket.io` online-user tracking, event triggers for course assignments, and a real-time bell drawer to notify users of modifications.
+* **Automated CI/CD Quality Control**: Outfitted with a GitHub Actions workflow (`.github/workflows/ci.yml`) compiling frontend and backend assets and running unit tests automatically on push.
+
 ---
 
 ## 🛠️ Environmental Settings (.env)
@@ -97,10 +103,19 @@ npm install
 npm run dev
 ```
 
-### 3. Database Seeding (Admin Registration)
-1. Go to the signup page at `http://localhost:5173/register`.
-2. Register an account with the role set to **Admin** or **Faculty** (these roles bypass email verification steps automatically for testing simplicity).
-3. If registering as a **Student**, a verification email link will print directly to the backend terminal window. Click it to verify the student account!
+### 3. Database Seeding & Demo Credentials
+The local database automatically seeds a complete set of user cards on the first boot. You can log in instantly with these roles:
+
+| Role | Email Address | Password | Privileges |
+|---|---|---|---|
+| **Admin** | `admin@sms.com` | `admin123` | Full CRUD, Course Allocation, Bulk Excel Import |
+| **Faculty** | `faculty@sms.com` | `faculty123` | Read student profiles, update gradesheet, log attendance |
+| **Student** | `student@sms.com` | `student123` | View attendance heatmap, view transcript, chat with Gemini AI |
+
+To register new student accounts:
+1. Go to `http://localhost:5173/register` and select **Student**.
+2. A verification email token link will print directly to the backend server terminal window.
+3. Click the link to auto-verify the account and log in. Admin/Faculty accounts bypass verification automatically.
 
 ---
 

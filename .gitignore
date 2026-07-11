@@ -44,3 +44,5 @@ uploads/
 logs/
 data/db.json
 *test_db.json
+*.zip
+.github/

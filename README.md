@@ -5,7 +5,7 @@ EduManager is a production-ready, internship-level MERN stack application design
 🚀 **Live Deployment Links:**
 - **Live Frontend Web App (Vercel):** [smart-student-management-system-seven.vercel.app](https://smart-student-management-system-seven.vercel.app)
 - **Live Backend API Server (Render):** [https://smart-student-management-system-34eo.onrender.com](https://smart-student-management-system-34eo.onrender.com)
-- **Developer Guidelines:** [CONTRIBUTING.md](file:///Users/priyanshu/Desktop/smart-student-management-system/CONTRIBUTING.md)
+- **Developer Guidelines:** [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ---
 

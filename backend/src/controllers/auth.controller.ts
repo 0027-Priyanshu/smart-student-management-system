@@ -135,6 +135,22 @@ export class AuthController {
 
       const userId = user._id || user.id;
 
+      // Block soft-deleted student profiles
+      if (user.role === 'Student') {
+        const studentProfile = await RepoService.findStudentByUserId(userId);
+        if (studentProfile && studentProfile.isDeleted) {
+          return res.status(403).json({ error: 'This student account has been deactivated or deleted.' });
+        }
+      }
+
+      // Block soft-deleted faculty profiles
+      if (user.role === 'Faculty') {
+        const facultyProfile = await RepoService.findFacultyByUserId(userId);
+        if (facultyProfile && facultyProfile.isDeleted) {
+          return res.status(403).json({ error: 'This faculty account has been deactivated or deleted.' });
+        }
+      }
+
       // Check email verification status (explicitly false means unverified) - bypassed
       /*
       if (user.isVerified === false) {

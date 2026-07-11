@@ -16,7 +16,7 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
   user: typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || 'null') : null,
   isAuthenticated: typeof window !== 'undefined' ? !!localStorage.getItem('accessToken') : false,
-  loading: false,
+  loading: typeof window !== 'undefined' ? !!localStorage.getItem('accessToken') : false,
 
   login: async (email, password) => {
     set({ loading: true });
@@ -60,6 +60,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ user: null, isAuthenticated: false, loading: false });
       return;
     }
+    set({ loading: true });
     try {
       const res = await api.get('/auth/me');
       const { user } = res.data;

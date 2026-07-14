@@ -106,6 +106,9 @@ export default function Students() {
       }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to fetch student directory');
+      setStudents([]); // Clear the list on error so it doesn't falsely show all students
+      setTotalItems(0);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }

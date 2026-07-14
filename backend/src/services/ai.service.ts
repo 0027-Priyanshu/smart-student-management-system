@@ -303,18 +303,15 @@ export async function predictRisk(
 }
 
 // 6. Natural Language Search to Query Translator
-export async function translateNlSearch(query: string): Promise<{ type: 'attendance' | 'gpa' | 'department', operator: '<' | '>' | '=', value: number | string } | null> {
+export async function translateNlSearch(query: string): Promise<{ type: 'attendance' | 'gpa' | 'department', operator: '<' | '>' | '<=' | '>=' | '=', value: number | string } | null> {
   const prompt = `You are a Smart Search interpreter. The user wants to filter students via natural language.
   Translate the following query into a JSON object representing the database filter intention.
   Supported types: "attendance", "gpa", "department".
-  Supported operators: "<", ">", "=".
+  Supported operators: "<", ">", "<=", ">=", "=".
   Query: "${query}"
-  Return ONLY the JSON format without markdown tags:
-  {
-    "type": "attendance",
-    "operator": "<",
-    "value": 75
-  }
+  Return ONLY the raw JSON object without any markdown formatting, backticks, or extra text.
+  Example output:
+  {"type": "attendance", "operator": "<", "value": 100}
   If the query cannot be interpreted, return an empty object {}.`;
 
   if (ai) {
@@ -324,9 +321,18 @@ export async function translateNlSearch(query: string): Promise<{ type: 'attenda
         contents: prompt,
       });
       let text = response.text || '';
-      text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      // Strip out markdown code blocks and any trailing/leading whitespace
+      text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+      if (!text || text === '{}') return null;
+      
       const parsed = JSON.parse(text);
-      if (parsed.type) return parsed;
+      if (parsed.type) {
+        // if they put a percentage, strip it out
+        if (typeof parsed.value === 'string' && parsed.value.includes('%')) {
+          parsed.value = Number(parsed.value.replace('%', ''));
+        }
+        return parsed;
+      }
     } catch (error) {
       console.error('Gemini NL search failed:', error);
     }

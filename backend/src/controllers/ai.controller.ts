@@ -256,19 +256,25 @@ export class AIController {
           const total = logs.length;
           const present = logs.filter(a => a.status === 'Present' || a.status === 'Late' || a.status === 'On Leave').length;
           const rate = total > 0 ? (present / total) * 100 : 100;
+          const val = Number(intent.value);
           
-          if (intent.operator === '<' && rate < Number(intent.value)) filteredStudents.push(student);
-          if (intent.operator === '>' && rate > Number(intent.value)) filteredStudents.push(student);
-          if (intent.operator === '=' && rate === Number(intent.value)) filteredStudents.push(student);
+          if (intent.operator === '<' && rate < val) filteredStudents.push(student);
+          else if (intent.operator === '<=' && rate <= val) filteredStudents.push(student);
+          else if (intent.operator === '>' && rate > val) filteredStudents.push(student);
+          else if (intent.operator === '>=' && rate >= val) filteredStudents.push(student);
+          else if (intent.operator === '=' && rate === val) filteredStudents.push(student);
         } else if (intent.type === 'gpa') {
           const results = await RepoService.findResults(student._id || student.id);
           let tp = 0, tc = 0;
           results.forEach(r => { tp += r.gpa * (r.courseId?.credits || 3); tc += (r.courseId?.credits || 3); });
           const gpa = tc > 0 ? tp / tc : 0;
+          const val = Number(intent.value);
           
-          if (intent.operator === '<' && gpa < Number(intent.value)) filteredStudents.push(student);
-          if (intent.operator === '>' && gpa > Number(intent.value)) filteredStudents.push(student);
-          if (intent.operator === '=' && gpa === Number(intent.value)) filteredStudents.push(student);
+          if (intent.operator === '<' && gpa < val) filteredStudents.push(student);
+          else if (intent.operator === '<=' && gpa <= val) filteredStudents.push(student);
+          else if (intent.operator === '>' && gpa > val) filteredStudents.push(student);
+          else if (intent.operator === '>=' && gpa >= val) filteredStudents.push(student);
+          else if (intent.operator === '=' && gpa === val) filteredStudents.push(student);
         }
       }
 

@@ -415,93 +415,154 @@ export class AIController {
         marksData
       );
 
-      const doc = new PDFDocument({ margin: 40 });
+      const doc = new PDFDocument({ margin: 40, size: 'A4', bufferPages: true });
       res.setHeader('Content-Disposition', `attachment; filename="${student.name.replace(/\s+/g, '_')}_AI_Report.pdf"`);
       res.setHeader('Content-Type', 'application/pdf');
       doc.pipe(res);
 
-      // Report Header Branding
-      doc.fillColor('#1f2937').fontSize(24).text('EDUMANAGER SMART INSIGHTS', { bold: true } as any);
-      doc.fillColor('#8a5cf6').fontSize(12).text('Artificial Intelligence Performance Report', { bold: true } as any);
-      doc.moveDown(1.5);
+      const primaryColor = '#8a5cf6';
+      const darkColor = '#12141c';
+      const textColor = '#374151';
+      const lightGray = '#f3f4f6';
 
-      // Student Profile Information Box
-      doc.fillColor('#111827').fontSize(14).text('STUDENT PROFILE', { underline: true });
-      doc.fontSize(10).fillColor('#374151');
-      doc.text(`Name: ${student.name}`, 40, 110);
-      doc.text(`Enrollment No: ${student.enrollmentNo}`, 40, 125);
-      doc.text(`Department: ${student.department}`, 40, 140);
-      doc.text(`Semester: ${student.semester}`, 40, 155);
+      // ================= HEADER BANNER =================
+      doc.rect(0, 0, doc.page.width, 100).fill(darkColor);
+      doc.fontSize(24).font('Helvetica-Bold').fillColor(primaryColor).text('EDUMANAGER AI', 40, 35);
+      doc.fontSize(12).font('Helvetica').fillColor('#ffffff').text('Smart Academic Performance Profile', 40, 65);
+      
+      const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      doc.fontSize(10).fillColor('#9ca3af').text(`Date: ${dateStr}`, 0, 65, { align: 'right', width: doc.page.width - 40 });
 
-      doc.text(`Current Cumulative GPA: ${gpa.toFixed(2)}`, 300, 110);
-      doc.text(`Overall Attendance Rate: ${attendanceRate.toFixed(1)}%`, 300, 125);
-      doc.text(`Academic Level: ${student.grade}`, 300, 140);
-      doc.moveDown(4.5);
+      // Track Y position dynamically
+      let y = 130;
+      const startX = 40;
+      const contentWidth = doc.page.width - 80;
 
-      // AI Summary Section
-      doc.fillColor('#8a5cf6').fontSize(14).text('AI SUMMARY OVERVIEW', { underline: true });
-      doc.moveDown(0.5);
-      doc.fillColor('#111827').fontSize(10).text(summary, { lineGap: 4 });
-      doc.moveDown(2);
+      // Helper for page break
+      const checkPageBreak = (neededSpace: number) => {
+        if (y + neededSpace > doc.page.height - 60) {
+          doc.addPage();
+          y = 50;
+        }
+      };
 
-      // Performance Breakdown Tables
-      doc.fillColor('#8a5cf6').fontSize(14).text('COURSE PERFORMANCE BREAKDOWN', { underline: true });
-      doc.moveDown(0.5);
+      // ================= STUDENT PROFILE BOX =================
+      checkPageBreak(100);
+      doc.rect(startX, y, contentWidth, 80).fill(lightGray);
+      
+      doc.fontSize(10).font('Helvetica-Bold').fillColor(darkColor);
+      doc.text('Name:', startX + 15, y + 15);
+      doc.text('Enrollment No:', startX + 15, y + 35);
+      doc.text('Department:', startX + 15, y + 55);
+      
+      doc.font('Helvetica').fillColor(textColor);
+      doc.text(student.name || 'N/A', startX + 90, y + 15);
+      doc.text(student.enrollmentNo || 'N/A', startX + 90, y + 35);
+      doc.text(student.department || 'N/A', startX + 90, y + 55);
 
-      // Headers
-      doc.fillColor('#111827').fontSize(10);
-      doc.text('Code', 40, 310, { width: 60, bold: true } as any);
-      doc.text('Course Name', 100, 310, { width: 220, bold: true } as any);
-      doc.text('Internal', 330, 310, { width: 50, bold: true } as any);
-      doc.text('External', 390, 310, { width: 50, bold: true } as any);
-      doc.text('Grade', 450, 310, { width: 40, bold: true } as any);
-      doc.text('GPA', 500, 310, { width: 40, bold: true } as any);
+      doc.font('Helvetica-Bold').fillColor(darkColor);
+      doc.text('Cumulative GPA:', startX + 280, y + 15);
+      doc.text('Attendance Rate:', startX + 280, y + 35);
+      doc.text('Academic Level:', startX + 280, y + 55);
 
-      doc.moveTo(40, 325).lineTo(550, 325).strokeColor('#e5e7eb').stroke();
+      doc.font('Helvetica').fillColor(textColor);
+      doc.text(gpa.toFixed(2), startX + 380, y + 15);
+      doc.text(`${attendanceRate.toFixed(1)}%`, startX + 380, y + 35);
+      doc.text(student.grade || 'N/A', startX + 380, y + 55);
+      
+      y += 100;
 
-      let tableY = 335;
-      marksData.forEach(item => {
-        doc.fillColor('#374151').fontSize(9);
-        doc.text(item.code, 40, tableY);
-        doc.text(item.name, 100, tableY, { width: 220 });
-        doc.text(item.internal.toString(), 330, tableY);
-        doc.text(item.external.toString(), 390, tableY);
-        doc.text(item.grade, 450, tableY);
-        doc.text(item.gpa.toFixed(1), 500, tableY);
-        tableY += 20;
+      // ================= AI SUMMARY =================
+      checkPageBreak(120);
+      doc.fontSize(14).font('Helvetica-Bold').fillColor(primaryColor).text('AI Executive Summary', startX, y);
+      y += 20;
+      
+      // Calculate height of text
+      doc.fontSize(10).font('Helvetica').fillColor(textColor);
+      const summaryHeight = doc.heightOfString(summary, { width: contentWidth, lineGap: 4 });
+      doc.text(summary, startX, y, { width: contentWidth, lineGap: 4, align: 'justify' });
+      y += summaryHeight + 25;
+
+      // ================= PERFORMANCE BREAKDOWN TABLE =================
+      checkPageBreak(100);
+      doc.fontSize(14).font('Helvetica-Bold').fillColor(primaryColor).text('Course Performance Breakdown', startX, y);
+      y += 20;
+
+      const colWidths = { code: 60, name: 200, marks: 50, grade: 50, gpa: 40 };
+      const rowHeight = 25;
+
+      // Table Header
+      doc.rect(startX, y, contentWidth, rowHeight).fill(darkColor);
+      doc.fontSize(10).font('Helvetica-Bold').fillColor('#ffffff');
+      doc.text('Code', startX + 5, y + 8, { width: colWidths.code });
+      doc.text('Course Name', startX + colWidths.code + 5, y + 8, { width: colWidths.name });
+      doc.text('Int', startX + colWidths.code + colWidths.name + 5, y + 8, { width: colWidths.marks });
+      doc.text('Ext', startX + colWidths.code + colWidths.name + colWidths.marks + 5, y + 8, { width: colWidths.marks });
+      doc.text('Grade', startX + colWidths.code + colWidths.name + colWidths.marks * 2 + 5, y + 8, { width: colWidths.grade });
+      doc.text('GPA', startX + colWidths.code + colWidths.name + colWidths.marks * 2 + colWidths.grade + 5, y + 8, { width: colWidths.gpa });
+      y += rowHeight;
+
+      let altRow = false;
+      marksData.forEach((item) => {
+        checkPageBreak(rowHeight);
+        if (altRow) doc.rect(startX, y, contentWidth, rowHeight).fill(lightGray);
+
+        doc.fontSize(9).font('Helvetica').fillColor(darkColor);
+        doc.text(item.code, startX + 5, y + 8, { width: colWidths.code });
+        doc.text(item.name, startX + colWidths.code + 5, y + 8, { width: colWidths.name });
+        doc.text(item.internal.toString(), startX + colWidths.code + colWidths.name + 5, y + 8, { width: colWidths.marks });
+        doc.text(item.external.toString(), startX + colWidths.code + colWidths.name + colWidths.marks + 5, y + 8, { width: colWidths.marks });
+        doc.text(item.grade, startX + colWidths.code + colWidths.name + colWidths.marks * 2 + 5, y + 8, { width: colWidths.grade });
+        doc.text(item.gpa.toFixed(1), startX + colWidths.code + colWidths.name + colWidths.marks * 2 + colWidths.grade + 5, y + 8, { width: colWidths.gpa });
+        
+        doc.rect(startX, y, contentWidth, rowHeight).strokeColor('#e5e7eb').lineWidth(0.5).stroke();
+        
+        y += rowHeight;
+        altRow = !altRow;
       });
+      y += 25;
 
-      doc.moveDown(3);
-
-      // Recommendations Section
-      doc.fillColor('#8a5cf6').fontSize(14).text('AI PREDICTIVE RECOMMENDATIONS', { underline: true });
-      doc.moveDown(0.5);
+      // ================= RECOMMENDATIONS & WEAKNESSES =================
+      checkPageBreak(150);
+      doc.fontSize(14).font('Helvetica-Bold').fillColor(primaryColor).text('Strategic Action Plan', startX, y);
+      y += 20;
 
       if (analysis.weakSubjects.length > 0) {
-        doc.fillColor('#ef4444').fontSize(10).text(`Detected Critical Weak Areas: ${analysis.weakSubjects.join(', ')}`, { bold: true } as any);
-        doc.moveDown(0.5);
+        doc.rect(startX, y, contentWidth, 30).fill('#fee2e2'); // light red
+        doc.fontSize(10).font('Helvetica-Bold').fillColor('#b91c1c').text(`Attention Required: ${analysis.weakSubjects.join(', ')}`, startX + 15, y + 10);
+        y += 45;
       }
 
-      doc.fillColor('#111827').fontSize(10);
+      doc.fontSize(10).font('Helvetica').fillColor(textColor);
       analysis.recommendations.forEach((rec, idx) => {
-        doc.text(`${idx + 1}. ${rec}`, { lineGap: 3 });
-        doc.moveDown(0.5);
+        checkPageBreak(30);
+        const textHeight = doc.heightOfString(`${idx + 1}. ${rec}`, { width: contentWidth - 20, lineGap: 3 });
+        doc.text(`${idx + 1}. ${rec}`, startX + 10, y, { width: contentWidth - 20, lineGap: 3, align: 'justify' });
+        y += textHeight + 10;
       });
-      doc.moveDown(2);
+      y += 15;
 
-      // Predictive Risk Section
-      doc.fillColor('#8a5cf6').fontSize(14).text('PREDICTIVE RISK ANALYSIS', { underline: true });
-      doc.moveDown(0.5);
-      
+      // ================= PREDICTIVE RISK ANALYSIS =================
+      checkPageBreak(80);
       const riskColor = riskData.riskLevel === 'High' ? '#ef4444' : riskData.riskLevel === 'Medium' ? '#f59e0b' : '#10b981';
-      doc.fillColor(riskColor).fontSize(12).text(`Risk Level: ${riskData.riskLevel} (${riskData.riskScore}%)`, { bold: true } as any);
-      doc.moveDown(0.5);
-      doc.fillColor('#374151').fontSize(10).text(`Warning Context: ${riskData.warningMessage}`);
+      const riskBg = riskData.riskLevel === 'High' ? '#fef2f2' : riskData.riskLevel === 'Medium' ? '#fffbeb' : '#ecfdf5';
 
-      // Footer
-      doc.moveDown(4);
-      doc.moveTo(40, 720).lineTo(550, 720).strokeColor('#e5e7eb').stroke();
-      doc.fontSize(8).fillColor('#9ca3af').text('Report powered by Google Gemini AI Engine. Confidential Student Academic Record.', 40, 730, { align: 'center' });
+      doc.fontSize(14).font('Helvetica-Bold').fillColor(primaryColor).text('Predictive Risk Forecast', startX, y);
+      y += 20;
+
+      doc.rect(startX, y, contentWidth, 60).fill(riskBg).strokeColor(riskColor).lineWidth(1).stroke();
+      doc.fontSize(12).font('Helvetica-Bold').fillColor(riskColor).text(`Risk Level: ${riskData.riskLevel} (${riskData.riskScore}%)`, startX + 15, y + 15);
+      doc.fontSize(10).font('Helvetica').fillColor(textColor).text(`AI Diagnosis: ${riskData.warningMessage}`, startX + 15, y + 35, { width: contentWidth - 30 });
+      y += 80;
+
+      // ================= FOOTER =================
+      const pages = doc.bufferedPageRange();
+      for (let i = 0; i < pages.count; i++) {
+        doc.switchToPage(i);
+        doc.fontSize(8).font('Helvetica').fillColor('#9ca3af')
+          .text(`Page ${i + 1} of ${pages.count} • Generated by EduManager AI • Confidential Record`, 
+                startX, doc.page.height - 40, { align: 'center', width: contentWidth });
+      }
 
       doc.end();
     } catch (error) {

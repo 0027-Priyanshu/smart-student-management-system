@@ -28,7 +28,6 @@ export default function Students() {
   
   // Queries
   const [search, setSearch] = useState('');
-  const [nlQuery, setNlQuery] = useState('');
   const [selectedDept, setSelectedDept] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('');
   const [showDeleted, setShowDeleted] = useState(false);
@@ -81,29 +80,19 @@ export default function Students() {
   const fetchStudentsList = useCallback(async () => {
     setLoading(true);
     try {
-      if (nlQuery.trim() !== '') {
-        const res = await api.post('/ai/nl-search', { query: nlQuery });
-        setStudents(res.data.students || []);
-        setTotalPages(1);
-        setTotalItems(res.data.students?.length || 0);
-        if (res.data.intent) {
-          toast.success(`AI filtered by: ${res.data.intent.type} ${res.data.intent.operator} ${res.data.intent.value}`);
+      const res = await api.get(`/students`, {
+        params: {
+          search,
+          department: selectedDept,
+          courseId: selectedCourse,
+          isDeleted: showDeleted,
+          page,
+          limit: 6
         }
-      } else {
-        const res = await api.get(`/students`, {
-          params: {
-            search,
-            department: selectedDept,
-            courseId: selectedCourse,
-            isDeleted: showDeleted,
-            page,
-            limit: 6
-          }
-        });
-        setStudents(res.data.students || []);
-        setTotalPages(res.data.pagination?.totalPages || 1);
-        setTotalItems(res.data.pagination?.totalItems || 0);
-      }
+      });
+      setStudents(res.data.students || []);
+      setTotalPages(res.data.pagination?.totalPages || 1);
+      setTotalItems(res.data.pagination?.totalItems || 0);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to fetch student directory');
       setStudents([]); // Clear the list on error so it doesn't falsely show all students
@@ -112,7 +101,7 @@ export default function Students() {
     } finally {
       setLoading(false);
     }
-  }, [search, selectedDept, selectedCourse, showDeleted, page, nlQuery]);
+  }, [search, selectedDept, selectedCourse, showDeleted, page]);
 
   useEffect(() => {
     fetchStudentsList();
@@ -292,28 +281,15 @@ export default function Students() {
       {/* Advanced Filters */}
       <div className="p-5 bg-[#12141c]/50 border border-white/5 rounded-3xl mb-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="relative">
+          <div className="relative col-span-1 sm:col-span-2 lg:col-span-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
             <input
               type="text"
               placeholder="Search by name, email, enrollment..."
               value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); setNlQuery(''); }}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               className="w-full pl-9 pr-4 py-2.5 bg-white/2 border border-white/5 focus:border-[#8a5cf6] rounded-xl text-xs focus:outline-none transition-all"
             />
-          </div>
-
-          <div className="relative">
-            <Sparkles className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8a5cf6]" size={16} />
-            <form onSubmit={(e) => { e.preventDefault(); setPage(1); fetchStudentsList(); }}>
-              <input
-                type="text"
-                placeholder="AI Search (e.g. attendance < 75)"
-                value={nlQuery}
-                onChange={(e) => { setNlQuery(e.target.value); setSearch(''); }}
-                className="w-full pl-9 pr-4 py-2.5 bg-[#8a5cf6]/5 border border-[#8a5cf6]/20 focus:border-[#8a5cf6] rounded-xl text-xs text-white focus:outline-none transition-all placeholder-[#8a5cf6]/50"
-              />
-            </form>
           </div>
 
           <select

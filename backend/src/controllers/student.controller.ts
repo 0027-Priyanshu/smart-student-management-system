@@ -246,40 +246,74 @@ export class StudentController {
   static async exportPDF(req: Request, res: Response, next: NextFunction) {
     try {
       const { students } = await RepoService.findStudents({}, 1, 1000);
-      const doc = new PDFDocument({ margin: 30 });
+      const doc = new PDFDocument({ margin: 40, size: 'A4' });
 
       res.setHeader('Content-Disposition', 'attachment; filename="students_report.pdf"');
       res.setHeader('Content-Type', 'application/pdf');
       doc.pipe(res);
 
-      doc.fontSize(22).fillColor('#8a5cf6').text('EduManager Student Enrollment Report', { align: 'center' });
-      doc.fontSize(10).fillColor('#6b7280').text(`Report Generated On: ${new Date().toLocaleDateString()}`, { align: 'center' });
-      doc.moveDown(2);
+      // Header Section
+      doc.rect(0, 0, doc.page.width, 100).fill('#12141c');
+      doc.fontSize(24).font('Helvetica-Bold').fillColor('#8a5cf6').text('EduManager', 40, 35);
+      doc.fontSize(12).font('Helvetica').fillColor('#ffffff').text('Student Enrollment Report', 40, 65);
+      
+      const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      doc.fontSize(10).fillColor('#9ca3af').text(`Generated: ${dateStr}`, 0, 65, { align: 'right', width: doc.page.width - 40 });
 
-      // Simple Table layout
-      doc.fontSize(10).fillColor('#12141c');
-      doc.text('Enrollment No', 30, 110, { width: 90, bold: true } as any);
-      doc.text('Name', 120, 110, { width: 140, bold: true } as any);
-      doc.text('Email', 260, 110, { width: 150, bold: true } as any);
-      doc.text('Department', 410, 110, { width: 80, bold: true } as any);
-      doc.text('Grade', 490, 110, { width: 70, bold: true } as any);
+      // Table configuration
+      const startX = 40;
+      let y = 130;
+      const rowHeight = 25;
+      const colWidths = { enr: 90, name: 140, email: 160, dept: 70, grade: 50 };
 
-      doc.moveTo(30, 125).lineTo(560, 125).strokeColor('#e5e7eb').stroke();
+      // Helper function for table header
+      const drawTableHeader = (startY: number) => {
+        doc.rect(startX, startY, doc.page.width - 80, rowHeight).fill('#f3f4f6');
+        doc.fontSize(10).font('Helvetica-Bold').fillColor('#374151');
+        doc.text('Enrollment No', startX + 5, startY + 8, { width: colWidths.enr });
+        doc.text('Name', startX + colWidths.enr + 5, startY + 8, { width: colWidths.name });
+        doc.text('Email', startX + colWidths.enr + colWidths.name + 5, startY + 8, { width: colWidths.email });
+        doc.text('Dept', startX + colWidths.enr + colWidths.name + colWidths.email + 5, startY + 8, { width: colWidths.dept });
+        doc.text('Grade', startX + colWidths.enr + colWidths.name + colWidths.email + colWidths.dept + 5, startY + 8, { width: colWidths.grade });
+      };
 
-      let y = 135;
-      students.forEach((s: any) => {
-        if (y > 700) {
+      drawTableHeader(y);
+      y += rowHeight;
+
+      let altRow = false;
+      let pageNum = 1;
+
+      students.forEach((s: any, index: number) => {
+        if (y > doc.page.height - 80) {
+          // Footer
+          doc.fontSize(9).font('Helvetica').fillColor('#9ca3af').text(`Page ${pageNum}`, startX, doc.page.height - 40, { align: 'center', width: doc.page.width - 80 });
           doc.addPage();
+          pageNum++;
           y = 50;
+          drawTableHeader(y);
+          y += rowHeight;
+          altRow = false;
         }
-        doc.fillColor('#374151');
-        doc.text(s.enrollmentNo, 30, y, { width: 90 });
-        doc.text(s.name, 120, y, { width: 140 });
-        doc.text(s.email, 260, y, { width: 150 });
-        doc.text(s.department, 410, y, { width: 80 });
-        doc.text(s.grade, 490, y, { width: 70 });
-        y += 20;
+
+        if (altRow) {
+          doc.rect(startX, y, doc.page.width - 80, rowHeight).fill('#f9fafb');
+        }
+        
+        doc.fontSize(9).font('Helvetica').fillColor('#1f2937');
+        doc.text(s.enrollmentNo || 'N/A', startX + 5, y + 8, { width: colWidths.enr, lineBreak: false });
+        doc.text(s.name || 'N/A', startX + colWidths.enr + 5, y + 8, { width: colWidths.name, lineBreak: false });
+        doc.text(s.email || 'N/A', startX + colWidths.enr + colWidths.name + 5, y + 8, { width: colWidths.email, lineBreak: false });
+        doc.text(s.department || 'N/A', startX + colWidths.enr + colWidths.name + colWidths.email + 5, y + 8, { width: colWidths.dept, lineBreak: false });
+        doc.text(s.grade || 'N/A', startX + colWidths.enr + colWidths.name + colWidths.email + colWidths.dept + 5, y + 8, { width: colWidths.grade, lineBreak: false });
+        
+        doc.rect(startX, y, doc.page.width - 80, rowHeight).strokeColor('#e5e7eb').lineWidth(0.5).stroke();
+        
+        y += rowHeight;
+        altRow = !altRow;
       });
+
+      // Final Footer
+      doc.fontSize(9).font('Helvetica').fillColor('#9ca3af').text(`Page ${pageNum} • Total Students: ${students.length}`, startX, doc.page.height - 40, { align: 'center', width: doc.page.width - 80 });
 
       doc.end();
     } catch (error) {

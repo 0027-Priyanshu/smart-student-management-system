@@ -9,8 +9,7 @@ import {
   Upload, 
   IdCard,
   X,
-  FileDown,
-  Sparkles
+  FileDown
 } from 'lucide-react';
 import DashboardShell from '../components/layout/DashboardShell';
 import api from '../utils/api';

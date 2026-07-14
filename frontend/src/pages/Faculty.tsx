@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Edit2 } from 'lucide-react';
 import DashboardShell from '../components/layout/DashboardShell';
 import api from '../utils/api';
 import { useAuthStore } from '../stores/authStore';
@@ -17,8 +17,11 @@ export default function Faculty() {
 
   // Modals
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [activeFaculty, setActiveFaculty] = useState<FacultyType | null>(null);
   const [selectedCourseId, setSelectedCourseId] = useState('');
+  const [editDepartment, setEditDepartment] = useState('');
+  const [editDesignation, setEditDesignation] = useState('');
 
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -67,6 +70,35 @@ export default function Faculty() {
       }, 1500);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to assign course');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    if (!editDepartment || !editDesignation) {
+      setError('Please fill out all fields');
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      await api.put(`/faculty/${activeFaculty?._id || activeFaculty?.id}`, {
+        department: editDepartment,
+        designation: editDesignation
+      });
+      setSuccess('Faculty profile updated successfully!');
+      loadData();
+      setTimeout(() => {
+        setShowEditModal(false);
+        setSuccess('');
+      }, 1500);
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to update profile');
     } finally {
       setActionLoading(false);
     }
@@ -131,7 +163,21 @@ export default function Faculty() {
                 </div>
 
                 {isAdmin && (
-                  <div className="mt-6 pt-4 border-t border-white/5 flex justify-end">
+                  <div className="mt-6 pt-4 border-t border-white/5 flex justify-end gap-2">
+                    <button 
+                      onClick={() => {
+                        setActiveFaculty(fac);
+                        setEditDepartment(fac.department || '');
+                        setEditDesignation(fac.designation || '');
+                        setError('');
+                        setSuccess('');
+                        setShowEditModal(true);
+                      }} 
+                      className="px-3.5 py-1.5 bg-white/3 hover:bg-[#8a5cf6] hover:text-white border border-white/5 hover:border-transparent text-white font-semibold rounded-xl text-[11px] flex items-center gap-1.5 transition-all"
+                    >
+                      <Edit2 size={12} />
+                      Edit Profile
+                    </button>
                     <button 
                       onClick={() => {
                         setActiveFaculty(fac);
@@ -140,7 +186,7 @@ export default function Faculty() {
                         setSuccess('');
                         setShowAssignModal(true);
                       }} 
-                      className="px-3.5 py-1.5 bg-white/3 hover:bg-[#8a5cf6] hover:text-white border border-white/5 hover:border-transparent text-white font-semibold rounded-xl text-[11px] flex items-center gap-1.5 transition-all"
+                      className="px-3.5 py-1.5 bg-white/3 hover:bg-[#06b6d4] hover:text-white border border-white/5 hover:border-transparent text-white font-semibold rounded-xl text-[11px] flex items-center gap-1.5 transition-all"
                     >
                       <Plus size={12} />
                       Assign Course
@@ -211,6 +257,72 @@ export default function Faculty() {
                 className="w-full py-3 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] text-white font-bold rounded-xl text-xs shadow-card transition-all"
               >
                 {actionLoading ? 'Assigning...' : 'Confirm Assignment'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT FACULTY MODAL */}
+      {showEditModal && activeFaculty && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#12141c] border border-[#8a5cf6]/20 rounded-3xl w-full max-w-sm p-6 relative overflow-hidden shadow-card animate-slideUp">
+            <button 
+              onClick={() => setShowEditModal(false)} 
+              className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+            >
+              <X size={20} />
+            </button>
+
+            <h3 className="font-title font-extrabold text-lg mb-2 text-white">Edit Faculty Profile</h3>
+            <p className="text-xs text-gray-400 mb-5">
+              Editing: <strong className="text-white">{activeFaculty.name}</strong>
+            </p>
+
+            {error && (
+              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-[#ef4444] rounded-xl text-xs">
+                {error}
+              </div>
+            )}
+            {success && (
+              <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-[#10b981] rounded-xl text-xs">
+                {success}
+              </div>
+            )}
+
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Department</label>
+                <input
+                  type="text"
+                  value={editDepartment}
+                  onChange={(e) => setEditDepartment(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-white/2 border border-white/5 focus:border-[#8a5cf6] rounded-xl text-xs text-gray-300 focus:outline-none"
+                  placeholder="e.g. Computer Science"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Designation</label>
+                <select
+                  value={editDesignation}
+                  onChange={(e) => setEditDesignation(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-white/2 border border-white/5 focus:border-[#8a5cf6] rounded-xl text-xs text-gray-300 focus:outline-none cursor-pointer"
+                >
+                  <option value="Assistant Professor">Assistant Professor</option>
+                  <option value="Associate Professor">Associate Professor</option>
+                  <option value="Professor">Professor</option>
+                  <option value="Lecturer">Lecturer</option>
+                  <option value="Guest Faculty">Guest Faculty</option>
+                </select>
+              </div>
+
+              <button
+                type="submit"
+                disabled={actionLoading}
+                className="w-full py-3 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] text-white font-bold rounded-xl text-xs shadow-card transition-all"
+              >
+                {actionLoading ? 'Saving...' : 'Save Changes'}
               </button>
             </form>
           </div>

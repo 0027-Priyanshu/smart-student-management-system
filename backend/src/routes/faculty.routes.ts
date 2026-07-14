@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { FacultyController } from '../controllers/faculty.controller';
 import { authenticateJWT, requireRole } from '../middlewares/auth.middleware';
-
+import { validateRequest } from '../middlewares/validation.middleware';
+import { updateFacultySchema } from '../schemas/faculty.schema';
 const router = Router();
 
 // GET: /api/faculty (Protected)
@@ -17,6 +18,15 @@ router.post(
 
 // GET: /api/faculty/:id/students (Protected)
 router.get('/:id/students', authenticateJWT, FacultyController.getFacultyStudents);
+
+// PUT: /api/faculty/:id (Admin only - Edit Faculty Profile)
+router.put(
+  '/:id',
+  authenticateJWT,
+  requireRole(['Super Admin', 'Admin']),
+  validateRequest(updateFacultySchema),
+  FacultyController.updateFaculty
+);
 
 // DELETE: /api/faculty/:id (Admin only - Soft Delete)
 router.delete(

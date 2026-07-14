@@ -122,4 +122,35 @@ export class FacultyController {
       next(error);
     }
   }
+
+  static async updateFaculty(req: Request, res: Response, next: NextFunction) {
+    try {
+      const requester = (req as any).user;
+      const { department, designation } = req.body;
+
+      const faculty = await RepoService.findFacultyById(req.params.id);
+      if (!faculty) {
+        return res.status(404).json({ error: 'Faculty profile not found' });
+      }
+
+      const updateData: any = {};
+      if (department) updateData.department = department;
+      if (designation) updateData.designation = designation;
+
+      await RepoService.updateFaculty(req.params.id, updateData);
+
+      // Log Activity
+      await RepoService.createLog({
+        userId: requester.userId,
+        userName: requester.name,
+        role: requester.role,
+        action: 'Faculty Updated',
+        details: `Updated faculty profile: ${faculty.name} (${designation || faculty.designation})`
+      });
+
+      return res.json({ message: 'Faculty profile updated successfully' });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

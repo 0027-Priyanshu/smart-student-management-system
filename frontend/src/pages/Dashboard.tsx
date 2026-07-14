@@ -26,11 +26,14 @@ import {
 import DashboardShell from '../components/layout/DashboardShell';
 import api from '../utils/api';
 import { useSocketStore } from '../stores/socketStore';
+import { useAuthStore } from '../stores/authStore';
 import AnimatedCounter from '../components/common/AnimatedCounter';
+import StudentDashboard from '../components/dashboard/StudentDashboard';
 
 const COLORS = ['#8a5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ec4899', '#3b82f6'];
 
 export default function Dashboard() {
+  const { user } = useAuthStore();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const { socket } = useSocketStore();
@@ -65,6 +68,14 @@ export default function Dashboard() {
       }
     };
   }, [socket, fetchDashboardData]);
+
+  if (user?.role === 'Student') {
+    return (
+      <DashboardShell title="My Dashboard">
+        <StudentDashboard />
+      </DashboardShell>
+    );
+  }
 
   if (loading) {
     return (

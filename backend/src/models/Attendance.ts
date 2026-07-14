@@ -6,7 +6,7 @@ const AttendanceSchema = new Schema({
   date: { type: String, required: true, index: true }, // Format YYYY-MM-DD for easy lookup
   status: { 
     type: String, 
-    enum: ['Present', 'Absent', 'Late', 'Excused'], 
+    enum: ['Present', 'Absent', 'On Leave', 'Excused'], 
     default: 'Present' 
   },
   markedBy: { type: Schema.Types.ObjectId, ref: 'User' },

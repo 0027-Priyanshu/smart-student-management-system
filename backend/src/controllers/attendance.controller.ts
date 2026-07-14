@@ -137,7 +137,7 @@ export class AttendanceController {
       // Group logs by date
       const dateCounts: { [key: string]: number } = {};
       logs.forEach(log => {
-        if (log.status === 'Present' || log.status === 'Late') {
+        if (log.status === 'Present' || log.status === 'On Leave') {
           dateCounts[log.date] = (dateCounts[log.date] || 0) + 1;
         }
       });

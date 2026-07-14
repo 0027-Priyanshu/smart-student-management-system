@@ -12,11 +12,16 @@ export interface AuthenticatedRequest extends Request {
 
 export function authenticateJWT(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
+  let token: string | undefined;
 
   if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.split(' ')[1];
-    const payload = verifyAccessToken(token);
+    token = authHeader.split(' ')[1];
+  } else if (req.query.token) {
+    token = req.query.token as string;
+  }
 
+  if (token) {
+    const payload = verifyAccessToken(token);
     if (payload) {
       (req as any).user = payload;
       return next();

@@ -181,10 +181,20 @@ export default function Login() {
             </div>
 
             {/* Hint Panel */}
-            <div className="mt-6 p-4 bg-[#181a23] border border-white/10 rounded-2xl text-[11px] text-gray-400 space-y-1">
+            <div className="mt-6 p-4 bg-[#181a23] border border-white/10 rounded-2xl text-[11px] text-gray-400 space-y-2">
               <span className="font-bold text-gray-300 block mb-1">Demo Credentials:</span>
-              <p>• Admin: <code className="text-[#06b6d4]">admin@sms.com</code> / <code className="text-[#06b6d4]">admin123</code></p>
-              <p>• Student: <code className="text-[#06b6d4]">student@sms.com</code> / <code className="text-[#06b6d4]">student123</code></p>
+              <div 
+                onClick={() => { setEmail('admin@sms.com'); setPassword('admin123'); }}
+                className="cursor-pointer hover:bg-white/5 p-1.5 -ml-1.5 rounded-lg transition-colors flex items-center gap-1"
+              >
+                • Admin: <code className="text-[#06b6d4]">admin@sms.com</code> / <code className="text-[#06b6d4]">admin123</code>
+              </div>
+              <div 
+                onClick={() => { setEmail('student@sms.com'); setPassword('student123'); }}
+                className="cursor-pointer hover:bg-white/5 p-1.5 -ml-1.5 rounded-lg transition-colors flex items-center gap-1"
+              >
+                • Student: <code className="text-[#06b6d4]">student@sms.com</code> / <code className="text-[#06b6d4]">student123</code>
+              </div>
             </div>
           </motion.div>
         )}

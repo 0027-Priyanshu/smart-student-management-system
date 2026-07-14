@@ -4,6 +4,8 @@ import DashboardShell from '../components/layout/DashboardShell';
 import api from '../utils/api';
 import { useAuthStore } from '../stores/authStore';
 import { CardSkeleton } from '../components/Skeleton';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface ChatMessage {
   role: 'user' | 'model';
@@ -187,10 +189,12 @@ export default function AiAssistant() {
                   <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${isAI ? 'bg-[#8a5cf6]/20 text-[#8a5cf6]' : 'bg-[#06b6d4]/20 text-[#06b6d4]'}`}>
                     {isAI ? <Bot size={16} /> : <User size={16} />}
                   </div>
-                  <div className={`p-4 rounded-2xl text-xs leading-normal border ${
+                  <div className={`p-4 rounded-2xl text-xs leading-normal border overflow-x-auto prose prose-invert max-w-none ${
                     isAI ? 'bg-white/2 border-white/5 text-gray-300' : 'bg-[#8a5cf6]/10 border-[#8a5cf6]/20 text-white'
                   }`}>
-                    {msg.parts.join('\n')}
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {msg.parts.join('\n')}
+                    </ReactMarkdown>
                   </div>
                 </div>
               );
@@ -291,9 +295,11 @@ export default function AiAssistant() {
                       Export PDF
                     </button>
                   </div>
-                  <p className="text-xs text-gray-300 leading-relaxed bg-white/2 p-4 rounded-2xl border border-white/5 font-medium">
-                    {summary}
-                  </p>
+                  <div className="text-xs text-gray-300 leading-relaxed bg-white/2 p-4 rounded-2xl border border-white/5 font-medium prose prose-invert max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {summary}
+                    </ReactMarkdown>
+                  </div>
                 </div>
 
                 {/* Recommendations */}
@@ -388,8 +394,10 @@ export default function AiAssistant() {
                 Click the button to evaluate MERN analytics metrics via Gemini and produce objectives.
               </div>
             ) : (
-              <div className="p-5 bg-white/2 border border-white/5 rounded-2xl text-xs text-gray-300 leading-relaxed font-medium">
-                {insights}
+              <div className="p-5 bg-white/2 border border-white/5 rounded-2xl text-xs text-gray-300 leading-relaxed font-medium prose prose-invert max-w-none">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {insights}
+                </ReactMarkdown>
               </div>
             )}
           </div>

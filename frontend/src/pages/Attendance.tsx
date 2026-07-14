@@ -89,31 +89,40 @@ export default function Attendance() {
     loadCurrentStatuses();
   }, [selectedCourse, selectedDate, isAdminOrFaculty]);
 
-  // Handle single status updates (Admin/Faculty marking)
-  const handleMarkStatus = async (studentId: string, status: string) => {
+  // Handle single status updates locally
+  const handleMarkStatus = (studentId: string, status: string) => {
+    setStudentStatuses(prev => ({
+      ...prev,
+      [studentId]: status
+    }));
+  };
+
+  const handleSaveAttendance = async () => {
     if (!selectedCourse) {
       setError('Please select a course first');
       return;
     }
     setError('');
     setSuccess('');
-    
+    setActionLoading(true);
+
     try {
-      await api.post('/attendance/mark', {
-        studentId,
-        courseId: selectedCourse,
-        date: selectedDate,
-        status
-      });
+      const studentIds = Object.keys(studentStatuses);
+      await Promise.all(studentIds.map(studentId => 
+        api.post('/attendance/mark', {
+          studentId,
+          courseId: selectedCourse,
+          date: selectedDate,
+          status: studentStatuses[studentId]
+        })
+      ));
       
-      setStudentStatuses(prev => ({
-        ...prev,
-        [studentId]: status
-      }));
-      
+      setSuccess('Attendance saved successfully!');
       fetchHeatmapData();
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to update attendance status');
+      setError(err.response?.data?.error || 'Failed to save attendance');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -261,8 +270,19 @@ export default function Attendance() {
 
         {/* Directory Student List (Admin/Faculty only) */}
         {isAdminOrFaculty && (
-          <div className="lg:col-span-2 p-6 bg-[#12141c]/50 border border-white/5 rounded-3xl shadow-card">
-            <h4 className="font-title font-extrabold text-base mb-4 text-white">Enrollment List</h4>
+          <div className="lg:col-span-2 p-6 bg-[#12141c]/50 border border-white/5 rounded-3xl shadow-card flex flex-col h-full">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="font-title font-extrabold text-base text-white">Enrollment List</h4>
+              {selectedCourse && (
+                <button
+                  onClick={handleSaveAttendance}
+                  disabled={actionLoading}
+                  className="px-4 py-2 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] hover:shadow-glow text-white font-bold rounded-xl text-xs transition-all"
+                >
+                  {actionLoading ? 'Saving...' : 'Confirm Attendance'}
+                </button>
+              )}
+            </div>
 
             {error && (
               <div className="mb-4 p-3.5 bg-red-500/10 border border-red-500/20 text-[#ef4444] rounded-xl text-xs">
@@ -309,10 +329,10 @@ export default function Attendance() {
                             Present
                           </button>
                           <button 
-                            onClick={() => handleMarkStatus(studentId, 'Late')}
-                            className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold uppercase transition-all ${status === 'Late' ? 'bg-[#f59e0b] text-white' : 'text-gray-500 hover:text-gray-300'}`}
+                            onClick={() => handleMarkStatus(studentId, 'On Leave')}
+                            className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold uppercase transition-all ${status === 'On Leave' ? 'bg-[#f59e0b] text-white' : 'text-gray-500 hover:text-gray-300'}`}
                           >
-                            Late
+                            On Leave
                           </button>
                           <button 
                             onClick={() => handleMarkStatus(studentId, 'Absent')}

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { FacultyController } from '../controllers/faculty.controller';
 import { authenticateJWT, requireRole } from '../middlewares/auth.middleware';
-import { validateRequest } from '../middlewares/validation.middleware';
+import { validate } from '../middlewares/validation.middleware';
 import { updateFacultySchema } from '../schemas/faculty.schema';
 const router = Router();
 
@@ -24,7 +24,7 @@ router.put(
   '/:id',
   authenticateJWT,
   requireRole(['Super Admin', 'Admin']),
-  validateRequest(updateFacultySchema),
+  validate({ body: updateFacultySchema }),
   FacultyController.updateFaculty
 );
 

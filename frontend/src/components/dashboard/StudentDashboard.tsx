@@ -26,9 +26,9 @@ import {
   Bar,
   Cell
 } from 'recharts';
-import api from '../../../utils/api';
-import { useAuthStore } from '../../../stores/authStore';
-import AnimatedCounter from '../../common/AnimatedCounter';
+import api from '../../utils/api';
+import { useAuthStore } from '../../stores/authStore';
+import AnimatedCounter from '../common/AnimatedCounter';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useNavigate } from 'react-router-dom';

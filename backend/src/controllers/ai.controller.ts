@@ -5,7 +5,10 @@ import {
   generateStudentSummary, 
   generateRecommendations, 
   generateAcademicInsights, 
-  adminChatAssistant 
+  adminChatAssistant,
+  predictRisk,
+  translateNlSearch,
+  generateParentEmail
 } from '../services/ai.service';
 
 export class AIController {
@@ -91,6 +94,50 @@ export class AIController {
     }
   }
 
+  static async getPredictRisk(req: Request, res: Response, next: NextFunction) {
+    try {
+      const student = await RepoService.findStudentById(req.params.studentId);
+      if (!student) {
+        return res.status(404).json({ error: 'Student profile not found' });
+      }
+
+      const results = await RepoService.findResults(req.params.studentId);
+      let totalGradePoints = 0;
+      let totalCredits = 0;
+      
+      const marksData = results.map(r => {
+        const courseCredits = r.courseId?.credits || 3;
+        totalGradePoints += r.gpa * courseCredits;
+        totalCredits += courseCredits;
+        
+        return {
+          courseName: r.courseId?.name || 'Course',
+          internal: r.internal,
+          external: r.external,
+          assignment: r.assignment,
+          practical: r.practical
+        };
+      });
+      const gpa = totalCredits > 0 ? totalGradePoints / totalCredits : 0.0;
+
+      const attendanceLogs = await RepoService.findAttendance({ studentId: req.params.studentId });
+      const totalDays = attendanceLogs.length;
+      const presentDays = attendanceLogs.filter(a => a.status === 'Present' || a.status === 'Late' || a.status === 'On Leave').length;
+      const attendanceRate = totalDays > 0 ? (presentDays / totalDays) * 100 : 100.0;
+
+      const riskData = await predictRisk(
+        student.name,
+        gpa,
+        parseFloat(attendanceRate.toFixed(1)),
+        marksData
+      );
+
+      return res.json(riskData);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   static async getAcademicInsights(req: Request, res: Response, next: NextFunction) {
     try {
       const { students } = await RepoService.findStudents({}, 1, 1000);
@@ -125,7 +172,7 @@ export class AIController {
       const presentDays = attendanceLogs.filter(a => a.status === 'Present' || a.status === 'Late').length;
       const avgAttendance = totalDays > 0 ? (presentDays / totalDays) * 100 : 85.0;
 
-      const insights = await generateAcademicInsights(
+      const { text, chartData } = await generateAcademicInsights(
         totalStudents,
         avgGpa,
         avgAttendance,
@@ -171,7 +218,8 @@ export class AIController {
       }
 
       return res.json({ 
-        insights,
+        insights: text,
+        chartData,
         metrics: {
           totalStudents,
           avgGpa: parseFloat(avgGpa.toFixed(2)),
@@ -185,10 +233,120 @@ export class AIController {
     }
   }
 
+  static async nlSearch(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { query } = req.body;
+      if (!query) return res.status(400).json({ error: 'Query is required' });
+
+      const intent = await translateNlSearch(query);
+      if (!intent) {
+        return res.status(400).json({ error: 'Could not understand the search intent.' });
+      }
+
+      const { students } = await RepoService.findStudents({}, 1, 1000);
+      let filteredStudents = [];
+
+      for (const student of students) {
+        if (intent.type === 'department') {
+          if (student.department.toLowerCase() === String(intent.value).toLowerCase()) {
+            filteredStudents.push(student);
+          }
+        } else if (intent.type === 'attendance') {
+          const logs = await RepoService.findAttendance({ studentId: student._id || student.id });
+          const total = logs.length;
+          const present = logs.filter(a => a.status === 'Present' || a.status === 'Late' || a.status === 'On Leave').length;
+          const rate = total > 0 ? (present / total) * 100 : 100;
+          
+          if (intent.operator === '<' && rate < Number(intent.value)) filteredStudents.push(student);
+          if (intent.operator === '>' && rate > Number(intent.value)) filteredStudents.push(student);
+          if (intent.operator === '=' && rate === Number(intent.value)) filteredStudents.push(student);
+        } else if (intent.type === 'gpa') {
+          const results = await RepoService.findResults(student._id || student.id);
+          let tp = 0, tc = 0;
+          results.forEach(r => { tp += r.gpa * (r.courseId?.credits || 3); tc += (r.courseId?.credits || 3); });
+          const gpa = tc > 0 ? tp / tc : 0;
+          
+          if (intent.operator === '<' && gpa < Number(intent.value)) filteredStudents.push(student);
+          if (intent.operator === '>' && gpa > Number(intent.value)) filteredStudents.push(student);
+          if (intent.operator === '=' && gpa === Number(intent.value)) filteredStudents.push(student);
+        }
+      }
+
+      return res.json({ intent, students: filteredStudents });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getChatHistory(req: Request, res: Response, next: NextFunction) {
+    try {
+      const requester = (req as any).user;
+      const history = await RepoService.findChatHistory(requester.userId);
+      return res.json({ history });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async sendParentEmail(req: Request, res: Response, next: NextFunction) {
+    try {
+      const student = await RepoService.findStudentById(req.params.studentId);
+      if (!student) {
+        return res.status(404).json({ error: 'Student not found' });
+      }
+      
+      const parentName = student.parentName || 'Parent/Guardian';
+      const results = await RepoService.findResults(student._id || student.id);
+      
+      let totalGradePoints = 0, totalCredits = 0;
+      const weakSubjects: string[] = [];
+      results.forEach(r => {
+        const c = r.courseId?.credits || 3;
+        totalGradePoints += r.gpa * c;
+        totalCredits += c;
+        if (((r.internal || 0) + (r.external || 0) + (r.assignment || 0) + (r.practical || 0)) < 65) {
+          weakSubjects.push(r.courseId?.name || 'Course');
+        }
+      });
+      const gpa = totalCredits > 0 ? totalGradePoints / totalCredits : 0;
+      
+      const attendanceLogs = await RepoService.findAttendance({ studentId: req.params.studentId });
+      const presentDays = attendanceLogs.filter(a => a.status === 'Present' || a.status === 'Late' || a.status === 'On Leave').length;
+      const attendance = attendanceLogs.length > 0 ? (presentDays / attendanceLogs.length) * 100 : 100;
+      
+      const emailContent = await generateParentEmail(student.name, gpa, attendance, weakSubjects, parentName);
+      
+      // MOCK sending email
+      console.log(`[EMAIL DISPATCHER] Sending email to ${student.parentPhone || 'Parent'}...`);
+      console.log(`\n--- MOCK EMAIL TO PARENT ---\n${emailContent}\n----------------------------\n`);
+      
+      return res.json({ message: 'Email drafted and sent successfully via AI', content: emailContent });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   static async chat(req: Request, res: Response, next: NextFunction) {
     try {
+      const requester = (req as any).user;
       const { message, history } = req.body;
+      
+      // Save User Message
+      await RepoService.createChatMessage({
+        userId: requester.userId,
+        role: 'user',
+        content: message
+      });
+
       const reply = await adminChatAssistant(message, history || []);
+      
+      // Save AI Response
+      await RepoService.createChatMessage({
+        userId: requester.userId,
+        role: 'model',
+        content: reply
+      });
+
       return res.json({ reply });
     } catch (error) {
       next(error);
@@ -238,6 +396,13 @@ export class AIController {
       );
 
       const analysis = await generateRecommendations(
+        student.name,
+        gpa,
+        parseFloat(attendanceRate.toFixed(1)),
+        marksData
+      );
+
+      const riskData = await predictRisk(
         student.name,
         gpa,
         parseFloat(attendanceRate.toFixed(1)),
@@ -316,6 +481,16 @@ export class AIController {
         doc.text(`${idx + 1}. ${rec}`, { lineGap: 3 });
         doc.moveDown(0.5);
       });
+      doc.moveDown(2);
+
+      // Predictive Risk Section
+      doc.fillColor('#8a5cf6').fontSize(14).text('PREDICTIVE RISK ANALYSIS', { underline: true });
+      doc.moveDown(0.5);
+      
+      const riskColor = riskData.riskLevel === 'High' ? '#ef4444' : riskData.riskLevel === 'Medium' ? '#f59e0b' : '#10b981';
+      doc.fillColor(riskColor).fontSize(12).text(`Risk Level: ${riskData.riskLevel} (${riskData.riskScore}%)`, { bold: true } as any);
+      doc.moveDown(0.5);
+      doc.fillColor('#374151').fontSize(10).text(`Warning Context: ${riskData.warningMessage}`);
 
       // Footer
       doc.moveDown(4);

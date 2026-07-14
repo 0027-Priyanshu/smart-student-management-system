@@ -10,6 +10,17 @@ router.get('/student-summary/:studentId', authenticateJWT, AIController.getStude
 // GET: /api/ai/student-recommendations/:studentId (Protected)
 router.get('/student-recommendations/:studentId', authenticateJWT, AIController.getStudentRecommendations);
 
+// GET: /api/ai/predict-risk/:studentId (Protected)
+router.get('/predict-risk/:studentId', authenticateJWT, AIController.getPredictRisk);
+
+// POST: /api/ai/generate-parent-email/:studentId (Protected - Admin only)
+router.post(
+  '/generate-parent-email/:studentId',
+  authenticateJWT,
+  requireRole(['Super Admin', 'Admin']),
+  AIController.sendParentEmail
+);
+
 // GET: /api/ai/academic-insights (Protected - Admin only)
 router.get(
   '/academic-insights', 
@@ -18,8 +29,19 @@ router.get(
   AIController.getAcademicInsights
 );
 
+// GET: /api/ai/chat-history (Protected)
+router.get('/chat-history', authenticateJWT, AIController.getChatHistory);
+
 // POST: /api/ai/chat (Protected - Admin chat assistant)
 router.post('/chat', authenticateJWT, AIController.chat);
+
+// POST: /api/ai/nl-search (Protected - Admin only)
+router.post(
+  '/nl-search',
+  authenticateJWT,
+  requireRole(['Super Admin', 'Admin']),
+  AIController.nlSearch
+);
 
 // GET: /api/ai/report/:studentId/pdf (Protected - download student's AI report PDF)
 router.get('/report/:studentId/pdf', authenticateJWT, AIController.downloadReportPDF);

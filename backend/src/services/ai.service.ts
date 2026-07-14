@@ -1,5 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
 
 dotenv.config();
 
@@ -115,21 +117,32 @@ export async function generateAcademicInsights(
   avgGpa: number,
   avgAttendance: number,
   departmentCounts: any
-): Promise<string> {
-  const prompt = `Write a professional administrative insight report (around 120 words) for a department head based on these institute-wide metrics:
+): Promise<{ text: string, chartData: any[] }> {
+  const prompt = `Write a professional administrative insight report (around 120 words) based on these metrics:
   Total Students: ${totalStudents}, Average GPA: ${avgGpa.toFixed(2)}, Average Attendance: ${avgAttendance.toFixed(1)}%.
   Department distributions: ${JSON.stringify(departmentCounts)}.
-  Summarize strengths, highlight area of concern (e.g. attendance or GPA drop), and outline 2 strategic objectives.`;
+  Summarize strengths, highlight concerns, and outline 2 strategic objectives.
+
+  Also, generate a mock dataset for a 6-month GPA and Attendance trend chart for the whole institute.
+  Return EXACTLY and ONLY this JSON format (no markdown tags):
+  {
+    "text": "Your report here...",
+    "chartData": [
+      { "month": "Jan", "gpa": 3.1, "attendance": 82 },
+      { "month": "Feb", "gpa": 3.2, "attendance": 85 }
+    ]
+  }`;
 
   if (ai) {
     try {
       const response = await ioGenerate(prompt);
-      return response;
+      let text = response.replace(/```json/g, '').replace(/```/g, '').trim();
+      return JSON.parse(text);
     } catch (err) {
-      return getDefaultInsights(avgGpa, avgAttendance);
+      console.error('Gemini error generating insights:', err);
     }
   }
-  return getDefaultInsights(avgGpa, avgAttendance);
+  return { text: getDefaultInsights(avgGpa, avgAttendance), chartData: [] };
 }
 
 // Helper function for raw text generation
@@ -144,9 +157,22 @@ async function ioGenerate(prompt: string): Promise<string> {
 
 // 4. Admin Chatbot Companion
 export async function adminChatAssistant(message: string, history: { role: 'user' | 'model'; parts: string[] }[]): Promise<string> {
+  let knowledgeBaseContext = '';
+  try {
+    const kbPath = path.join(__dirname, '../data/knowledge_base.txt');
+    if (fs.existsSync(kbPath)) {
+      knowledgeBaseContext = fs.readFileSync(kbPath, 'utf8');
+    }
+  } catch (err) {
+    console.error('Failed to load knowledge base:', err);
+  }
+
   const sysContext = `You are a helpful AI Academic Assistant for EduManager, an advanced MERN Student Management System.
   You help admins find insights, answer curriculum questions, and explain student performance.
-  Keep responses highly professional, concise, and structured. Answer the user's latest message based on the conversation history.`;
+  Keep responses highly professional, concise, and structured. Answer the user's latest message based on the conversation history.
+  
+  IMPORTANT COLLEGE RULES & KNOWLEDGE BASE:
+  ${knowledgeBaseContext}`;
 
   if (ai) {
     try {
@@ -212,4 +238,122 @@ function getMockChatResponse(message: string): string {
     return `Admins can add new students using the Student Directory screen by clicking "Add Student", filling out the enrollment forms (including parent and contact info), and setting credentials. Alternatively, you can use the "Bulk Import" button to upload an Excel file directly.`;
   }
   return `Hello! I am your EduManager AI Assistant. I can help you search student directories, analyze academic GPA progress, calculate grade metrics, or check attendance histories. Try asking me about 'how to mark attendance', 'how GPA is computed', or 'bulk importing students'!`;
+}
+
+// 5. Predictive AI: At-Risk Student Analysis
+export async function predictRisk(
+  studentName: string,
+  gpa: number,
+  attendanceRate: number,
+  marks: any[]
+): Promise<{ riskScore: number; warningMessage: string; riskLevel: 'Low' | 'Medium' | 'High' }> {
+  const weakSubjects = marks.filter(m => ((m.internal || 0) + (m.external || 0) + (m.assignment || 0) + (m.practical || 0)) < 65).map(m => m.courseName);
+  
+  const prompt = `You are an AI academic advisor. Analyze this student for academic risk of failing the semester.
+  Student: ${studentName}
+  GPA: ${gpa.toFixed(2)}
+  Attendance: ${attendanceRate.toFixed(1)}%
+  Weak Subjects (< 65 marks): ${weakSubjects.length > 0 ? weakSubjects.join(', ') : 'None'}
+
+  Based on historical patterns (low GPA and low attendance correlate strongly with failure), calculate a "Risk Probability Score" from 0 to 100.
+  Then provide a 1-sentence warning/explanation.
+  Return EXACTLY and ONLY this JSON format, nothing else (no markdown tags):
+  {
+    "riskScore": 75,
+    "warningMessage": "Short explanation of the risk factors.",
+    "riskLevel": "High"
+  }
+  Where riskLevel must be "Low" (< 40), "Medium" (40 - 70), or "High" (> 70).`;
+
+  if (ai) {
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+      });
+      let text = response.text || '';
+      // Clean markdown json tags if present
+      text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      return JSON.parse(text);
+    } catch (error) {
+      console.error('Gemini error generating risk prediction, falling back:', error);
+    }
+  }
+
+  // Fallback heuristic
+  let score = 10;
+  if (gpa < 2.5) score += 40;
+  else if (gpa < 3.0) score += 20;
+
+  if (attendanceRate < 75) score += 40;
+  else if (attendanceRate < 85) score += 20;
+
+  score += Math.min(weakSubjects.length * 10, 30);
+  score = Math.min(score, 99);
+
+  let level: 'Low' | 'Medium' | 'High' = 'Low';
+  if (score > 70) level = 'High';
+  else if (score >= 40) level = 'Medium';
+
+  return {
+    riskScore: score,
+    riskLevel: level,
+    warningMessage: `${studentName} exhibits a ${level} risk profile due to a combination of ${gpa.toFixed(2)} GPA and ${attendanceRate.toFixed(1)}% attendance.`
+  };
+}
+
+// 6. Natural Language Search to Query Translator
+export async function translateNlSearch(query: string): Promise<{ type: 'attendance' | 'gpa' | 'department', operator: '<' | '>' | '=', value: number | string } | null> {
+  const prompt = `You are a Smart Search interpreter. The user wants to filter students via natural language.
+  Translate the following query into a JSON object representing the database filter intention.
+  Supported types: "attendance", "gpa", "department".
+  Supported operators: "<", ">", "=".
+  Query: "${query}"
+  Return ONLY the JSON format without markdown tags:
+  {
+    "type": "attendance",
+    "operator": "<",
+    "value": 75
+  }
+  If the query cannot be interpreted, return an empty object {}.`;
+
+  if (ai) {
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+      });
+      let text = response.text || '';
+      text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      const parsed = JSON.parse(text);
+      if (parsed.type) return parsed;
+    } catch (error) {
+      console.error('Gemini NL search failed:', error);
+    }
+  }
+  return null;
+}
+
+// 7. Generate Parent Notification Email
+export async function generateParentEmail(studentName: string, gpa: number, attendance: number, weakSubjects: string[], parentName: string): Promise<string> {
+  const prompt = `Write a polite, professional, and empathetic email from the college administration to ${parentName}, the parent of ${studentName}.
+  The student currently has a GPA of ${gpa.toFixed(2)} and attendance of ${attendance.toFixed(1)}%. 
+  Their weaker subjects are: ${weakSubjects.join(', ')}.
+  The email should express concern about their academic trajectory and invite the parent for a discussion with the academic counselor. 
+  Sign off as "EduManager Academic Counseling Team".
+  Return only the email body without any markdown formatting.`;
+
+  if (ai) {
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+      });
+      return response.text || '';
+    } catch (error) {
+      console.error('Gemini error generating email:', error);
+    }
+  }
+
+  return `Dear ${parentName},\n\nWe are writing to you regarding the academic progress of your ward, ${studentName}.\n\nCurrently, ${studentName} has an attendance rate of ${attendance.toFixed(1)}% and a GPA of ${gpa.toFixed(2)}. We have noticed some challenges in ${weakSubjects.join(', ')}.\n\nWe encourage you to schedule a meeting with our academic counselor to discuss strategies to support their success.\n\nBest regards,\nEduManager Academic Counseling Team`;
 }

@@ -6,6 +6,8 @@ import { useAuthStore } from '../stores/authStore';
 import { CardSkeleton } from '../components/Skeleton';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 
 interface ChatMessage {
   role: 'user' | 'model';
@@ -25,6 +27,8 @@ export default function AiAssistant() {
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(true); // Voice output enabled by default
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Student Profiler state
@@ -33,10 +37,12 @@ export default function AiAssistant() {
   const [summary, setSummary] = useState('');
   const [recommendations, setRecommendations] = useState<string[]>([]);
   const [weakSubjects, setWeakSubjects] = useState<string[]>([]);
+  const [riskData, setRiskData] = useState<{ riskScore: number; warningMessage: string; riskLevel: string } | null>(null);
   const [profilerLoading, setProfilerLoading] = useState(false);
 
   // Insights state
   const [insights, setInsights] = useState('');
+  const [chartData, setChartData] = useState<any[]>([]);
   const [insightsLoading, setInsightsLoading] = useState(false);
 
   // Load students for profiler (Admin only)
@@ -62,6 +68,25 @@ export default function AiAssistant() {
     }
   }, [isStudent, user]);
 
+  // Load chat history
+  useEffect(() => {
+    async function loadChatHistory() {
+      try {
+        const res = await api.get('/ai/chat-history');
+        if (res.data.history && res.data.history.length > 0) {
+          const formattedHistory = res.data.history.map((msg: any) => ({
+            role: msg.role,
+            parts: [msg.content]
+          }));
+          setMessages(formattedHistory);
+        }
+      } catch (err) {
+        console.error('Failed to load chat history:', err);
+      }
+    }
+    loadChatHistory();
+  }, []);
+
   // Scroll chat
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -83,12 +108,63 @@ export default function AiAssistant() {
         history: messages
       });
 
-      setMessages(prev => [...prev, { role: 'model', parts: [res.data.reply] }]);
+      const reply = res.data.reply;
+      setMessages(prev => [...prev, { role: 'model', parts: [reply] }]);
+
+      if (isSpeaking) {
+        speakText(reply);
+      }
     } catch (err) {
       console.error(err);
       setMessages(prev => [...prev, { role: 'model', parts: ['Sorry, I encountered an issue connecting to the AI brain. Please try again.'] }]);
     } finally {
       setChatLoading(false);
+    }
+  };
+
+  const toggleListen = () => {
+    if (isListening) {
+      setIsListening(false);
+      return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Your browser does not support Speech Recognition.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      setIsListening(true);
+    };
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setInputMessage(transcript);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error(event.error);
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.start();
+  };
+
+  const speakText = (text: string) => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      window.speechSynthesis.speak(utterance);
     }
   };
 
@@ -98,16 +174,18 @@ export default function AiAssistant() {
     setSummary('');
     setRecommendations([]);
     setWeakSubjects([]);
-
+    setRiskData(null);
     try {
-      const [summaryRes, recRes] = await Promise.all([
+      const [summaryRes, recRes, riskRes] = await Promise.all([
         api.get(`/ai/student-summary/${studentId}`),
-        api.get(`/ai/student-recommendations/${studentId}`)
+        api.get(`/ai/student-recommendations/${studentId}`),
+        api.get(`/ai/predict-risk/${studentId}`)
       ]);
 
       setSummary(summaryRes.data.summary);
       setRecommendations(recRes.data.recommendations || []);
       setWeakSubjects(recRes.data.weakSubjects || []);
+      setRiskData(riskRes.data || null);
     } catch (err) {
       console.error(err);
     } finally {
@@ -120,7 +198,8 @@ export default function AiAssistant() {
     setInsights('');
     try {
       const res = await api.get('/ai/academic-insights');
-      setInsights(res.data.insights);
+      setInsights(res.data.insights || '');
+      setChartData(res.data.chartData || []);
     } catch (err) {
       console.error(err);
       setInsights('Failed to generate insights report. Please try again.');
@@ -129,12 +208,27 @@ export default function AiAssistant() {
     }
   };
 
-  const downloadPDFReport = () => {
-    const studentId = selectedStudent || user?.studentProfile?._id || user?.studentProfile?.id;
-    if (!studentId) return;
-    const token = localStorage.getItem('accessToken');
-    const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
-    window.open(`${apiBase}/ai/report/${studentId}/pdf?token=${token}`, '_blank');
+  const downloadPDFReport = async () => {
+    if (!selectedStudent && !isStudent) return;
+    const studentId = selectedStudent || user?.studentProfile?._id || user?.studentProfile?.id || user?.userId;
+    try {
+      const token = localStorage.getItem('accessToken');
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+      window.open(`${apiBase}/ai/report/${studentId}/pdf?token=${token}`, '_blank');
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleSendParentEmail = async () => {
+    if (!selectedStudent) return;
+    try {
+      const res = await api.post(`/ai/generate-parent-email/${selectedStudent}`);
+      alert(res.data.message + '\n\nDraft:\n' + res.data.content);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to send email to parent.');
+    }
   };
 
   return (
@@ -166,18 +260,28 @@ export default function AiAssistant() {
         )}
       </div>
 
-      {/* Tab 1: AI Chat Companion */}
-      {activeTab === 'chat' && !isStudent && (
-        <div className="bg-[#12141c]/50 border border-white/5 rounded-3xl overflow-hidden shadow-card flex flex-col h-[520px]">
-          {/* Header */}
-          <div className="p-4 bg-white/2 border-b border-white/5 flex items-center gap-3">
-            <div className="h-9 w-9 rounded-xl bg-[#8a5cf6]/10 flex items-center justify-center text-[#8a5cf6]">
-              <Bot size={20} />
+      {/* Tab 1: Direct Chat interface */}
+      {activeTab === 'chat' && (
+        <div className="flex flex-col h-[600px] bg-[#12141c]/50 border border-white/5 rounded-3xl overflow-hidden shadow-card">
+          {/* Header area */}
+          <div className="p-4 bg-white/2 border-b border-white/5 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 bg-gradient-to-br from-[#8a5cf6] to-[#06b6d4] rounded-xl flex items-center justify-center text-white shadow-glow">
+                <Bot size={20} />
+              </div>
+              <div>
+                <h3 className="font-title font-extrabold text-sm text-white">EduManager AI</h3>
+                <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Online & Connected</p>
+              </div>
             </div>
-            <div>
-              <h4 className="font-title font-bold text-sm text-white">EduManager Assistant</h4>
-              <p className="text-[10px] text-gray-500 font-semibold uppercase">Powered by Google Gemini</p>
-            </div>
+            
+            <button 
+              onClick={() => setIsSpeaking(!isSpeaking)}
+              className={`p-2 rounded-lg transition-all ${isSpeaking ? 'text-[#06b6d4] bg-[#06b6d4]/10' : 'text-gray-500 bg-white/5'}`}
+              title="Toggle AI Voice Response"
+            >
+              {isSpeaking ? <Volume2 size={18} /> : <VolumeX size={18} />}
+            </button>
           </div>
 
           {/* Messages */}
@@ -216,6 +320,17 @@ export default function AiAssistant() {
 
           {/* Form */}
           <form onSubmit={handleSendMessage} className="p-4 bg-white/2 border-t border-white/5 flex gap-3">
+            <button
+              type="button"
+              onClick={toggleListen}
+              className={`p-3 rounded-xl flex items-center justify-center transition-all ${
+                isListening 
+                  ? 'bg-red-500 text-white animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.5)]' 
+                  : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 border border-white/5'
+              }`}
+            >
+              {isListening ? <Mic size={18} /> : <MicOff size={18} />}
+            </button>
             <input
               type="text"
               placeholder="Ask me something..."
@@ -287,19 +402,62 @@ export default function AiAssistant() {
                       <BrainCircuit size={18} className="text-[#8a5cf6]" />
                       AI Academic Summary Profile
                     </h4>
-                    <button
-                      onClick={downloadPDFReport}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#8a5cf6]/10 hover:bg-[#8a5cf6] text-[#8a5cf6] hover:text-white rounded-xl border border-[#8a5cf6]/20 transition-all text-[10px] font-bold"
-                    >
-                      <FileText size={12} />
-                      Export PDF
-                    </button>
+                    <div className="flex gap-2">
+                      {isAdmin && riskData && (riskData.riskLevel === 'Medium' || riskData.riskLevel === 'High') && (
+                        <button
+                          onClick={handleSendParentEmail}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-xl border border-red-500/20 transition-all text-[10px] font-bold"
+                        >
+                          Notify Parent (AI)
+                        </button>
+                      )}
+                      <button
+                        onClick={downloadPDFReport}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#8a5cf6]/10 hover:bg-[#8a5cf6] text-[#8a5cf6] hover:text-white rounded-xl border border-[#8a5cf6]/20 transition-all text-[10px] font-bold"
+                      >
+                        <FileText size={12} />
+                        Export PDF
+                      </button>
+                    </div>
                   </div>
                   <div className="text-xs text-gray-300 leading-relaxed bg-white/2 p-4 rounded-2xl border border-white/5 font-medium prose prose-invert max-w-none">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {summary}
                     </ReactMarkdown>
                   </div>
+
+                  {/* Risk Prediction Banner */}
+                  {riskData && (
+                    <div className={`mt-4 p-5 rounded-2xl border flex items-start gap-4 ${
+                      riskData.riskLevel === 'High' 
+                        ? 'bg-red-500/10 border-red-500/20' 
+                        : riskData.riskLevel === 'Medium'
+                        ? 'bg-amber-500/10 border-amber-500/20'
+                        : 'bg-emerald-500/10 border-emerald-500/20'
+                    }`}>
+                      <div className={`h-10 w-10 shrink-0 rounded-xl flex items-center justify-center font-bold text-lg ${
+                        riskData.riskLevel === 'High' 
+                          ? 'bg-red-500/20 text-red-500' 
+                          : riskData.riskLevel === 'Medium'
+                          ? 'bg-amber-500/20 text-amber-500'
+                          : 'bg-emerald-500/20 text-emerald-500'
+                      }`}>
+                        {riskData.riskScore}%
+                      </div>
+                      <div>
+                        <h5 className={`font-bold text-sm mb-1 ${
+                          riskData.riskLevel === 'High' ? 'text-red-400' : riskData.riskLevel === 'Medium' ? 'text-amber-400' : 'text-emerald-400'
+                        }`}>
+                          AI Risk Prediction: {riskData.riskLevel}
+                        </h5>
+                        <p className={`text-xs ${
+                          riskData.riskLevel === 'High' ? 'text-red-300' : riskData.riskLevel === 'Medium' ? 'text-amber-300' : 'text-emerald-300'
+                        }`}>
+                          {riskData.warningMessage}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Recommendations */}
@@ -394,10 +552,33 @@ export default function AiAssistant() {
                 Click the button to evaluate MERN analytics metrics via Gemini and produce objectives.
               </div>
             ) : (
-              <div className="p-5 bg-white/2 border border-white/5 rounded-2xl text-xs text-gray-300 leading-relaxed font-medium prose prose-invert max-w-none">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                  {insights}
-                </ReactMarkdown>
+              <div className="space-y-6">
+                <div className="p-5 bg-white/2 border border-white/5 rounded-2xl text-xs text-gray-300 leading-relaxed font-medium prose prose-invert max-w-none">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {insights}
+                  </ReactMarkdown>
+                </div>
+
+                {/* Recharts - AI Trend Graph */}
+                {chartData && chartData.length > 0 && (
+                  <div className="p-5 bg-white/2 border border-white/5 rounded-2xl h-72">
+                    <h5 className="font-title font-extrabold text-sm mb-4 text-white">AI Projected Trend (GPA vs Attendance)</h5>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
+                        <XAxis dataKey="month" stroke="#9ca3af" fontSize={10} tickLine={false} axisLine={false} />
+                        <YAxis yAxisId="left" stroke="#8a5cf6" fontSize={10} tickLine={false} axisLine={false} />
+                        <YAxis yAxisId="right" orientation="right" stroke="#06b6d4" fontSize={10} tickLine={false} axisLine={false} />
+                        <Tooltip 
+                          contentStyle={{ backgroundColor: '#12141c', borderColor: '#ffffff10', borderRadius: '12px', fontSize: '12px' }}
+                        />
+                        <Legend wrapperStyle={{ fontSize: '10px' }} />
+                        <Line yAxisId="left" type="monotone" dataKey="gpa" stroke="#8a5cf6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Avg GPA" />
+                        <Line yAxisId="right" type="monotone" dataKey="attendance" stroke="#06b6d4" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Attendance %" />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -6,6 +6,7 @@ import Course from '../models/Course';
 import Attendance from '../models/Attendance';
 import Result from '../models/Result';
 import Log from '../models/Log';
+import { ChatHistory } from '../models/ChatHistory';
 import { isMongoConnected, readJsonDb, writeJsonDb } from '../config/db';
 
 const generateId = () => new mongoose.Types.ObjectId().toString();
@@ -560,6 +561,36 @@ export class RepoService {
       db.logs.push(newLog);
       writeJsonDb(db);
       return newLog;
+    }
+  }
+
+  // ==================== CHAT HISTORY OPERATIONS ====================
+
+  static async findChatHistory(userId: string, limit = 50): Promise<any[]> {
+    if (isMongoConnected) {
+      return await ChatHistory.find({ userId }).sort({ createdAt: 1 }).limit(limit).lean();
+    } else {
+      const db = readJsonDb();
+      if (!db.chatHistory) db.chatHistory = [];
+      const history = db.chatHistory.filter((c: any) => c.userId === userId);
+      return history.sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()).slice(-limit);
+    }
+  }
+
+  static async createChatMessage(chatData: { userId: string; role: 'user' | 'model'; content: string }): Promise<any> {
+    if (isMongoConnected) {
+      return await ChatHistory.create(chatData);
+    } else {
+      const db = readJsonDb();
+      if (!db.chatHistory) db.chatHistory = [];
+      const newMessage = {
+        _id: generateId(),
+        ...chatData,
+        createdAt: new Date().toISOString()
+      };
+      db.chatHistory.push(newMessage);
+      writeJsonDb(db);
+      return newMessage;
     }
   }
 }

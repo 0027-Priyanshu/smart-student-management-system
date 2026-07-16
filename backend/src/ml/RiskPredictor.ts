@@ -57,7 +57,7 @@ class RiskPredictor {
   private isTrained = false;
 
   constructor() {
-    this.model = new LogisticRegression(3); // GPA, Attendance, WeakSubjects
+    this.model = new LogisticRegression(3, 0.5, 5000); // Higher learning rate, more epochs
     this.trainModel();
   }
 
@@ -66,9 +66,12 @@ class RiskPredictor {
     const y: number[] = [];
     
     for (let i = 0; i < 1000; i++) {
-      const gpa = Math.random() * 4;
-      const attendance = Math.random() * 100;
-      const weakSubjects = Math.floor(Math.random() * 6);
+      // Skew GPA towards higher values to simulate realistic student distribution (mostly passing)
+      const gpa = Math.min(4.0, (Math.random() * 2) + 2.0 + (Math.random() > 0.8 ? -2 : 0)); 
+      // Skew attendance towards higher values
+      const attendance = Math.min(100, (Math.random() * 30) + 70 + (Math.random() > 0.8 ? -40 : 0));
+      // Weak subjects mostly 0-2
+      const weakSubjects = Math.floor(Math.random() * (Math.random() > 0.8 ? 6 : 3));
 
       let riskLevel = 0;
       if (gpa < 2.0) riskLevel = 1;
@@ -78,7 +81,12 @@ class RiskPredictor {
 
       if (Math.random() < 0.05) riskLevel = riskLevel === 1 ? 0 : 1;
 
-      X.push([gpa, attendance, weakSubjects]);
+      // Normalize inputs
+      const normGpa = gpa / 4.0;
+      const normAttendance = attendance / 100.0;
+      const normWeak = weakSubjects / 10.0;
+
+      X.push([normGpa, normAttendance, normWeak]);
       y.push(riskLevel);
     }
     return { X, y };
@@ -101,7 +109,12 @@ class RiskPredictor {
       return this.fallbackHeuristic(gpa, attendanceRate, weakSubjectsCount);
     }
 
-    const probability = this.model.predictProbability([gpa, attendanceRate, weakSubjectsCount]);
+    // Normalize inputs to 0-1 range to match training
+    const normGpa = gpa / 4.0;
+    const normAttendance = attendanceRate / 100.0;
+    const normWeak = weakSubjectsCount / 10.0;
+
+    const probability = this.model.predictProbability([normGpa, normAttendance, normWeak]);
     const riskScore = Math.min(Math.round(probability * 100), 99);
     
     let riskLevel: 'Low' | 'Medium' | 'High' = 'Low';

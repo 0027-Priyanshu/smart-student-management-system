@@ -434,7 +434,8 @@ export default function StudentDashboard() {
                     <p className="text-[10px] text-gray-400 font-medium">{act.date}</p>
                   </div>
                 </div>
-              ))}
+              ))
+              )}
             </div>
           </div>
 

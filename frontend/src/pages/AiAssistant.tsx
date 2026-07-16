@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Bot, Send, User, Sparkles, BrainCircuit, ShieldAlert, FileText } from 'lucide-react';
+import { Bot, Send, User, Sparkles, BrainCircuit, ShieldAlert, FileText, TrendingUp } from 'lucide-react';
 import DashboardShell from '../components/layout/DashboardShell';
 import api from '../utils/api';
 import { useAuthStore } from '../stores/authStore';
@@ -43,6 +43,7 @@ export default function AiAssistant() {
   // Insights state
   const [insights, setInsights] = useState('');
   const [chartData, setChartData] = useState<any[]>([]);
+  const [trendData, setTrendData] = useState<any[]>([]);
   const [insightsLoading, setInsightsLoading] = useState(false);
 
   // Load students for profiler (Admin only)
@@ -183,6 +184,7 @@ export default function AiAssistant() {
       ]);
 
       setSummary(summaryRes.data.summary);
+      setTrendData(summaryRes.data.trendData || []);
       setRecommendations(recRes.data.recommendations || []);
       setWeakSubjects(recRes.data.weakSubjects || []);
       setRiskData(riskRes.data || null);
@@ -420,10 +422,36 @@ export default function AiAssistant() {
                       </button>
                     </div>
                   </div>
-                  <div className="text-xs text-gray-300 leading-relaxed bg-white/2 p-4 rounded-2xl border border-white/5 font-medium prose prose-invert max-w-none">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {summary}
-                    </ReactMarkdown>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Summary Text */}
+                    <div className="text-sm text-gray-200 leading-relaxed bg-white/5 p-6 rounded-2xl border border-white/10 font-sans shadow-inner prose prose-invert prose-p:text-gray-300 prose-headings:text-white prose-strong:text-[#06b6d4] prose-li:text-gray-300 max-w-none">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {summary}
+                      </ReactMarkdown>
+                    </div>
+
+                    {/* Historical Trend Chart */}
+                    <div className="bg-white/5 p-6 rounded-2xl border border-white/10 shadow-inner flex flex-col">
+                      <h5 className="text-sm font-bold text-gray-200 mb-4 flex items-center gap-2">
+                        <TrendingUp size={16} className="text-[#10b981]" />
+                        Historical GPA Trend
+                      </h5>
+                      <div className="flex-1 min-h-[200px]">
+                        {trendData && trendData.length > 0 ? (
+                          <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                              <XAxis dataKey="name" stroke="#6b7280" fontSize={11} />
+                              <YAxis domain={[0, 4]} stroke="#6b7280" fontSize={11} />
+                              <Tooltip contentStyle={{ backgroundColor: '#12141c', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '12px' }} />
+                              <Line type="monotone" dataKey="gpa" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: '#12141c', stroke: '#10b981', strokeWidth: 2 }} activeDot={{ r: 6 }} isAnimationActive={true} />
+                            </LineChart>
+                          </ResponsiveContainer>
+                        ) : (
+                          <div className="h-full flex items-center justify-center text-xs text-gray-500 italic">No trend data available.</div>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
                   {/* Risk Prediction Banner */}

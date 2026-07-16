@@ -90,6 +90,9 @@ connectDB();
 initSocket(server);
 
 // Mount API Routes
+import activityRoutes from './routes/activity.routes';
+
+// Ensure other routes remain...
 app.use('/api/auth', authRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/courses', courseRoutes);
@@ -99,6 +102,7 @@ app.use('/api/results', resultRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/logs', logRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/activities', activityRoutes);
 
 // Base Route
 app.get('/', (req, res) => {

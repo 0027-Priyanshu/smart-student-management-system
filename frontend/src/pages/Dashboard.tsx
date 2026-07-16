@@ -7,7 +7,8 @@ import {
   Bookmark, 
   Calendar,
   History as HistoryIcon,
-  TrendingUp
+  TrendingUp,
+  AlertTriangle
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -42,12 +43,22 @@ export default function Dashboard() {
     try {
       const res = await api.get('/dashboard');
       setData(res.data);
+      
+      // Fetch at-risk students for Admin/Faculty
+      if (user?.role === 'Admin' || user?.role === 'Faculty' || user?.role === 'Super Admin') {
+        try {
+          const aiRes = await api.get('/ai/at-risk-students');
+          setData((prev: any) => ({ ...prev, atRiskStudents: aiRes.data.atRiskStudents || [] }));
+        } catch (aiErr) {
+          console.error('Failed to fetch at risk students:', aiErr);
+        }
+      }
     } catch (err) {
       console.error('Error fetching dashboard stats:', err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user?.role]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -288,6 +299,81 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* AI At-Risk Students Panel (Admin/Faculty) */}
+      {(user?.role === 'Admin' || user?.role === 'Super Admin' || user?.role === 'Faculty') && (
+        <div className="mt-8 p-6 bg-[#12141c]/50 border border-white/5 rounded-3xl shadow-card overflow-hidden">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="font-title font-bold text-lg flex items-center gap-2">
+              <AlertTriangle size={20} className="text-red-400" />
+              AI Risk Analysis: Students At Risk
+            </h3>
+            <span className="bg-red-500/10 text-red-400 text-xs font-bold px-3 py-1 rounded-full border border-red-500/20">
+              {data?.atRiskStudents?.length || 0} Flagged
+            </span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-white/5">
+                  <th className="pb-3 text-xs font-bold text-gray-400 uppercase tracking-wider pl-4">Student</th>
+                  <th className="pb-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Academics</th>
+                  <th className="pb-3 text-xs font-bold text-gray-400 uppercase tracking-wider">AI Warning</th>
+                  <th className="pb-3 text-xs font-bold text-gray-400 uppercase tracking-wider text-right pr-4">Risk Score</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {!data?.atRiskStudents || data.atRiskStudents.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="py-8 text-center text-gray-500 italic text-sm">
+                      No students are currently flagged as at risk.
+                    </td>
+                  </tr>
+                ) : (
+                  data.atRiskStudents.map((student: any) => (
+                    <tr key={student.id} className="hover:bg-white/[0.02] transition-colors">
+                      <td className="py-4 pl-4">
+                        <div className="font-bold text-gray-200">{student.name}</div>
+                        <div className="text-xs text-gray-500">{student.enrollmentNo} • {student.department} (Sem {student.semester})</div>
+                      </td>
+                      <td className="py-4">
+                        <div className="flex gap-4 text-xs">
+                          <span className={student.gpa < 2.5 ? 'text-red-400' : 'text-gray-400'}>
+                            GPA: <span className="font-bold text-gray-200">{student.gpa.toFixed(2)}</span>
+                          </span>
+                          <span className={student.attendance < 75 ? 'text-red-400' : 'text-gray-400'}>
+                            Att: <span className="font-bold text-gray-200">{student.attendance}%</span>
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-4">
+                        <p className="text-xs text-gray-400 max-w-md line-clamp-2">
+                          {student.warning}
+                        </p>
+                      </td>
+                      <td className="py-4 text-right pr-4">
+                        <div className="inline-flex items-center justify-end gap-2">
+                          <div className="w-16 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full rounded-full ${student.riskLevel === 'High' ? 'bg-red-500' : 'bg-orange-400'}`}
+                              style={{ width: `${student.riskScore}%` }}
+                            />
+                          </div>
+                          <span className={`text-sm font-bold ${student.riskLevel === 'High' ? 'text-red-400' : 'text-orange-400'}`}>
+                            {student.riskScore}%
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
     </DashboardShell>
   );
 }

@@ -44,6 +44,7 @@ export default function StudentDashboard() {
   const [results, setResults] = useState<any[]>([]);
   const [cgpa, setCgpa] = useState(0);
   const [attendanceLogs, setAttendanceLogs] = useState<any[]>([]);
+  const [activities, setActivities] = useState<any[]>([]);
   const [aiSummary, setAiSummary] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
 
@@ -62,6 +63,10 @@ export default function StudentDashboard() {
       // Fetch Attendance
       const attRes = await api.get(`/attendance?studentId=${studentId}`);
       setAttendanceLogs(attRes.data.attendance || []);
+
+      // Fetch Activities
+      const actRes = await api.get(`/activities`);
+      setActivities(actRes.data.activities || []);
 
       // Fetch AI Summary
       fetchAiSummary();
@@ -153,12 +158,7 @@ export default function StudentDashboard() {
     subject: r.courseId?.name
   }));
 
-  // Mock Upcoming Activities
-  const upcomingActivities = [
-    { title: 'Mid-term Data Structures Exam', date: 'Oct 15, 2026', type: 'Exam' },
-    { title: 'AI Assignment 3 Submission', date: 'Oct 18, 2026', type: 'Assignment' },
-    { title: 'Guest Lecture: Future of Tech', date: 'Oct 20, 2026', type: 'Notice' }
-  ];
+
 
   if (loading) {
     return (
@@ -254,7 +254,7 @@ export default function StudentDashboard() {
           </div>
           <div>
             <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">Pending Assignments</p>
-            <p className="text-2xl font-extrabold text-white mt-1"><AnimatedCounter value={upcomingActivities.filter(a => a.type === 'Assignment').length} /></p>
+            <p className="text-2xl font-extrabold text-white mt-1"><AnimatedCounter value={activities.filter(a => a.type === 'Assignment').length} /></p>
           </div>
         </div>
       </div>
@@ -413,7 +413,12 @@ export default function StudentDashboard() {
             </h3>
             
             <div className="space-y-3">
-              {upcomingActivities.map((act, i) => (
+              {activities.length === 0 ? (
+                <div className="p-6 bg-white/2 border border-white/5 rounded-3xl text-center text-gray-500 italic">
+                  No upcoming activities at this time.
+                </div>
+              ) : (
+                activities.map((act, i) => (
                 <div key={i} className="p-3 bg-white/2 border border-white/5 hover:border-white/10 rounded-xl transition-all flex gap-3 items-start">
                   <div className={`p-2 rounded-lg ${
                     act.type === 'Exam' ? 'bg-red-500/10 text-red-400' :

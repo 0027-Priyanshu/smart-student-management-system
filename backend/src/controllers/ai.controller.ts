@@ -32,8 +32,9 @@ export class AIController {
       const gpa = totalCredits > 0 ? totalGradePoints / totalCredits : 0.0;
 
       const attendanceLogs = await RepoService.findAttendance({ studentId: req.params.studentId });
-      const totalDays = attendanceLogs.length;
-      const presentDays = attendanceLogs.filter(a => a.status === 'Present' || a.status === 'Late').length;
+      const validLogs = attendanceLogs.filter(a => a.status !== 'On Leave');
+      const totalDays = validLogs.length;
+      const presentDays = validLogs.filter(a => a.status === 'Present' || a.status === 'Late').length;
       const attendanceRate = totalDays > 0 ? (presentDays / totalDays) * 100 : 100.0;
 
       const summary = await generateStudentSummary(
@@ -44,7 +45,16 @@ export class AIController {
         courseCodes
       );
 
-      return res.json({ summary });
+      // Mock Historical Trend Data (Last 5 Semesters)
+      const trendData = [
+        { name: 'Sem 1', gpa: Math.min(4.0, gpa * 0.85) },
+        { name: 'Sem 2', gpa: Math.min(4.0, gpa * 0.90) },
+        { name: 'Sem 3', gpa: Math.min(4.0, gpa * 0.95) },
+        { name: 'Sem 4', gpa: Math.min(4.0, gpa * 0.98) },
+        { name: 'Sem 5', gpa: gpa }
+      ];
+
+      return res.json({ summary, trendData });
     } catch (error) {
       next(error);
     }
@@ -77,8 +87,9 @@ export class AIController {
       const gpa = totalCredits > 0 ? totalGradePoints / totalCredits : 0.0;
 
       const attendanceLogs = await RepoService.findAttendance({ studentId: req.params.studentId });
-      const totalDays = attendanceLogs.length;
-      const presentDays = attendanceLogs.filter(a => a.status === 'Present' || a.status === 'Late').length;
+      const validLogs = attendanceLogs.filter(a => a.status !== 'On Leave');
+      const totalDays = validLogs.length;
+      const presentDays = validLogs.filter(a => a.status === 'Present' || a.status === 'Late').length;
       const attendanceRate = totalDays > 0 ? (presentDays / totalDays) * 100 : 100.0;
 
       const analysis = await generateRecommendations(
@@ -121,8 +132,9 @@ export class AIController {
       const gpa = totalCredits > 0 ? totalGradePoints / totalCredits : 0.0;
 
       const attendanceLogs = await RepoService.findAttendance({ studentId: req.params.studentId });
-      const totalDays = attendanceLogs.length;
-      const presentDays = attendanceLogs.filter(a => a.status === 'Present' || a.status === 'Late' || a.status === 'On Leave').length;
+      const validLogs = attendanceLogs.filter(a => a.status !== 'On Leave');
+      const totalDays = validLogs.length;
+      const presentDays = validLogs.filter(a => a.status === 'Present' || a.status === 'Late').length;
       const attendanceRate = totalDays > 0 ? (presentDays / totalDays) * 100 : 100.0;
 
       const riskData = await predictRisk(
@@ -168,8 +180,9 @@ export class AIController {
       const avgGpa = studentWithGradesCount > 0 ? totalGpaSum / studentWithGradesCount : 3.0;
 
       const attendanceLogs = await RepoService.findAttendance({});
-      const totalDays = attendanceLogs.length;
-      const presentDays = attendanceLogs.filter(a => a.status === 'Present' || a.status === 'Late').length;
+      const validLogs = attendanceLogs.filter(a => a.status !== 'On Leave');
+      const totalDays = validLogs.length;
+      const presentDays = validLogs.filter(a => a.status === 'Present' || a.status === 'Late').length;
       const avgAttendance = totalDays > 0 ? (presentDays / totalDays) * 100 : 85.0;
 
       const { text, chartData } = await generateAcademicInsights(
@@ -184,8 +197,9 @@ export class AIController {
       for (const student of students) {
         // Attendance check
         const sAttendanceLogs = await RepoService.findAttendance({ studentId: student._id || student.id });
-        const sTotalDays = sAttendanceLogs.length;
-        const sPresentDays = sAttendanceLogs.filter(a => a.status === 'Present' || a.status === 'Late').length;
+        const sValidLogs = sAttendanceLogs.filter(a => a.status !== 'On Leave');
+        const sTotalDays = sValidLogs.length;
+        const sPresentDays = sValidLogs.filter(a => a.status === 'Present' || a.status === 'Late').length;
         const sAttendanceRate = sTotalDays > 0 ? (sPresentDays / sTotalDays) * 100 : 100.0;
 
         // GPA check
@@ -254,7 +268,7 @@ export class AIController {
         } else if (intent.type === 'attendance') {
           const logs = await RepoService.findAttendance({ studentId: student._id || student.id });
           const total = logs.length;
-          const present = logs.filter(a => a.status === 'Present' || a.status === 'Late' || a.status === 'On Leave').length;
+          const present = logs.filter(a => a.status === 'Present' || a.status === 'Late').length;
           const rate = total > 0 ? (present / total) * 100 : 100;
           const val = Number(intent.value);
           
@@ -317,7 +331,7 @@ export class AIController {
       const gpa = totalCredits > 0 ? totalGradePoints / totalCredits : 0;
       
       const attendanceLogs = await RepoService.findAttendance({ studentId: req.params.studentId });
-      const presentDays = attendanceLogs.filter(a => a.status === 'Present' || a.status === 'Late' || a.status === 'On Leave').length;
+      const presentDays = attendanceLogs.filter(a => a.status === 'Present' || a.status === 'Late').length;
       const attendance = attendanceLogs.length > 0 ? (presentDays / attendanceLogs.length) * 100 : 100;
       
       const emailContent = await generateParentEmail(student.name, gpa, attendance, weakSubjects, parentName);
@@ -359,6 +373,73 @@ export class AIController {
     }
   }
 
+  static async getAtRiskStudents(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { students } = await RepoService.findStudents({}, 1, 1000);
+      const atRiskStudents = [];
+
+      for (const student of students) {
+        const studentId = student._id || student.id;
+        if (!studentId) continue;
+
+        // Fetch stats
+        const results = await RepoService.findResults(studentId);
+        let totalGradePoints = 0;
+        let totalCredits = 0;
+        const marksData = results.map(r => {
+          const courseCredits = r.courseId?.credits || 3;
+          totalGradePoints += r.gpa * courseCredits;
+          totalCredits += courseCredits;
+          return {
+            courseName: r.courseId?.name,
+            internal: r.internal,
+            external: r.external,
+            assignment: r.assignment,
+            practical: r.practical,
+            grade: r.grade,
+            gpa: r.gpa
+          };
+        });
+        const gpa = totalCredits > 0 ? totalGradePoints / totalCredits : 0.0;
+
+        const attendanceLogs = await RepoService.findAttendance({ studentId });
+        const validLogs = attendanceLogs.filter(a => a.status !== 'On Leave');
+        const totalDays = validLogs.length;
+        const presentDays = validLogs.filter(a => a.status === 'Present' || a.status === 'Late').length;
+        const attendanceRate = totalDays > 0 ? (presentDays / totalDays) * 100 : 100.0;
+
+        const riskData = await predictRisk(
+          student.name,
+          gpa,
+          parseFloat(attendanceRate.toFixed(1)),
+          marksData
+        );
+
+        if (riskData.riskLevel === 'High' || riskData.riskLevel === 'Medium') {
+          atRiskStudents.push({
+            id: studentId,
+            name: student.name,
+            enrollmentNo: student.enrollmentNo,
+            department: student.department,
+            semester: student.semester,
+            gpa: parseFloat(gpa.toFixed(2)),
+            attendance: parseFloat(attendanceRate.toFixed(1)),
+            riskLevel: riskData.riskLevel,
+            riskScore: riskData.riskScore,
+            warning: riskData.warningMessage
+          });
+        }
+      }
+
+      // Sort by risk score descending
+      atRiskStudents.sort((a, b) => b.riskScore - a.riskScore);
+
+      return res.json({ atRiskStudents });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   static async downloadReportPDF(req: Request, res: Response, next: NextFunction) {
     try {
       const studentId = req.params.studentId;
@@ -389,8 +470,9 @@ export class AIController {
       const gpa = totalCredits > 0 ? totalGradePoints / totalCredits : 0.0;
 
       const attendanceLogs = await RepoService.findAttendance({ studentId });
-      const totalDays = attendanceLogs.length;
-      const presentDays = attendanceLogs.filter(a => a.status === 'Present' || a.status === 'Late').length;
+      const validLogs = attendanceLogs.filter(a => a.status !== 'On Leave');
+      const totalDays = validLogs.length;
+      const presentDays = validLogs.filter(a => a.status === 'Present' || a.status === 'Late').length;
       const attendanceRate = totalDays > 0 ? (presentDays / totalDays) * 100 : 100.0;
 
       const summary = await generateStudentSummary(

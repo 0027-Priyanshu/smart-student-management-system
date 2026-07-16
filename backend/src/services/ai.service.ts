@@ -241,6 +241,8 @@ function getMockChatResponse(message: string): string {
 }
 
 // 5. Predictive AI: At-Risk Student Analysis
+import { riskPredictor } from '../ml/RiskPredictor';
+
 export async function predictRisk(
   studentName: string,
   gpa: number,
@@ -249,56 +251,35 @@ export async function predictRisk(
 ): Promise<{ riskScore: number; warningMessage: string; riskLevel: 'Low' | 'Medium' | 'High' }> {
   const weakSubjects = marks.filter(m => ((m.internal || 0) + (m.external || 0) + (m.assignment || 0) + (m.practical || 0)) < 65).map(m => m.courseName);
   
-  const prompt = `You are an AI academic advisor. Analyze this student for academic risk of failing the semester.
-  Student: ${studentName}
-  GPA: ${gpa.toFixed(2)}
-  Attendance: ${attendanceRate.toFixed(1)}%
-  Weak Subjects (< 65 marks): ${weakSubjects.length > 0 ? weakSubjects.join(', ') : 'None'}
-
-  Based on historical patterns (low GPA and low attendance correlate strongly with failure), calculate a "Risk Probability Score" from 0 to 100.
-  Then provide a 1-sentence warning/explanation.
-  Return EXACTLY and ONLY this JSON format, nothing else (no markdown tags):
-  {
-    "riskScore": 75,
-    "warningMessage": "Short explanation of the risk factors.",
-    "riskLevel": "High"
-  }
-  Where riskLevel must be "Low" (< 40), "Medium" (40 - 70), or "High" (> 70).`;
-
-  if (ai) {
-    try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-      });
-      let text = response.text || '';
-      // Clean markdown json tags if present
-      text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-      return JSON.parse(text);
-    } catch (error) {
-      console.error('Gemini error generating risk prediction, falling back:', error);
+  // 1. Get raw probability score from ML model
+  const prediction = riskPredictor.predict(gpa, attendanceRate, weakSubjects.length);
+  
+  // 2. Generate a concise warning message using LLM for context, but keeping ML ground truth
+  let warningMessage = 'Academic profile is stable.';
+  if (prediction.riskLevel !== 'Low') {
+    const prompt = `You are an AI academic advisor. The ML model flagged student ${studentName} as ${prediction.riskLevel} risk (Score: ${prediction.riskScore}%).
+    GPA: ${gpa.toFixed(2)}
+    Attendance: ${attendanceRate.toFixed(1)}%
+    Weak Subjects: ${weakSubjects.join(', ') || 'None'}
+    
+    Provide EXACTLY ONE concise sentence (max 15 words) explaining why this student is at risk, mentioning the specific data points.`;
+    
+    if (ai) {
+      try {
+        const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+        warningMessage = (response.text || '').trim().replace(/"/g, '');
+      } catch (error) {
+        warningMessage = `Student flagged as ${prediction.riskLevel} risk due to combination of GPA (${gpa.toFixed(2)}) and attendance (${attendanceRate.toFixed(1)}%).`;
+      }
+    } else {
+       warningMessage = `Student flagged as ${prediction.riskLevel} risk due to combination of GPA (${gpa.toFixed(2)}) and attendance (${attendanceRate.toFixed(1)}%).`;
     }
   }
 
-  // Fallback heuristic
-  let score = 10;
-  if (gpa < 2.5) score += 40;
-  else if (gpa < 3.0) score += 20;
-
-  if (attendanceRate < 75) score += 40;
-  else if (attendanceRate < 85) score += 20;
-
-  score += Math.min(weakSubjects.length * 10, 30);
-  score = Math.min(score, 99);
-
-  let level: 'Low' | 'Medium' | 'High' = 'Low';
-  if (score > 70) level = 'High';
-  else if (score >= 40) level = 'Medium';
-
   return {
-    riskScore: score,
-    riskLevel: level,
-    warningMessage: `${studentName} exhibits a ${level} risk profile due to a combination of ${gpa.toFixed(2)} GPA and ${attendanceRate.toFixed(1)}% attendance.`
+    riskScore: prediction.riskScore,
+    riskLevel: prediction.riskLevel,
+    warningMessage
   };
 }
 

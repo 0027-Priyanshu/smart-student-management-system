@@ -46,4 +46,7 @@ router.post(
 // GET: /api/ai/report/:studentId/pdf (Protected - download student's AI report PDF)
 router.get('/report/:studentId/pdf', authenticateJWT, AIController.downloadReportPDF);
 
+// GET: /api/ai/at-risk-students (Faculty/Admin only)
+router.get('/at-risk-students', authenticateJWT, requireRole(['Admin', 'Faculty']), AIController.getAtRiskStudents);
+
 export default router;

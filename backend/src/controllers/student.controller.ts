@@ -425,4 +425,48 @@ export class StudentController {
       next(error);
     }
   }
+
+  static async updateStudentPassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const { password } = req.body;
+      const requester = (req as any).user;
+
+      const student = await RepoService.findStudentById(id);
+      if (!student) {
+        return res.status(404).json({ error: 'Student profile not found' });
+      }
+
+      const rawUserId = student.userId;
+      const userId = rawUserId?._id ? rawUserId._id.toString() : (rawUserId?.toString ? rawUserId.toString() : rawUserId);
+
+      if (!userId) {
+        return res.status(400).json({ error: 'Associated user account not found for this student' });
+      }
+
+      const user = await RepoService.findUserById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User account not found' });
+      }
+
+      const salt = bcrypt.genSaltSync(10);
+      const passwordHash = bcrypt.hashSync(password, salt);
+
+      await RepoService.updateUser(userId, { password: passwordHash });
+
+      // Log Activity
+      await RepoService.createLog({
+        userId: requester.userId,
+        userName: requester.name,
+        role: requester.role,
+        action: 'Student Password Updated',
+        details: `Updated password for student: ${student.name} (${student.enrollmentNo})`
+      });
+
+      return res.json({ message: `Password for ${student.name} updated successfully` });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
+

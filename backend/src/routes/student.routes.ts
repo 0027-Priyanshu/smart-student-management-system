@@ -6,8 +6,10 @@ import { uploadLocal, uploadMemory } from '../middlewares/upload.middleware';
 import { 
   createStudentSchema, 
   updateStudentSchema, 
-  queryStudentSchema 
+  queryStudentSchema,
+  updateStudentPasswordSchema 
 } from '../schemas/student.schema';
+
 
 const router = Router();
 
@@ -63,6 +65,16 @@ router.put(
   validate({ body: updateStudentSchema }), 
   StudentController.updateStudent
 );
+
+// PUT: /api/students/:id/password (Admin only)
+router.put(
+  '/:id/password',
+  authenticateJWT,
+  requireRole(['Super Admin', 'Admin']),
+  validate({ body: updateStudentPasswordSchema }),
+  StudentController.updateStudentPassword
+);
+
 
 // DELETE: /api/students/:id (Admin only - Soft Delete)
 router.delete(

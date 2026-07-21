@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert';
+import bcrypt from 'bcryptjs';
 import { RepoService } from '../services/repo.service';
+
 
 test('🎓 Student Profile CRUD Test Suite', async (t) => {
   let studentId = '';
@@ -46,7 +48,28 @@ test('🎓 Student Profile CRUD Test Suite', async (t) => {
     assert.strictEqual(updated.grade, 'Junior');
   });
 
-  await t.test('4. Soft-delete Student Record', async () => {
+  await t.test('4. Update Associated User Password', async () => {
+    // Create associated user
+    const user = await RepoService.createUser({
+      name: 'John Doe Test',
+      email: 'john_doe@test.com',
+      password: 'oldPassword123',
+      role: 'Student',
+      isVerified: true
+    });
+    const userId = user._id || user.id;
+    await RepoService.updateStudent(studentId, { userId });
+
+    const newPass = 'newSecurePassword456';
+    const salt = bcrypt.genSaltSync(10);
+    const passwordHash = bcrypt.hashSync(newPass, salt);
+    const updatedUser = await RepoService.updateUser(userId, { password: passwordHash });
+
+    assert.ok(updatedUser);
+    assert.strictEqual(bcrypt.compareSync(newPass, updatedUser.password), true);
+  });
+
+  await t.test('5. Soft-delete Student Record', async () => {
     // Soft delete student by setting isDeleted to true
     const deleted = await RepoService.updateStudent(studentId, {
       isDeleted: true
@@ -56,3 +79,4 @@ test('🎓 Student Profile CRUD Test Suite', async (t) => {
     assert.strictEqual(deleted.isDeleted, true);
   });
 });
+

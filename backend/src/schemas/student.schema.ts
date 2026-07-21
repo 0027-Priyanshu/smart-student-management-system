@@ -32,3 +32,8 @@ export const queryStudentSchema = z.object({
   page: z.string().regex(/^\d+$/).transform(Number).optional(),
   limit: z.string().regex(/^\d+$/).transform(Number).optional(),
 });
+
+export const updateStudentPasswordSchema = z.object({
+  password: z.string().min(6, 'Password must be at least 6 characters long'),
+});
+

@@ -9,8 +9,12 @@ import {
   Upload, 
   IdCard,
   X,
-  FileDown
+  FileDown,
+  KeyRound,
+  Eye,
+  EyeOff
 } from 'lucide-react';
+
 import DashboardShell from '../components/layout/DashboardShell';
 import api from '../utils/api';
 import { useAuthStore } from '../stores/authStore';
@@ -44,7 +48,13 @@ export default function Students() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showIdCardModal, setShowIdCardModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [activeStudent, setActiveStudent] = useState<Student | null>(null);
+  const [passwordStudent, setPasswordStudent] = useState<Student | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [showPasswordText, setShowPasswordText] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+
   
   // Form states
   const [formData, setFormData] = useState({
@@ -149,6 +159,44 @@ export default function Students() {
       setActionLoading(false);
     }
   };
+
+  const openPasswordModal = (student: Student) => {
+    setPasswordStudent(student);
+    setNewPassword('');
+    setShowPasswordText(false);
+    setPasswordError('');
+    setShowPasswordModal(true);
+  };
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!passwordStudent) return;
+    if (newPassword.length < 6) {
+      setPasswordError('Password must be at least 6 characters long');
+      return;
+    }
+
+    setPasswordError('');
+    setActionLoading(true);
+
+    try {
+      const studentId = passwordStudent._id || passwordStudent.id;
+      const res = await api.put(`/students/${studentId}/password`, {
+        password: newPassword
+      });
+      toast.success(res.data.message || `Password updated successfully for ${passwordStudent.name}`);
+      setShowPasswordModal(false);
+      setPasswordStudent(null);
+      setNewPassword('');
+    } catch (err: any) {
+      const errMsg = err.response?.data?.error || 'Failed to update student password';
+      setPasswordError(errMsg);
+      toast.error(errMsg);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
 
   const handleSoftDelete = async (id: string) => {
     if (!confirm('Are you sure you want to soft delete this student?')) return;
@@ -418,11 +466,19 @@ export default function Students() {
                         {isAdmin && !showDeleted && (
                           <>
                             <button 
+                              onClick={() => openPasswordModal(student)} 
+                              className="p-1.5 bg-[#f97316]/10 text-[#f97316] border border-[#f97316]/20 hover:bg-[#f97316] hover:text-slate-900 rounded-lg transition-colors"
+                              title="Edit Student Password"
+                            >
+                              <KeyRound size={14} />
+                            </button>
+                            <button 
                               onClick={() => openEditModal(student)} 
                               className="px-2.5 py-1.5 bg-[#eab308]/10 text-[#eab308] hover:bg-[#eab308] hover:text-slate-900 rounded-lg font-semibold transition-colors"
                             >
                               Edit
                             </button>
+
                             <button 
                               onClick={() => handleSoftDelete(student._id || student.id || '')} 
                               className="p-1.5 bg-[#ef4444]/10 text-[#ef4444] hover:bg-[#ef4444] hover:text-slate-900 rounded-lg transition-colors border border-[#ef4444]/20"
@@ -753,8 +809,94 @@ export default function Students() {
             </button>
           </div>
         </div>
+      {/* EDIT STUDENT PASSWORD MODAL */}
+      {showPasswordModal && passwordStudent && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-[#f97316]/30 rounded-3xl w-full max-w-md p-6 relative shadow-card animate-slideUp">
+            <button 
+              onClick={() => { setShowPasswordModal(false); setPasswordStudent(null); }} 
+              className="absolute top-4 right-4 text-slate-500 hover:text-slate-900 transition-colors"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="flex items-center gap-3 mb-5">
+              <div className="p-3 bg-[#f97316]/10 text-[#f97316] rounded-2xl border border-[#f97316]/20">
+                <KeyRound size={22} />
+              </div>
+              <div>
+                <h3 className="font-title font-extrabold text-lg text-slate-900">
+                  Change Student Password
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Set a new password for <span className="font-semibold text-slate-700">{passwordStudent.name}</span> ({passwordStudent.enrollmentNo})
+                </p>
+              </div>
+            </div>
+
+            {passwordError && (
+              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-[#ef4444] rounded-xl text-xs">
+                {passwordError}
+              </div>
+            )}
+
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">New Password</label>
+                  <button 
+                    type="button"
+                    onClick={() => setNewPassword(Math.random().toString(36).slice(-8) + '!')}
+                    className="text-[10px] text-[#ef4444] hover:text-slate-900 font-bold transition-colors"
+                  >
+                    Auto-Generate
+                  </button>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showPasswordText ? 'text' : 'password'}
+                    required
+                    minLength={6}
+                    placeholder="Enter at least 6 characters..."
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full pl-3 pr-10 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-xs text-slate-900 focus:outline-none transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswordText(!showPasswordText)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                    {showPasswordText ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-400">
+                  Password must be at least 6 characters. The student will use this new password for next login.
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setShowPasswordModal(false); setPasswordStudent(null); }}
+                  className="w-1/3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading}
+                  className="w-2/3 py-2.5 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-slate-900 font-bold rounded-xl text-xs shadow-card transition-all disabled:opacity-50"
+                >
+                  {actionLoading ? 'Updating Password...' : 'Update Password'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
 
     </DashboardShell>
   );
 }
+

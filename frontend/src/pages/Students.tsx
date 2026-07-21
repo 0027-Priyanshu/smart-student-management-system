@@ -809,7 +809,10 @@ export default function Students() {
             </button>
           </div>
         </div>
+      )}
+
       {/* EDIT STUDENT PASSWORD MODAL */}
+
       {showPasswordModal && passwordStudent && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white border border-[#f97316]/30 rounded-3xl w-full max-w-md p-6 relative shadow-card animate-slideUp">

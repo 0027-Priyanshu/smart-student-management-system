@@ -32,24 +32,6 @@ export async function generateStudentSummary(
   Enrolled courses: ${courses.join(', ')}. 
   Mention their current standing, focus areas, and a brief positive outlook. Keep it realistic and objective.`;
 
-  if (ai) {
-    try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-      });
-      const text = response.text || '';
-      if (text) {
-        // Unmask the response locally by replacing generic references with the actual student name
-        return text.replace(/\b(the student|the Student|The student|The Student|student|Student)\b/g, studentName);
-      }
-      return getDefaultSummary(studentName, gpa, attendanceRate);
-    } catch (error) {
-      console.error('Gemini error generating summary, falling back:', error);
-      return getDefaultSummary(studentName, gpa, attendanceRate);
-    }
-  }
-
   return getDefaultSummary(studentName, gpa, attendanceRate);
 }
 
@@ -77,33 +59,6 @@ export async function generateRecommendations(
   const prompt = `Based on the student's details: GPA is ${gpa}, Attendance is ${attendanceRate}%, and weak subjects are: ${weakSubjects.join(', ')}.
   Generate exactly 3 actionable, highly specific study recommendations for this student to improve their grades. 
   Respond with exactly 3 bullet points, separated by newlines, without markdown formatting.`;
-
-  if (ai) {
-    try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-      });
-      const text = response.text || '';
-      const recommendations = text
-        .split('\n')
-        .map(line => line.replace(/^-\s*/, '').replace(/^\d+\.\s*/, '').trim())
-        .filter(line => line.length > 0)
-        .map(line => line.replace(/\b(the student|the Student|The student|The Student|student|Student)\b/g, studentName))
-        .slice(0, 3);
-      
-      return {
-        recommendations: recommendations.length > 0 ? recommendations : getDefaultRecommendations(studentName, weakSubjects, attendanceRate),
-        weakSubjects
-      };
-    } catch (error) {
-      console.error('Gemini error generating recommendations, falling back:', error);
-      return {
-        recommendations: getDefaultRecommendations(studentName, weakSubjects, attendanceRate),
-        weakSubjects
-      };
-    }
-  }
 
   return {
     recommendations: getDefaultRecommendations(studentName, weakSubjects, attendanceRate),

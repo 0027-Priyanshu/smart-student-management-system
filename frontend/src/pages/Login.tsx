@@ -93,8 +93,8 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 relative px-4 overflow-hidden">
       {/* Background Gradients */}
-      <div className="absolute inset-0 bg-[radial-gradient(at_50%_0%,rgba(138,92,246,0.15),transparent_50%)] pointer-events-none z-0" />
-      <div className="absolute inset-0 bg-[radial-gradient(at_50%_100%,rgba(6,182,212,0.1),transparent_50%)] pointer-events-none z-0" />
+      <div className="absolute inset-0 bg-[radial-gradient(at_50%_0%,rgba(249,115,22,0.15),transparent_50%)] pointer-events-none z-0" />
+      <div className="absolute inset-0 bg-[radial-gradient(at_50%_100%,rgba(245,158,11,0.1),transparent_50%)] pointer-events-none z-0" />
 
       <AnimatePresence mode="wait">
         {screen === 'login' && (
@@ -181,19 +181,25 @@ export default function Login() {
             </div>
 
             {/* Hint Panel */}
-            <div className="mt-6 p-4 bg-[#181a23] border border-slate-300 rounded-2xl text-[11px] text-slate-500 space-y-2">
+            <div className="mt-6 p-4 bg-white border border-[#f97316]/20 rounded-2xl text-[11px] text-slate-500 space-y-2">
               <span className="font-bold text-slate-700 block mb-1">Demo Credentials:</span>
               <div 
                 onClick={() => { setEmail('admin@sms.com'); setPassword('admin123'); }}
-                className="cursor-pointer hover:bg-slate-100 p-1.5 -ml-1.5 rounded-lg transition-colors flex items-center gap-1"
+                className="cursor-pointer hover:bg-slate-50 p-1.5 -ml-1.5 rounded-lg transition-colors flex items-center gap-1"
               >
-                • Admin: <code className="text-[#ef4444]">admin@sms.com</code> / <code className="text-[#ef4444]">admin123</code>
+                • Admin: <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded">admin@sms.com</code> / <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded">admin123</code>
+              </div>
+              <div 
+                onClick={() => { setEmail('faculty@sms.com'); setPassword('faculty123'); }}
+                className="cursor-pointer hover:bg-slate-50 p-1.5 -ml-1.5 rounded-lg transition-colors flex items-center gap-1"
+              >
+                • Faculty: <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded">faculty@sms.com</code> / <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded">faculty123</code>
               </div>
               <div 
                 onClick={() => { setEmail('student@sms.com'); setPassword('student123'); }}
-                className="cursor-pointer hover:bg-slate-100 p-1.5 -ml-1.5 rounded-lg transition-colors flex items-center gap-1"
+                className="cursor-pointer hover:bg-slate-50 p-1.5 -ml-1.5 rounded-lg transition-colors flex items-center gap-1"
               >
-                • Student: <code className="text-[#ef4444]">student@sms.com</code> / <code className="text-[#ef4444]">student123</code>
+                • Student: <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded">student@sms.com</code> / <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded">student123</code>
               </div>
             </div>
           </motion.div>

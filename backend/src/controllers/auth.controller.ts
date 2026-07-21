@@ -182,11 +182,21 @@ export class AuthController {
         details: 'Logged into the system'
       });
 
+      const profileResponse: any = { userId, name: user.name, email: cleanEmail, role: user.role };
+      
+      if (user.role === 'Student') {
+        const studentProfile = await RepoService.findStudentByUserId(userId);
+        profileResponse.studentProfile = studentProfile;
+      } else if (user.role === 'Faculty') {
+        const facultyProfile = await RepoService.findFacultyByUserId(userId);
+        profileResponse.facultyProfile = facultyProfile;
+      }
+
       return res.json({
         message: 'Login successful',
         accessToken,
         refreshToken,
-        user: { userId, name: user.name, email: cleanEmail, role: user.role }
+        user: profileResponse
       });
     } catch (error) {
       next(error);

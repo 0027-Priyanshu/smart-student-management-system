@@ -131,7 +131,7 @@ export default function DashboardShell({ children, title }: DashboardShellProps)
             </nav>
 
             {/* Mobile Sidebar Footer */}
-            <div className="p-4 border-t border-slate-200 bg-[#0f1118]">
+            <div className="p-4 border-t border-slate-200 bg-slate-50">
               <div className="flex items-center gap-3.5 px-2 py-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer" onClick={() => setShowProfileMenu(!showProfileMenu)}>
                 <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#4f46e5] to-[#f97316] flex items-center justify-center font-semibold text-slate-900">
                   {initials}
@@ -207,7 +207,7 @@ export default function DashboardShell({ children, title }: DashboardShellProps)
         </nav>
 
         {/* Sidebar Footer */}
-        <div className="p-4 border-t border-slate-200 bg-[#0f1118]">
+        <div className="p-4 border-t border-slate-200 bg-slate-50">
           <div className="flex items-center gap-3.5 px-2 py-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer" onClick={() => setShowProfileMenu(!showProfileMenu)}>
             <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#4f46e5] to-[#f97316] flex items-center justify-center font-semibold text-slate-900">
               {initials}
@@ -317,7 +317,7 @@ export default function DashboardShell({ children, title }: DashboardShellProps)
         </header>
 
         {/* Content View Area */}
-        <main className="flex-1 p-6 md:p-10 overflow-y-auto bg-gradient-to-b from-[#0b0c10] to-[#0f1118]">
+        <main className="flex-1 p-6 md:p-10 overflow-y-auto bg-transparent">
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}

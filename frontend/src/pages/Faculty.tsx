@@ -130,7 +130,7 @@ export default function Faculty() {
             return (
               <div 
                 key={facId} 
-                className="bg-slate-1000 border border-slate-200 p-6 rounded-3xl shadow-card flex flex-col justify-between hover:border-[#f97316]/20 transition-all duration-300 group"
+                className="bg-white border border-slate-200 p-6 rounded-3xl shadow-card flex flex-col justify-between hover:border-[#f97316]/20 transition-all duration-300 group"
               >
                 <div>
                   <div className="flex items-center gap-4 mb-4 pb-4 border-b border-slate-200">

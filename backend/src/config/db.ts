@@ -17,7 +17,6 @@ import Faculty from '../models/Faculty';
 import Course from '../models/Course';
 import Attendance from '../models/Attendance';
 import Result from '../models/Result';
-import Log from '../models/Log';
 
 export async function connectDB() {
   try {
@@ -150,14 +149,6 @@ export async function connectDB() {
         grade: "A+",
         gpa: 4.0,
         markedBy: facultyUser?._id
-      });
-
-      await Log.create({
-        userId: adminUser?._id,
-        userName: "System Admin",
-        role: "Admin",
-        action: "Database Seeding",
-        details: "Initialized MongoDB with seed registries and default profiles"
       });
 
       console.log('🌱 MongoDB seeded successfully with default records!');

@@ -540,12 +540,7 @@ export class RepoService {
   // ==================== LOG OPERATIONS ====================
 
   static async findLogs(limit = 100): Promise<any[]> {
-    if (isMongoConnected) {
-      return await Log.find({}).sort({ createdAt: -1 }).limit(limit).lean();
-    } else {
-      const db = readJsonDb();
-      return [...db.logs].sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, limit);
-    }
+    return Promise.resolve([]);
   }
 
   static async createLog(logData: { userId?: string; userName: string; role: string; action: string; details: string }): Promise<any> {

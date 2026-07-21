@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Users, BookOpen, AlertTriangle, CheckCircle } from 'lucide-react';
 import api from '../../utils/api';
-import { useAuthStore } from '../../stores/authStore';
 
 export default function FacultyDashboard() {
-  const { user } = useAuthStore();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 

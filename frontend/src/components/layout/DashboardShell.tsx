@@ -9,7 +9,6 @@ import {
   CalendarCheck, 
   FileSpreadsheet, 
   Bot, 
-  History as HistoryIcon, 
   LogOut, 
   Menu, 
   X, 

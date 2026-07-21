@@ -152,17 +152,43 @@ export class AIController {
 
   static async getAcademicInsights(req: Request, res: Response, next: NextFunction) {
     try {
-      const { students } = await RepoService.findStudents({}, 1, 1000);
+      const [{ students }, allResults, allAttendance] = await Promise.all([
+        RepoService.findStudents({}, 1, 1000),
+        RepoService.findResults(),
+        RepoService.findAttendance({})
+      ]);
+
       const totalStudents = students.length;
       
       const departmentCounts: { [key: string]: number } = {};
       let totalGpaSum = 0;
       let studentWithGradesCount = 0;
 
+      // Group results
+      const resultsByStudent: Record<string, any[]> = {};
+      allResults.forEach(r => {
+        const sId = r.studentId?._id?.toString() || r.studentId?.toString() || r.studentId;
+        if (sId) {
+          if (!resultsByStudent[sId]) resultsByStudent[sId] = [];
+          resultsByStudent[sId].push(r);
+        }
+      });
+
+      // Group attendance
+      const attendanceByStudent: Record<string, any[]> = {};
+      allAttendance.forEach(a => {
+        const sId = a.studentId?._id?.toString() || a.studentId?.toString() || a.studentId;
+        if (sId) {
+          if (!attendanceByStudent[sId]) attendanceByStudent[sId] = [];
+          attendanceByStudent[sId].push(a);
+        }
+      });
+
       for (const student of students) {
         departmentCounts[student.department] = (departmentCounts[student.department] || 0) + 1;
         
-        const results = await RepoService.findResults(student._id || student.id);
+        const sId = student._id?.toString() || student.id?.toString();
+        const results = resultsByStudent[sId] || [];
         if (results.length > 0) {
           let totalGradePoints = 0;
           let totalCredits = 0;
@@ -179,8 +205,7 @@ export class AIController {
 
       const avgGpa = studentWithGradesCount > 0 ? totalGpaSum / studentWithGradesCount : 3.0;
 
-      const attendanceLogs = await RepoService.findAttendance({});
-      const validLogs = attendanceLogs.filter(a => a.status !== 'On Leave');
+      const validLogs = allAttendance.filter(a => a.status !== 'On Leave');
       const totalDays = validLogs.length;
       const presentDays = validLogs.filter(a => a.status === 'Present' || a.status === 'Late').length;
       const avgAttendance = totalDays > 0 ? (presentDays / totalDays) * 100 : 85.0;
@@ -195,15 +220,17 @@ export class AIController {
       // Detect weak students dynamically (GPA < 2.5 or Attendance < 75%)
       const weakStudents: any[] = [];
       for (const student of students) {
+        const sId = student._id?.toString() || student.id?.toString();
+        
         // Attendance check
-        const sAttendanceLogs = await RepoService.findAttendance({ studentId: student._id || student.id });
+        const sAttendanceLogs = attendanceByStudent[sId] || [];
         const sValidLogs = sAttendanceLogs.filter(a => a.status !== 'On Leave');
         const sTotalDays = sValidLogs.length;
         const sPresentDays = sValidLogs.filter(a => a.status === 'Present' || a.status === 'Late').length;
         const sAttendanceRate = sTotalDays > 0 ? (sPresentDays / sTotalDays) * 100 : 100.0;
 
         // GPA check
-        const sResults = await RepoService.findResults(student._id || student.id);
+        const sResults = resultsByStudent[sId] || [];
         let sTotalGradePoints = 0;
         let sTotalCredits = 0;
         sResults.forEach(r => {
@@ -215,7 +242,7 @@ export class AIController {
 
         if (sGpa < 2.5 || sAttendanceRate < 75) {
           weakStudents.push({
-            id: student._id || student.id,
+            id: sId,
             name: student.name,
             email: student.email,
             enrollmentNo: student.enrollmentNo,
@@ -375,15 +402,40 @@ export class AIController {
 
   static async getAtRiskStudents(req: Request, res: Response, next: NextFunction) {
     try {
-      const { students } = await RepoService.findStudents({}, 1, 1000);
+      const [{ students }, allResults, allAttendance] = await Promise.all([
+        RepoService.findStudents({}, 1, 1000),
+        RepoService.findResults(),
+        RepoService.findAttendance({})
+      ]);
+
+      // Group results
+      const resultsByStudent: Record<string, any[]> = {};
+      allResults.forEach(r => {
+        const sId = r.studentId?._id?.toString() || r.studentId?.toString() || r.studentId;
+        if (sId) {
+          if (!resultsByStudent[sId]) resultsByStudent[sId] = [];
+          resultsByStudent[sId].push(r);
+        }
+      });
+
+      // Group attendance
+      const attendanceByStudent: Record<string, any[]> = {};
+      allAttendance.forEach(a => {
+        const sId = a.studentId?._id?.toString() || a.studentId?.toString() || a.studentId;
+        if (sId) {
+          if (!attendanceByStudent[sId]) attendanceByStudent[sId] = [];
+          attendanceByStudent[sId].push(a);
+        }
+      });
+
       const atRiskStudents = [];
 
       for (const student of students) {
-        const studentId = student._id || student.id;
+        const studentId = student._id?.toString() || student.id?.toString();
         if (!studentId) continue;
 
         // Fetch stats
-        const results = await RepoService.findResults(studentId);
+        const results = resultsByStudent[studentId] || [];
         let totalGradePoints = 0;
         let totalCredits = 0;
         const marksData = results.map(r => {
@@ -402,7 +454,7 @@ export class AIController {
         });
         const gpa = totalCredits > 0 ? totalGradePoints / totalCredits : 0.0;
 
-        const attendanceLogs = await RepoService.findAttendance({ studentId });
+        const attendanceLogs = attendanceByStudent[studentId] || [];
         const validLogs = attendanceLogs.filter(a => a.status !== 'On Leave');
         const totalDays = validLogs.length;
         const presentDays = validLogs.filter(a => a.status === 'Present' || a.status === 'Late').length;

@@ -21,7 +21,6 @@ import facultyRoutes from './routes/faculty.routes';
 import attendanceRoutes from './routes/attendance.routes';
 import resultRoutes from './routes/result.routes';
 import aiRoutes from './routes/ai.routes';
-import logRoutes from './routes/log.routes';
 import dashboardRoutes from './routes/dashboard.routes';
 
 dotenv.config();
@@ -100,7 +99,6 @@ app.use('/api/faculty', facultyRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/results', resultRoutes);
 app.use('/api/ai', aiRoutes);
-app.use('/api/logs', logRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/activities', activityRoutes);
 

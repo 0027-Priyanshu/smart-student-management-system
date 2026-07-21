@@ -9,7 +9,6 @@ import Courses from './pages/Courses';
 import Attendance from './pages/Attendance';
 import Marks from './pages/Marks';
 import AiAssistant from './pages/AiAssistant';
-import Logs from './pages/Logs';
 import VerifyEmail from './pages/VerifyEmail';
 import NotFound from './pages/NotFound';
 import ProtectedRoute from './components/layout/ProtectedRoute';
@@ -25,7 +24,7 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="flex flex-col justify-center items-center min-h-screen bg-[#0b0c10] text-[#f3f4f6]">
+      <div className="flex flex-col justify-center items-center min-h-screen bg-slate-50 text-slate-800">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#8a5cf6] mb-4"></div>
         <span className="text-sm font-semibold tracking-wide">Loading System Dashboard...</span>
       </div>
@@ -98,14 +97,7 @@ export default function App() {
             </ProtectedRoute>
           } 
         />
-        <Route 
-          path="/logs" 
-          element={
-            <ProtectedRoute allowedRoles={['Super Admin', 'Admin']}>
-              <Logs />
-            </ProtectedRoute>
-          } 
-        />
+
 
         {/* Index Redirect */}
         <Route 

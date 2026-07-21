@@ -25,10 +25,10 @@ function ToastCard({ toast, onClose }: { toast: ToastMessage; onClose: () => voi
   };
 
   const bgBorderMap = {
-    success: 'bg-[#12141c]/90 border-[#10b981]/20 text-gray-200',
-    error: 'bg-[#12141c]/90 border-[#ef4444]/20 text-gray-200',
-    warning: 'bg-[#12141c]/90 border-[#f59e0b]/20 text-gray-200',
-    info: 'bg-[#12141c]/90 border-[#06b6d4]/20 text-gray-200',
+    success: 'bg-white/90 border-[#10b981]/20 text-gray-200',
+    error: 'bg-white/90 border-[#ef4444]/20 text-gray-200',
+    warning: 'bg-white/90 border-[#f59e0b]/20 text-gray-200',
+    info: 'bg-white/90 border-[#06b6d4]/20 text-gray-200',
   };
 
   return (
@@ -44,7 +44,7 @@ function ToastCard({ toast, onClose }: { toast: ToastMessage; onClose: () => voi
       </div>
       <button
         onClick={onClose}
-        className="text-gray-500 hover:text-gray-300 transition-colors shrink-0"
+        className="text-slate-400 hover:text-slate-700 transition-colors shrink-0"
       >
         <X size={14} />
       </button>

@@ -30,6 +30,7 @@ import { useSocketStore } from '../stores/socketStore';
 import { useAuthStore } from '../stores/authStore';
 import AnimatedCounter from '../components/common/AnimatedCounter';
 import StudentDashboard from '../components/dashboard/StudentDashboard';
+import FacultyDashboard from '../components/dashboard/FacultyDashboard';
 
 const COLORS = ['#8a5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ec4899', '#3b82f6'];
 
@@ -88,17 +89,25 @@ export default function Dashboard() {
     );
   }
 
+  if (user?.role === 'Faculty') {
+    return (
+      <DashboardShell title="Faculty Portal">
+        <FacultyDashboard />
+      </DashboardShell>
+    );
+  }
+
   if (loading) {
     return (
       <DashboardShell title="Dashboard">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-32 bg-white/2 border border-white/5 rounded-3xl animate-pulse" />
+            <div key={i} className="h-32 bg-slate-50 border border-slate-200 rounded-3xl animate-pulse" />
           ))}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="h-80 bg-white/2 border border-white/5 rounded-3xl animate-pulse" />
-          <div className="h-80 bg-white/2 border border-white/5 rounded-3xl animate-pulse" />
+          <div className="h-80 bg-slate-50 border border-slate-200 rounded-3xl animate-pulse" />
+          <div className="h-80 bg-slate-50 border border-slate-200 rounded-3xl animate-pulse" />
         </div>
       </DashboardShell>
     );
@@ -132,14 +141,14 @@ export default function Dashboard() {
           return (
             <div 
               key={idx} 
-              className={`p-6 bg-[#12141c]/50 backdrop-blur-md border ${card.border} rounded-3xl shadow-card flex items-center gap-5 hover:-translate-y-1 transition-all duration-300 group`}
+              className={`p-6 bg-slate-1000 backdrop-blur-md border ${card.border} rounded-3xl shadow-card flex items-center gap-5 hover:-translate-y-1 transition-all duration-300 group`}
             >
               <div className={`h-14 w-14 rounded-2xl ${card.bg} flex items-center justify-center ${card.color} group-hover:scale-110 transition-transform duration-300`}>
                 <Icon size={26} />
               </div>
               <div>
-                <h3 className="text-gray-400 text-xs font-semibold uppercase tracking-wider">{card.title}</h3>
-                <p className="text-3xl font-title font-extrabold mt-1 text-white">
+                <h3 className="text-slate-500 text-xs font-semibold uppercase tracking-wider">{card.title}</h3>
+                <p className="text-3xl font-title font-extrabold mt-1 text-slate-900">
                   <AnimatedCounter value={card.value} />
                 </p>
               </div>
@@ -152,7 +161,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
         
         {/* Monthly Registrations (Area Chart) */}
-        <div className="p-6 bg-[#12141c]/50 border border-white/5 rounded-3xl shadow-card">
+        <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card">
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-title font-bold text-lg flex items-center gap-2">
               <TrendingUp size={20} className="text-[#8a5cf6]" />
@@ -177,13 +186,13 @@ export default function Dashboard() {
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-xs text-gray-500 italic">No trend data available.</div>
+              <div className="h-full flex items-center justify-center text-xs text-slate-400 italic">No trend data available.</div>
             )}
           </div>
         </div>
 
         {/* Course-wise Enrollment Stats (Bar Chart) */}
-        <div className="p-6 bg-[#12141c]/50 border border-white/5 rounded-3xl shadow-card">
+        <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card">
           <h3 className="font-title font-bold text-lg mb-6 flex items-center gap-2">
             <BookOpen size={20} className="text-[#06b6d4]" />
             Course Enrollment Statistics
@@ -204,7 +213,7 @@ export default function Dashboard() {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-xs text-gray-500 italic">No enrollment records.</div>
+              <div className="h-full flex items-center justify-center text-xs text-slate-400 italic">No enrollment records.</div>
             )}
           </div>
         </div>
@@ -213,7 +222,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Department-wise Student Distribution (Pie Chart) */}
-        <div className="p-6 bg-[#12141c]/50 border border-white/5 rounded-3xl shadow-card lg:col-span-1">
+        <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card lg:col-span-1">
           <h3 className="font-title font-bold text-lg mb-6 flex items-center gap-2">
             <Users size={20} className="text-[#10b981]" />
             Department Distribution
@@ -240,15 +249,15 @@ export default function Dashboard() {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="text-xs text-gray-500 italic">No department data.</div>
+              <div className="text-xs text-slate-400 italic">No department data.</div>
             )}
           </div>
           <div className="mt-4 space-y-2 max-h-36 overflow-y-auto scrollbar-thin">
             {data?.departmentWiseData?.map((item: any, idx: number) => (
-              <div key={idx} className="flex items-center justify-between text-xs font-semibold px-2 py-1 bg-white/2 rounded-lg">
+              <div key={idx} className="flex items-center justify-between text-xs font-semibold px-2 py-1 bg-slate-50 rounded-lg">
                 <div className="flex items-center gap-2">
                   <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
-                  <span className="text-gray-300">{item.name}</span>
+                  <span className="text-slate-700">{item.name}</span>
                 </div>
                 <span>{item.value} Students</span>
               </div>
@@ -257,36 +266,36 @@ export default function Dashboard() {
         </div>
 
         {/* Recent Activity Logs Timeline */}
-        <div className="p-6 bg-[#12141c]/50 border border-white/5 rounded-3xl shadow-card lg:col-span-2">
+        <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card lg:col-span-2">
           <h3 className="font-title font-bold text-lg mb-6 flex items-center gap-2">
             <HistoryIcon size={20} className="text-[#ec4899]" />
             Recent Activity Logs
           </h3>
           <div className="flow-root max-h-[310px] overflow-y-auto pr-2 scrollbar-thin">
             {data?.recentActivities?.length === 0 ? (
-              <p className="text-xs text-gray-500 italic text-center py-10">No recent logs recorded.</p>
+              <p className="text-xs text-slate-400 italic text-center py-10">No recent logs recorded.</p>
             ) : (
               <ul className="-mb-8">
                 {data?.recentActivities?.map((log: any, logIdx: number) => (
                   <li key={log.id}>
                     <div className="relative pb-8">
                       {logIdx !== data.recentActivities.length - 1 ? (
-                        <span className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-white/5" aria-hidden="true" />
+                        <span className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-slate-100" aria-hidden="true" />
                       ) : null}
                       <div className="relative flex space-x-3.5">
                         <div>
-                          <span className="h-8 w-8 rounded-full bg-[#12141c] border border-white/5 flex items-center justify-center text-xs">
+                          <span className="h-8 w-8 rounded-full bg-white border border-slate-200 flex items-center justify-center text-xs">
                             📝
                           </span>
                         </div>
                         <div className="flex-1 min-w-0 pt-1.5 flex justify-between space-x-4">
                           <div>
-                            <p className="text-xs text-gray-300">
-                              <strong className="text-white">{log.userName}</strong> ({log.role}):{' '}
-                              <span className="text-gray-400">{log.details}</span>
+                            <p className="text-xs text-slate-700">
+                              <strong className="text-slate-900">{log.userName}</strong> ({log.role}):{' '}
+                              <span className="text-slate-500">{log.details}</span>
                             </p>
                           </div>
-                          <div className="text-right text-[10px] whitespace-nowrap text-gray-500">
+                          <div className="text-right text-[10px] whitespace-nowrap text-slate-400">
                             {new Date(log.createdAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
                           </div>
                         </div>
@@ -302,7 +311,7 @@ export default function Dashboard() {
 
       {/* AI At-Risk Students Panel (Admin/Faculty) */}
       {(user?.role === 'Admin' || user?.role === 'Super Admin' || user?.role === 'Faculty') && (
-        <div className="mt-8 p-6 bg-[#12141c]/50 border border-white/5 rounded-3xl shadow-card overflow-hidden">
+        <div className="mt-8 p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card overflow-hidden">
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-title font-bold text-lg flex items-center gap-2">
               <AlertTriangle size={20} className="text-red-400" />
@@ -316,17 +325,17 @@ export default function Dashboard() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-white/5">
-                  <th className="pb-3 text-xs font-bold text-gray-400 uppercase tracking-wider pl-4">Student</th>
-                  <th className="pb-3 text-xs font-bold text-gray-400 uppercase tracking-wider">Academics</th>
-                  <th className="pb-3 text-xs font-bold text-gray-400 uppercase tracking-wider">AI Warning</th>
-                  <th className="pb-3 text-xs font-bold text-gray-400 uppercase tracking-wider text-right pr-4">Risk Score</th>
+                <tr className="border-b border-slate-200">
+                  <th className="pb-3 text-xs font-bold text-slate-500 uppercase tracking-wider pl-4">Student</th>
+                  <th className="pb-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Academics</th>
+                  <th className="pb-3 text-xs font-bold text-slate-500 uppercase tracking-wider">AI Warning</th>
+                  <th className="pb-3 text-xs font-bold text-slate-500 uppercase tracking-wider text-right pr-4">Risk Score</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-slate-200">
                 {!data?.atRiskStudents || data.atRiskStudents.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="py-8 text-center text-gray-500 italic text-sm">
+                    <td colSpan={4} className="py-8 text-center text-slate-400 italic text-sm">
                       No students are currently flagged as at risk.
                     </td>
                   </tr>
@@ -335,20 +344,20 @@ export default function Dashboard() {
                     <tr key={student.id} className="hover:bg-white/[0.02] transition-colors">
                       <td className="py-4 pl-4">
                         <div className="font-bold text-gray-200">{student.name}</div>
-                        <div className="text-xs text-gray-500">{student.enrollmentNo} • {student.department} (Sem {student.semester})</div>
+                        <div className="text-xs text-slate-400">{student.enrollmentNo} • {student.department} (Sem {student.semester})</div>
                       </td>
                       <td className="py-4">
                         <div className="flex gap-4 text-xs">
-                          <span className={student.gpa < 2.5 ? 'text-red-400' : 'text-gray-400'}>
+                          <span className={student.gpa < 2.5 ? 'text-red-400' : 'text-slate-500'}>
                             GPA: <span className="font-bold text-gray-200">{student.gpa.toFixed(2)}</span>
                           </span>
-                          <span className={student.attendance < 75 ? 'text-red-400' : 'text-gray-400'}>
+                          <span className={student.attendance < 75 ? 'text-red-400' : 'text-slate-500'}>
                             Att: <span className="font-bold text-gray-200">{student.attendance}%</span>
                           </span>
                         </div>
                       </td>
                       <td className="py-4">
-                        <p className="text-xs text-gray-400 max-w-md line-clamp-2">
+                        <p className="text-xs text-slate-500 max-w-md line-clamp-2">
                           {student.warning}
                         </p>
                       </td>

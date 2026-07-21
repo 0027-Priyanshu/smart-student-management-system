@@ -37,7 +37,7 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0b0c10] relative px-4 overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 relative px-4 overflow-hidden">
       {/* Background Gradients */}
       <div className="absolute inset-0 bg-[radial-gradient(at_50%_0%,rgba(138,92,246,0.15),transparent_50%)] pointer-events-none z-0" />
       <div className="absolute inset-0 bg-[radial-gradient(at_50%_100%,rgba(6,182,212,0.1),transparent_50%)] pointer-events-none z-0" />
@@ -46,13 +46,13 @@ export default function Register() {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
-        className="w-full max-w-md bg-[#12141c]/80 backdrop-blur-xl border border-[#8a5cf6]/20 p-6 sm:p-8 rounded-3xl shadow-card relative z-10"
+        className="w-full max-w-md bg-white/80 backdrop-blur-xl border border-[#8a5cf6]/20 p-6 sm:p-8 rounded-3xl shadow-card relative z-10"
       >
         <div className="text-center mb-8">
           <h2 className="text-3xl font-title font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4]">
             Create Account
           </h2>
-          <p className="text-sm text-gray-400 mt-2">Get started with EduManager system</p>
+          <p className="text-sm text-slate-500 mt-2">Get started with EduManager system</p>
         </div>
 
         {error && (
@@ -64,63 +64,63 @@ export default function Register() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Select System Role</label>
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Select System Role</label>
             <div className="relative">
-              <UserCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+              <UserCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#8a5cf6] rounded-xl text-sm text-black focus:outline-none transition-all appearance-none cursor-pointer"
+                className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-sm text-black focus:outline-none transition-all appearance-none cursor-pointer"
               >
-                <option value="Student" className="bg-[#12141c]">Student</option>
-                <option value="Faculty" className="bg-[#12141c]">Faculty Member</option>
-                <option value="Admin" className="bg-[#12141c]">Administrator</option>
-                <option value="Super Admin" className="bg-[#12141c]">Super Administrator</option>
+                <option value="Student" className="bg-white">Student</option>
+                <option value="Faculty" className="bg-white">Faculty Member</option>
+                <option value="Admin" className="bg-white">Administrator</option>
+                <option value="Super Admin" className="bg-white">Super Administrator</option>
               </select>
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Full Name</label>
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Full Name</label>
             <div className="relative">
-              <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+              <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input
                 type="text"
                 required
                 placeholder="e.g. John Doe"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#8a5cf6] rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
+                className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Email Address</label>
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Email Address</label>
             <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input
                 type="email"
                 required
                 placeholder="e.g. john@sms.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#8a5cf6] rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
+                className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Password</label>
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Password</label>
             <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input
                 type="password"
                 required
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#8a5cf6] rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
+                className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
               />
             </div>
           </div>
@@ -128,13 +128,13 @@ export default function Register() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] hover:shadow-glow text-white font-bold rounded-xl text-sm shadow-card transition-all"
+            className="w-full py-3.5 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] hover:shadow-glow text-slate-900 font-bold rounded-xl text-sm shadow-card transition-all"
           >
             {loading ? 'Creating account...' : 'Register'}
           </button>
         </form>
 
-        <div className="mt-8 text-center text-xs text-gray-400">
+        <div className="mt-8 text-center text-xs text-slate-500">
           Already have an account?{' '}
           <Link to="/login" className="text-[#8a5cf6] font-semibold hover:underline">
             Sign In

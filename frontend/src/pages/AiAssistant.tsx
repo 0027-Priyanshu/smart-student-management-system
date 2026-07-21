@@ -237,25 +237,25 @@ export default function AiAssistant() {
     <DashboardShell title="AI Academic Assistant">
       
       {/* Dynamic Tab Switchers */}
-      <div className="flex border-b border-white/5 mb-8 overflow-x-auto scrollbar-none whitespace-nowrap">
+      <div className="flex border-b border-slate-200 mb-8 overflow-x-auto scrollbar-none whitespace-nowrap">
         {!isStudent && (
           <button 
             onClick={() => setActiveTab('chat')} 
-            className={`px-5 py-3 text-xs font-semibold border-b-2 transition-colors ${activeTab === 'chat' ? 'border-[#8a5cf6] text-[#8a5cf6]' : 'border-transparent text-gray-400 hover:text-white'}`}
+            className={`px-5 py-3 text-xs font-semibold border-b-2 transition-colors ${activeTab === 'chat' ? 'border-[#8a5cf6] text-[#8a5cf6]' : 'border-transparent text-slate-500 hover:text-slate-900'}`}
           >
             AI Chat Companion
           </button>
         )}
         <button 
           onClick={() => setActiveTab('profiler')} 
-          className={`px-5 py-3 text-xs font-semibold border-b-2 transition-colors ${activeTab === 'profiler' ? 'border-[#8a5cf6] text-[#8a5cf6]' : 'border-transparent text-gray-400 hover:text-white'}`}
+          className={`px-5 py-3 text-xs font-semibold border-b-2 transition-colors ${activeTab === 'profiler' ? 'border-[#8a5cf6] text-[#8a5cf6]' : 'border-transparent text-slate-500 hover:text-slate-900'}`}
         >
           {isStudent ? 'Your AI Profile Analyzer' : 'Student Performance Analyzer'}
         </button>
         {isAdmin && (
           <button 
             onClick={() => setActiveTab('insights')} 
-            className={`px-5 py-3 text-xs font-semibold border-b-2 transition-colors ${activeTab === 'insights' ? 'border-[#8a5cf6] text-[#8a5cf6]' : 'border-transparent text-gray-400 hover:text-white'}`}
+            className={`px-5 py-3 text-xs font-semibold border-b-2 transition-colors ${activeTab === 'insights' ? 'border-[#8a5cf6] text-[#8a5cf6]' : 'border-transparent text-slate-500 hover:text-slate-900'}`}
           >
             Strategic Admin Insights
           </button>
@@ -264,22 +264,22 @@ export default function AiAssistant() {
 
       {/* Tab 1: Direct Chat interface */}
       {activeTab === 'chat' && (
-        <div className="flex flex-col h-[600px] bg-[#12141c]/50 border border-white/5 rounded-3xl overflow-hidden shadow-card">
+        <div className="flex flex-col h-[600px] bg-slate-1000 border border-slate-200 rounded-3xl overflow-hidden shadow-card">
           {/* Header area */}
-          <div className="p-4 bg-white/2 border-b border-white/5 flex items-center justify-between">
+          <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 bg-gradient-to-br from-[#8a5cf6] to-[#06b6d4] rounded-xl flex items-center justify-center text-white shadow-glow">
+              <div className="h-10 w-10 bg-gradient-to-br from-[#8a5cf6] to-[#06b6d4] rounded-xl flex items-center justify-center text-slate-900 shadow-glow">
                 <Bot size={20} />
               </div>
               <div>
-                <h3 className="font-title font-extrabold text-sm text-white">EduManager AI</h3>
+                <h3 className="font-title font-extrabold text-sm text-slate-900">EduManager AI</h3>
                 <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Online & Connected</p>
               </div>
             </div>
             
             <button 
               onClick={() => setIsSpeaking(!isSpeaking)}
-              className={`p-2 rounded-lg transition-all ${isSpeaking ? 'text-[#06b6d4] bg-[#06b6d4]/10' : 'text-gray-500 bg-white/5'}`}
+              className={`p-2 rounded-lg transition-all ${isSpeaking ? 'text-[#06b6d4] bg-[#06b6d4]/10' : 'text-slate-400 bg-slate-100'}`}
               title="Toggle AI Voice Response"
             >
               {isSpeaking ? <Volume2 size={18} /> : <VolumeX size={18} />}
@@ -296,7 +296,7 @@ export default function AiAssistant() {
                     {isAI ? <Bot size={16} /> : <User size={16} />}
                   </div>
                   <div className={`p-4 rounded-2xl text-xs leading-normal border overflow-x-auto prose prose-invert max-w-none ${
-                    isAI ? 'bg-white/2 border-white/5 text-gray-300' : 'bg-[#8a5cf6]/10 border-[#8a5cf6]/20 text-white'
+                    isAI ? 'bg-slate-50 border-slate-200 text-slate-700' : 'bg-[#8a5cf6]/10 border-[#8a5cf6]/20 text-slate-900'
                   }`}>
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {msg.parts.join('\n')}
@@ -310,7 +310,7 @@ export default function AiAssistant() {
                 <div className="h-8 w-8 rounded-full bg-[#8a5cf6]/20 text-[#8a5cf6] flex items-center justify-center animate-pulse">
                   <Bot size={16} />
                 </div>
-                <div className="flex gap-1.5 p-3 rounded-xl bg-white/2 border border-white/5">
+                <div className="flex gap-1.5 p-3 rounded-xl bg-slate-50 border border-slate-200">
                   <span className="h-1.5 w-1.5 bg-[#8a5cf6] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                   <span className="h-1.5 w-1.5 bg-[#8a5cf6] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                   <span className="h-1.5 w-1.5 bg-[#8a5cf6] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
@@ -321,14 +321,14 @@ export default function AiAssistant() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSendMessage} className="p-4 bg-white/2 border-t border-white/5 flex gap-3">
+          <form onSubmit={handleSendMessage} className="p-4 bg-slate-50 border-t border-slate-200 flex gap-3">
             <button
               type="button"
               onClick={toggleListen}
               className={`p-3 rounded-xl flex items-center justify-center transition-all ${
                 isListening 
-                  ? 'bg-red-500 text-white animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.5)]' 
-                  : 'bg-white/5 text-gray-400 hover:text-white hover:bg-white/10 border border-white/5'
+                  ? 'bg-red-500 text-slate-900 animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.5)]' 
+                  : 'bg-slate-100 text-slate-500 hover:text-slate-900 hover:bg-slate-500 border border-slate-200'
               }`}
             >
               {isListening ? <Mic size={18} /> : <MicOff size={18} />}
@@ -338,11 +338,11 @@ export default function AiAssistant() {
               placeholder="Ask me something..."
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
-              className="flex-1 px-4 py-3 bg-[#0b0c10]/80 border border-white/5 focus:border-[#8a5cf6] rounded-xl text-xs text-white focus:outline-none transition-all"
+              className="flex-1 px-4 py-3 bg-slate-50/80 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-xs text-slate-900 focus:outline-none transition-all"
             />
             <button 
               type="submit" 
-              className="px-4.5 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] text-white font-bold rounded-xl text-xs shadow-card flex items-center justify-center"
+              className="px-4.5 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] text-slate-900 font-bold rounded-xl text-xs shadow-card flex items-center justify-center"
             >
               <Send size={16} />
             </button>
@@ -355,15 +355,15 @@ export default function AiAssistant() {
         <div className="space-y-6">
           {/* Student Selector (Admin only) */}
           {isAdmin && (
-            <div className="p-5 bg-[#12141c]/50 border border-white/5 rounded-3xl flex flex-col sm:flex-row sm:items-center gap-4">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Select Student</label>
+            <div className="p-5 bg-slate-1000 border border-slate-200 rounded-3xl flex flex-col sm:flex-row sm:items-center gap-4">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Select Student</label>
               <select
                 value={selectedStudent}
                 onChange={(e) => {
                   setSelectedStudent(e.target.value);
                   handleAnalyzeStudent(e.target.value);
                 }}
-                className="px-3 py-2.5 bg-white/2 border border-white/5 focus:border-[#8a5cf6] rounded-xl text-xs text-gray-300 focus:outline-none cursor-pointer min-w-[200px]"
+                className="px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-xs text-slate-700 focus:outline-none cursor-pointer min-w-[200px]"
               >
                 <option value="">-- Choose student --</option>
                 {students.map(s => (
@@ -386,7 +386,7 @@ export default function AiAssistant() {
               </div>
             </div>
           ) : !summary && !isStudent ? (
-            <div className="p-10 bg-[#12141c]/50 border border-white/5 rounded-3xl text-center text-gray-500 italic text-xs">
+            <div className="p-10 bg-slate-1000 border border-slate-200 rounded-3xl text-center text-slate-400 italic text-xs">
               Select a student to generate their AI Performance analysis card.
             </div>
           ) : (
@@ -396,11 +396,11 @@ export default function AiAssistant() {
               <div className="lg:col-span-2 space-y-6">
                 
                 {/* Academic Profile summary */}
-                <div className="p-6 bg-[#12141c]/50 border border-white/5 rounded-3xl shadow-card relative overflow-hidden">
+                <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card relative overflow-hidden">
                   <div className="absolute top-0 right-0 h-16 w-16 bg-[#8a5cf6]/5 rounded-full filter blur-xl" />
                   
                   <div className="flex items-center justify-between mb-4">
-                    <h4 className="font-title font-extrabold text-base text-white flex items-center gap-2">
+                    <h4 className="font-title font-extrabold text-base text-slate-900 flex items-center gap-2">
                       <BrainCircuit size={18} className="text-[#8a5cf6]" />
                       AI Academic Summary Profile
                     </h4>
@@ -408,14 +408,14 @@ export default function AiAssistant() {
                       {isAdmin && riskData && (riskData.riskLevel === 'Medium' || riskData.riskLevel === 'High') && (
                         <button
                           onClick={handleSendParentEmail}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-xl border border-red-500/20 transition-all text-[10px] font-bold"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-slate-900 rounded-xl border border-red-500/20 transition-all text-[10px] font-bold"
                         >
                           Notify Parent (AI)
                         </button>
                       )}
                       <button
                         onClick={downloadPDFReport}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#8a5cf6]/10 hover:bg-[#8a5cf6] text-[#8a5cf6] hover:text-white rounded-xl border border-[#8a5cf6]/20 transition-all text-[10px] font-bold"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#8a5cf6]/10 hover:bg-[#8a5cf6] text-[#8a5cf6] hover:text-slate-900 rounded-xl border border-[#8a5cf6]/20 transition-all text-[10px] font-bold"
                       >
                         <FileText size={12} />
                         Export PDF
@@ -424,14 +424,14 @@ export default function AiAssistant() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Summary Text */}
-                    <div className="text-sm text-gray-200 leading-relaxed bg-white/5 p-6 rounded-2xl border border-white/10 font-sans shadow-inner prose prose-invert prose-p:text-gray-300 prose-headings:text-white prose-strong:text-[#06b6d4] prose-li:text-gray-300 max-w-none">
+                    <div className="text-sm text-gray-200 leading-relaxed bg-slate-100 p-6 rounded-2xl border border-slate-300 font-sans shadow-inner prose prose-invert prose-p:text-slate-700 prose-headings:text-slate-900 prose-strong:text-[#06b6d4] prose-li:text-slate-700 max-w-none">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {summary}
                       </ReactMarkdown>
                     </div>
 
                     {/* Historical Trend Chart */}
-                    <div className="bg-white/5 p-6 rounded-2xl border border-white/10 shadow-inner flex flex-col">
+                    <div className="bg-slate-100 p-6 rounded-2xl border border-slate-300 shadow-inner flex flex-col">
                       <h5 className="text-sm font-bold text-gray-200 mb-4 flex items-center gap-2">
                         <TrendingUp size={16} className="text-[#10b981]" />
                         Historical GPA Trend
@@ -448,7 +448,7 @@ export default function AiAssistant() {
                             </LineChart>
                           </ResponsiveContainer>
                         ) : (
-                          <div className="h-full flex items-center justify-center text-xs text-gray-500 italic">No trend data available.</div>
+                          <div className="h-full flex items-center justify-center text-xs text-slate-400 italic">No trend data available.</div>
                         )}
                       </div>
                     </div>
@@ -489,17 +489,17 @@ export default function AiAssistant() {
                 </div>
 
                 {/* Recommendations */}
-                <div className="p-6 bg-[#12141c]/50 border border-white/5 rounded-3xl shadow-card">
-                  <h4 className="font-title font-extrabold text-base mb-4 text-white flex items-center gap-2">
+                <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card">
+                  <h4 className="font-title font-extrabold text-base mb-4 text-slate-900 flex items-center gap-2">
                     <Sparkles size={18} className="text-[#06b6d4]" />
                     Personalized Study Recommendations
                   </h4>
                   <div className="space-y-3">
                     {recommendations.length === 0 ? (
-                      <p className="text-xs text-gray-500 italic">No recommendations mapped.</p>
+                      <p className="text-xs text-slate-400 italic">No recommendations mapped.</p>
                     ) : (
                       recommendations.map((rec, idx) => (
-                        <div key={idx} className="flex gap-3 p-3 bg-white/2 rounded-xl border border-white/5 text-xs text-gray-300 font-semibold leading-normal items-start">
+                        <div key={idx} className="flex gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700 font-semibold leading-normal items-start">
                           <span className="h-5 w-5 rounded-full bg-[#06b6d4]/15 border border-[#06b6d4]/20 text-[#06b6d4] flex items-center justify-center text-[10px] font-bold shrink-0">{idx + 1}</span>
                           <span>{rec}</span>
                         </div>
@@ -511,15 +511,15 @@ export default function AiAssistant() {
 
               {/* Side panel: warnings */}
               <div className="lg:col-span-1 space-y-6">
-                <div className="p-6 bg-[#12141c]/50 border border-white/5 rounded-3xl shadow-card h-full">
-                  <h4 className="font-title font-extrabold text-base mb-4 text-white flex items-center gap-2">
+                <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card h-full">
+                  <h4 className="font-title font-extrabold text-base mb-4 text-slate-900 flex items-center gap-2">
                     <ShieldAlert size={18} className="text-[#ef4444]" />
                     AI Alert Center
                   </h4>
                   
                   <div className="space-y-4">
                     <div>
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-500 block mb-2">Weak Subjects Detected</span>
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mb-2">Weak Subjects Detected</span>
                       {weakSubjects.length === 0 ? (
                         <span className="px-2.5 py-1 rounded-full bg-[#10b981]/10 text-[#10b981] font-semibold border border-[#10b981]/25 text-[10px] uppercase">
                           No Risk Found
@@ -535,9 +535,9 @@ export default function AiAssistant() {
                       )}
                     </div>
 
-                    <div className="pt-4 border-t border-white/5">
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-500 block mb-1">Target Standing Goal</span>
-                      <p className="text-xs text-gray-400 leading-normal">
+                    <div className="pt-4 border-t border-slate-200">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mb-1">Target Standing Goal</span>
+                      <p className="text-xs text-slate-500 leading-normal">
                         Focus 70% of weekly review hours on the weak subjects highlighted above to elevate overall CGPA levels.
                       </p>
                     </div>
@@ -552,22 +552,22 @@ export default function AiAssistant() {
       {/* Tab 3: Strategic Admin Insights (Admin only) */}
       {activeTab === 'insights' && isAdmin && (
         <div className="space-y-6">
-          <div className="p-6 bg-[#12141c]/50 border border-white/5 rounded-3xl shadow-card relative overflow-hidden">
+          <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card relative overflow-hidden">
             <div className="absolute top-0 right-0 h-28 w-28 bg-[#8a5cf6]/5 rounded-full filter blur-2xl" />
 
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h4 className="font-title font-extrabold text-base text-white flex items-center gap-2">
+                <h4 className="font-title font-extrabold text-base text-slate-900 flex items-center gap-2">
                   <FileText size={18} className="text-[#8a5cf6]" />
                   AI Strategic Insight Report
                 </h4>
-                <p className="text-[10px] text-gray-500 mt-1 uppercase font-semibold">Generates real-time institute-wide evaluation and targets</p>
+                <p className="text-[10px] text-slate-400 mt-1 uppercase font-semibold">Generates real-time institute-wide evaluation and targets</p>
               </div>
 
               <button
                 onClick={handleGenerateInsights}
                 disabled={insightsLoading}
-                className="px-4 py-2.5 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] text-white font-bold rounded-xl text-xs hover:shadow-glow transition-all"
+                className="px-4 py-2.5 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] text-slate-900 font-bold rounded-xl text-xs hover:shadow-glow transition-all"
               >
                 {insightsLoading ? 'Generating report...' : 'Generate New Insights'}
               </button>
@@ -576,12 +576,12 @@ export default function AiAssistant() {
             {insightsLoading ? (
               <CardSkeleton />
             ) : !insights ? (
-              <div className="p-10 text-center text-gray-500 italic text-xs bg-white/2 rounded-2xl border border-white/5">
+              <div className="p-10 text-center text-slate-400 italic text-xs bg-slate-50 rounded-2xl border border-slate-200">
                 Click the button to evaluate MERN analytics metrics via Gemini and produce objectives.
               </div>
             ) : (
               <div className="space-y-6">
-                <div className="p-5 bg-white/2 border border-white/5 rounded-2xl text-xs text-gray-300 leading-relaxed font-medium prose prose-invert max-w-none">
+                <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-700 leading-relaxed font-medium prose prose-invert max-w-none">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {insights}
                   </ReactMarkdown>
@@ -589,8 +589,8 @@ export default function AiAssistant() {
 
                 {/* Recharts - AI Trend Graph */}
                 {chartData && chartData.length > 0 && (
-                  <div className="p-5 bg-white/2 border border-white/5 rounded-2xl h-72">
-                    <h5 className="font-title font-extrabold text-sm mb-4 text-white">AI Projected Trend (GPA vs Attendance)</h5>
+                  <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl h-72">
+                    <h5 className="font-title font-extrabold text-sm mb-4 text-slate-900">AI Projected Trend (GPA vs Attendance)</h5>
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />

@@ -153,20 +153,20 @@ export default function Attendance() {
     <DashboardShell title="Attendance Tracker">
       
       {/* Attendance Heatmap Widget */}
-      <div className="p-6 bg-[#12141c]/50 border border-white/5 rounded-3xl mb-8 shadow-card">
+      <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl mb-8 shadow-card">
         <h3 className="font-title font-bold text-lg mb-4 flex items-center gap-2">
           <Calendar size={20} className="text-[#8a5cf6]" />
           {isStudent ? 'Your Attendance Activity Tracker' : 'Overall Institute Attendance Frequency'}
         </h3>
         
-        <p className="text-xs text-gray-400 mb-6">
+        <p className="text-xs text-slate-500 mb-6">
           Daily logging frequency map. Higher intensities reflect high class presence counts.
         </p>
 
         {/* Heatmap Grid */}
-        <div className="flex flex-wrap gap-2.5 max-h-48 overflow-y-auto p-1.5 bg-white/2 rounded-2xl border border-white/5">
+        <div className="flex flex-wrap gap-2.5 max-h-48 overflow-y-auto p-1.5 bg-slate-50 rounded-2xl border border-slate-200">
           {heatmap.length === 0 ? (
-            <p className="text-xs text-gray-500 italic py-4 text-center w-full">No attendances recorded yet.</p>
+            <p className="text-xs text-slate-400 italic py-4 text-center w-full">No attendances recorded yet.</p>
           ) : (
             heatmap.map((item, idx) => {
               const count = item.count;
@@ -175,7 +175,7 @@ export default function Attendance() {
               return (
                 <div 
                   key={idx} 
-                  className={`h-11 px-3 flex flex-col justify-center items-center rounded-xl text-white font-mono text-[10px] ${colorBg} shadow-glow`}
+                  className={`h-11 px-3 flex flex-col justify-center items-center rounded-xl text-slate-900 font-mono text-[10px] ${colorBg} shadow-glow`}
                   title={`${item.count} checkins on ${item.date}`}
                 >
                   <span className="font-bold">{item.date.split('-').slice(1).join('/')}</span>
@@ -192,17 +192,17 @@ export default function Attendance() {
         {/* Actions panel */}
         <div className="lg:col-span-1 space-y-6">
           
-          <div className="p-6 bg-[#12141c]/50 border border-white/5 rounded-3xl shadow-card">
-            <h4 className="font-title font-extrabold text-base mb-4 text-white">Tracking Session</h4>
+          <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card">
+            <h4 className="font-title font-extrabold text-base mb-4 text-slate-900">Tracking Session</h4>
             
             <div className="space-y-4">
               {/* Course Selection */}
               <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Select Academic Course</label>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Select Academic Course</label>
                 <select
                   value={selectedCourse}
                   onChange={(e) => setSelectedCourse(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-white/2 border border-white/5 focus:border-[#8a5cf6] rounded-xl text-xs text-gray-300 focus:outline-none cursor-pointer"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-xs text-slate-700 focus:outline-none cursor-pointer"
                 >
                   <option value="">-- Select Course --</option>
                   {courses.map(c => (
@@ -216,12 +216,12 @@ export default function Attendance() {
               {/* Date selection (only visible to admin/faculty) */}
               {isAdminOrFaculty && (
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Marking Date</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Marking Date</label>
                   <input
                     type="date"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-white/2 border border-white/5 focus:border-[#8a5cf6] rounded-xl text-xs text-white focus:outline-none"
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-xs text-slate-900 focus:outline-none"
                   />
                 </div>
               )}
@@ -230,16 +230,16 @@ export default function Attendance() {
 
           {/* Student QR scan simulation */}
           {isStudent && (
-            <div className="p-6 bg-[#12141c]/50 border border-white/5 rounded-3xl shadow-card relative overflow-hidden">
+            <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card relative overflow-hidden">
               {/* Glow light */}
               <div className="absolute top-0 right-0 h-16 w-16 bg-[#06b6d4]/5 rounded-full filter blur-xl" />
 
-              <h4 className="font-title font-extrabold text-base mb-4 text-white flex items-center gap-1.5">
+              <h4 className="font-title font-extrabold text-base mb-4 text-slate-900 flex items-center gap-1.5">
                 <Scan size={18} className="text-[#06b6d4]" />
                 Self QR Scanner Mock
               </h4>
               
-              <p className="text-xs text-gray-400 leading-normal mb-5">
+              <p className="text-xs text-slate-500 leading-normal mb-5">
                 Simulate scanning the lecturer projected classroom QR code to record your present attendance status for today.
               </p>
 
@@ -260,7 +260,7 @@ export default function Attendance() {
               <button
                 onClick={handleSimulateQRScan}
                 disabled={!selectedCourse || actionLoading}
-                className="w-full py-3 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] hover:shadow-glow text-white font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5"
+                className="w-full py-3 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] hover:shadow-glow text-slate-900 font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5"
               >
                 {actionLoading ? 'Recording entry...' : 'Scan Classroom QR'}
               </button>
@@ -270,14 +270,14 @@ export default function Attendance() {
 
         {/* Directory Student List (Admin/Faculty only) */}
         {isAdminOrFaculty && (
-          <div className="lg:col-span-2 p-6 bg-[#12141c]/50 border border-white/5 rounded-3xl shadow-card flex flex-col h-full">
+          <div className="lg:col-span-2 p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card flex flex-col h-full">
             <div className="flex items-center justify-between mb-4">
-              <h4 className="font-title font-extrabold text-base text-white">Enrollment List</h4>
+              <h4 className="font-title font-extrabold text-base text-slate-900">Enrollment List</h4>
               {selectedCourse && (
                 <button
                   onClick={handleSaveAttendance}
                   disabled={actionLoading}
-                  className="px-4 py-2 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] hover:shadow-glow text-white font-bold rounded-xl text-xs transition-all"
+                  className="px-4 py-2 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] hover:shadow-glow text-slate-900 font-bold rounded-xl text-xs transition-all"
                 >
                   {actionLoading ? 'Saving...' : 'Confirm Attendance'}
                 </button>
@@ -291,7 +291,7 @@ export default function Attendance() {
             )}
 
             {!selectedCourse ? (
-              <div className="flex flex-col justify-center items-center py-20 text-gray-500 text-center gap-2">
+              <div className="flex flex-col justify-center items-center py-20 text-slate-400 text-center gap-2">
                 <HelpCircle size={32} className="opacity-45" />
                 <p className="text-xs italic">Please select an academic course to load the student registry.</p>
               </div>
@@ -301,7 +301,7 @@ export default function Attendance() {
                   const studentCourses = s.enrolledCourses?.map((c: any) => typeof c === 'object' ? c._id || c.id : c) || [];
                   return studentCourses.includes(selectedCourse);
                 }).length === 0 ? (
-                  <p className="text-xs text-gray-500 italic text-center py-10">No students are currently enrolled in this course.</p>
+                  <p className="text-xs text-slate-400 italic text-center py-10">No students are currently enrolled in this course.</p>
                 ) : (
                   students.filter(s => {
                     const studentCourses = s.enrolledCourses?.map((c: any) => typeof c === 'object' ? c._id || c.id : c) || [];
@@ -313,30 +313,30 @@ export default function Attendance() {
                     return (
                       <div 
                         key={studentId} 
-                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-white/2 rounded-2xl border border-white/5 hover:border-white/10 transition-colors"
+                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-200 hover:border-slate-300 transition-colors"
                       >
                         <div>
-                          <p className="font-semibold text-xs text-white">{student.name}</p>
-                          <p className="text-[10px] font-mono text-gray-500">{student.enrollmentNo}</p>
+                          <p className="font-semibold text-xs text-slate-900">{student.name}</p>
+                          <p className="text-[10px] font-mono text-slate-400">{student.enrollmentNo}</p>
                         </div>
 
                         {/* Status Toggle buttons */}
-                        <div className="flex gap-1.5 bg-[#0b0c10] p-1 rounded-xl border border-white/5">
+                        <div className="flex gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200">
                           <button 
                             onClick={() => handleMarkStatus(studentId, 'Present')}
-                            className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold uppercase transition-all ${status === 'Present' ? 'bg-[#10b981] text-white' : 'text-gray-500 hover:text-gray-300'}`}
+                            className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold uppercase transition-all ${status === 'Present' ? 'bg-[#10b981] text-slate-900' : 'text-slate-400 hover:text-slate-700'}`}
                           >
                             Present
                           </button>
                           <button 
                             onClick={() => handleMarkStatus(studentId, 'On Leave')}
-                            className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold uppercase transition-all ${status === 'On Leave' ? 'bg-[#f59e0b] text-white' : 'text-gray-500 hover:text-gray-300'}`}
+                            className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold uppercase transition-all ${status === 'On Leave' ? 'bg-[#f59e0b] text-slate-900' : 'text-slate-400 hover:text-slate-700'}`}
                           >
                             On Leave
                           </button>
                           <button 
                             onClick={() => handleMarkStatus(studentId, 'Absent')}
-                            className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold uppercase transition-all ${status === 'Absent' ? 'bg-[#ef4444] text-white' : 'text-gray-500 hover:text-gray-300'}`}
+                            className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold uppercase transition-all ${status === 'Absent' ? 'bg-[#ef4444] text-slate-900' : 'text-slate-400 hover:text-slate-700'}`}
                           >
                             Absent
                           </button>

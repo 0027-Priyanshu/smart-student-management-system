@@ -91,7 +91,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0b0c10] relative px-4 overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 relative px-4 overflow-hidden">
       {/* Background Gradients */}
       <div className="absolute inset-0 bg-[radial-gradient(at_50%_0%,rgba(138,92,246,0.15),transparent_50%)] pointer-events-none z-0" />
       <div className="absolute inset-0 bg-[radial-gradient(at_50%_100%,rgba(6,182,212,0.1),transparent_50%)] pointer-events-none z-0" />
@@ -104,13 +104,13 @@ export default function Login() {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="w-full max-w-md bg-[#12141c]/80 backdrop-blur-xl border border-[#8a5cf6]/20 p-6 sm:p-8 rounded-3xl shadow-card relative z-10"
+            className="w-full max-w-md bg-white/80 backdrop-blur-xl border border-[#8a5cf6]/20 p-6 sm:p-8 rounded-3xl shadow-card relative z-10"
           >
             <div className="text-center mb-8">
               <h2 className="text-3xl font-title font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4]">
                 EduManager
               </h2>
-              <p className="text-sm text-gray-400 mt-2">Sign in to your administration panel</p>
+              <p className="text-sm text-slate-500 mt-2">Sign in to your administration panel</p>
             </div>
 
             {error && (
@@ -122,23 +122,23 @@ export default function Login() {
 
             <form onSubmit={handleLoginSubmit} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Email Address</label>
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Email Address</label>
                 <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                   <input
                     type="email"
                     required
                     placeholder="e.g. admin@sms.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#8a5cf6] rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
+                    className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
                 <div className="flex justify-between items-center">
-                  <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Password</label>
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Password</label>
                   <button 
                     type="button" 
                     onClick={() => {
@@ -152,14 +152,14 @@ export default function Login() {
                   </button>
                 </div>
                 <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                   <input
                     type="password"
                     required
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#8a5cf6] rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
+                    className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
                   />
                 </div>
               </div>
@@ -167,13 +167,13 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] hover:shadow-glow text-white font-bold rounded-xl text-sm shadow-card transition-all"
+                className="w-full py-3.5 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] hover:shadow-glow text-slate-900 font-bold rounded-xl text-sm shadow-card transition-all"
               >
                 {loading ? 'Authenticating...' : 'Sign In'}
               </button>
             </form>
 
-            <div className="mt-8 text-center text-xs text-gray-400">
+            <div className="mt-8 text-center text-xs text-slate-500">
               New here?{' '}
               <Link to="/register" className="text-[#8a5cf6] font-semibold hover:underline">
                 Create an account
@@ -181,17 +181,17 @@ export default function Login() {
             </div>
 
             {/* Hint Panel */}
-            <div className="mt-6 p-4 bg-[#181a23] border border-white/10 rounded-2xl text-[11px] text-gray-400 space-y-2">
-              <span className="font-bold text-gray-300 block mb-1">Demo Credentials:</span>
+            <div className="mt-6 p-4 bg-[#181a23] border border-slate-300 rounded-2xl text-[11px] text-slate-500 space-y-2">
+              <span className="font-bold text-slate-700 block mb-1">Demo Credentials:</span>
               <div 
                 onClick={() => { setEmail('admin@sms.com'); setPassword('admin123'); }}
-                className="cursor-pointer hover:bg-white/5 p-1.5 -ml-1.5 rounded-lg transition-colors flex items-center gap-1"
+                className="cursor-pointer hover:bg-slate-100 p-1.5 -ml-1.5 rounded-lg transition-colors flex items-center gap-1"
               >
                 • Admin: <code className="text-[#06b6d4]">admin@sms.com</code> / <code className="text-[#06b6d4]">admin123</code>
               </div>
               <div 
                 onClick={() => { setEmail('student@sms.com'); setPassword('student123'); }}
-                className="cursor-pointer hover:bg-white/5 p-1.5 -ml-1.5 rounded-lg transition-colors flex items-center gap-1"
+                className="cursor-pointer hover:bg-slate-100 p-1.5 -ml-1.5 rounded-lg transition-colors flex items-center gap-1"
               >
                 • Student: <code className="text-[#06b6d4]">student@sms.com</code> / <code className="text-[#06b6d4]">student123</code>
               </div>
@@ -206,11 +206,11 @@ export default function Login() {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="w-full max-w-md bg-[#12141c]/80 backdrop-blur-xl border border-[#8a5cf6]/20 p-8 rounded-3xl shadow-card relative z-10"
+            className="w-full max-w-md bg-white/80 backdrop-blur-xl border border-[#8a5cf6]/20 p-8 rounded-3xl shadow-card relative z-10"
           >
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-title font-extrabold text-white">Reset Password</h2>
-              <p className="text-xs text-gray-400 mt-2">Enter email to recover access</p>
+              <h2 className="text-2xl font-title font-extrabold text-slate-900">Reset Password</h2>
+              <p className="text-xs text-slate-500 mt-2">Enter email to recover access</p>
             </div>
 
             {error && (
@@ -229,16 +229,16 @@ export default function Login() {
 
             <form onSubmit={handleForgotSubmit} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Email Address</label>
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Email Address</label>
                 <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                   <input
                     type="email"
                     required
                     placeholder="e.g. admin@sms.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#8a5cf6] rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
+                    className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
                   />
                 </div>
               </div>
@@ -246,7 +246,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] text-white font-bold rounded-xl text-sm shadow-card transition-all"
+                className="w-full py-3.5 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] text-slate-900 font-bold rounded-xl text-sm shadow-card transition-all"
               >
                 {loading ? 'Sending...' : 'Send Reset Link'}
               </button>
@@ -260,7 +260,7 @@ export default function Login() {
                   setError('');
                   setSuccess('');
                 }} 
-                className="text-xs text-gray-400 hover:text-white transition-colors underline"
+                className="text-xs text-slate-500 hover:text-slate-900 transition-colors underline"
               >
                 Back to sign in
               </button>
@@ -275,11 +275,11 @@ export default function Login() {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="w-full max-w-md bg-[#12141c]/80 backdrop-blur-xl border border-[#8a5cf6]/20 p-8 rounded-3xl shadow-card relative z-10"
+            className="w-full max-w-md bg-white/80 backdrop-blur-xl border border-[#8a5cf6]/20 p-8 rounded-3xl shadow-card relative z-10"
           >
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-title font-extrabold text-white">Choose New Password</h2>
-              <p className="text-xs text-gray-400 mt-2">Enter the token shown in your server log console</p>
+              <h2 className="text-2xl font-title font-extrabold text-slate-900">Choose New Password</h2>
+              <p className="text-xs text-slate-500 mt-2">Enter the token shown in your server log console</p>
             </div>
 
             {error && (
@@ -298,28 +298,28 @@ export default function Login() {
 
             <form onSubmit={handleResetSubmit} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Reset Token</label>
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Reset Token</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. k4l5h..."
                   value={resetToken}
                   onChange={(e) => setResetToken(e.target.value)}
-                  className="w-full px-4 py-3.5 bg-white border border-gray-200 focus:border-[#8a5cf6] rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
+                  className="w-full px-4 py-3.5 bg-white border border-gray-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">New Password</label>
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">New Password</label>
                 <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                   <input
                     type="password"
                     required
                     placeholder="••••••••"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#8a5cf6] rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
+                    className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
                   />
                 </div>
               </div>
@@ -327,7 +327,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] text-white font-bold rounded-xl text-sm shadow-card transition-all"
+                className="w-full py-3.5 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] text-slate-900 font-bold rounded-xl text-sm shadow-card transition-all"
               >
                 {loading ? 'Updating...' : 'Update Password'}
               </button>

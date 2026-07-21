@@ -5,7 +5,6 @@ import Faculty from '../models/Faculty';
 import Course from '../models/Course';
 import Attendance from '../models/Attendance';
 import Result from '../models/Result';
-import Log from '../models/Log';
 import { ChatHistory } from '../models/ChatHistory';
 import { isMongoConnected, readJsonDb, writeJsonDb } from '../config/db';
 
@@ -487,12 +486,13 @@ export class RepoService {
 
   // ==================== RESULT OPERATIONS ====================
 
-  static async findResults(studentId: string): Promise<any[]> {
+  static async findResults(studentId?: string): Promise<any[]> {
     if (isMongoConnected) {
-      return await Result.find({ studentId }).populate('courseId').lean();
+      const query = studentId ? { studentId } : {};
+      return await Result.find(query).populate('courseId').lean();
     } else {
       const db = readJsonDb();
-      const filtered = db.results.filter((r: any) => r.studentId === studentId);
+      const filtered = studentId ? db.results.filter((r: any) => r.studentId === studentId) : db.results;
       return filtered.map((r: any) => {
         const course = db.courses.find((c: any) => c._id === r.courseId || c.id === r.courseId);
         return { ...r, courseId: course };
@@ -549,19 +549,8 @@ export class RepoService {
   }
 
   static async createLog(logData: { userId?: string; userName: string; role: string; action: string; details: string }): Promise<any> {
-    if (isMongoConnected) {
-      return await Log.create(logData);
-    } else {
-      const db = readJsonDb();
-      const newLog = {
-        _id: generateId(),
-        ...logData,
-        createdAt: new Date().toISOString()
-      };
-      db.logs.push(newLog);
-      writeJsonDb(db);
-      return newLog;
-    }
+    // Audit logs feature removed as requested by user.
+    return Promise.resolve(null);
   }
 
   // ==================== CHAT HISTORY OPERATIONS ====================

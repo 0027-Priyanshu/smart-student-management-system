@@ -163,15 +163,15 @@ export default function StudentDashboard() {
   if (loading) {
     return (
       <div className="space-y-8">
-        <div className="h-32 bg-white/2 border border-white/5 rounded-3xl animate-pulse" />
+        <div className="h-32 bg-slate-50 border border-slate-200 rounded-3xl animate-pulse" />
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-28 bg-white/2 border border-white/5 rounded-3xl animate-pulse" />
+            <div key={i} className="h-28 bg-slate-50 border border-slate-200 rounded-3xl animate-pulse" />
           ))}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="h-80 bg-white/2 border border-white/5 rounded-3xl animate-pulse" />
-          <div className="h-80 bg-white/2 border border-white/5 rounded-3xl animate-pulse" />
+          <div className="h-80 bg-slate-50 border border-slate-200 rounded-3xl animate-pulse" />
+          <div className="h-80 bg-slate-50 border border-slate-200 rounded-3xl animate-pulse" />
         </div>
       </div>
     );
@@ -180,39 +180,39 @@ export default function StudentDashboard() {
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
-      <div className="relative p-8 bg-gradient-to-br from-[#8a5cf6]/20 to-[#06b6d4]/20 border border-white/10 rounded-3xl overflow-hidden shadow-glow">
+      <div className="relative p-8 bg-gradient-to-br from-[#8a5cf6]/20 to-[#06b6d4]/20 border border-slate-300 rounded-3xl overflow-hidden shadow-glow">
         <div className="absolute top-0 right-0 h-full w-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <h1 className="text-3xl font-title font-extrabold text-white mb-2">
+            <h1 className="text-3xl font-title font-extrabold text-slate-900 mb-2">
               Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4]">{user?.name}</span> 👋
             </h1>
-            <p className="text-gray-300 font-medium">Ready to conquer another day in {student?.department}?</p>
+            <p className="text-slate-700 font-medium">Ready to conquer another day in {student?.department}?</p>
             
             <div className="flex flex-wrap items-center gap-4 mt-6">
-              <div className="px-4 py-2 bg-[#12141c]/60 rounded-xl border border-white/5 flex items-center gap-2">
+              <div className="px-4 py-2 bg-white/60 rounded-xl border border-slate-200 flex items-center gap-2">
                 <User size={16} className="text-[#8a5cf6]" />
-                <span className="text-xs font-semibold text-gray-300">Roll: {student?.enrollmentNo}</span>
+                <span className="text-xs font-semibold text-slate-700">Roll: {student?.enrollmentNo}</span>
               </div>
-              <div className="px-4 py-2 bg-[#12141c]/60 rounded-xl border border-white/5 flex items-center gap-2">
+              <div className="px-4 py-2 bg-white/60 rounded-xl border border-slate-200 flex items-center gap-2">
                 <BookOpen size={16} className="text-[#06b6d4]" />
-                <span className="text-xs font-semibold text-gray-300">Sem: {student?.semester}</span>
+                <span className="text-xs font-semibold text-slate-700">Sem: {student?.semester}</span>
               </div>
-              <div className="px-4 py-2 bg-[#12141c]/60 rounded-xl border border-white/5 flex items-center gap-2">
+              <div className="px-4 py-2 bg-white/60 rounded-xl border border-slate-200 flex items-center gap-2">
                 <Award size={16} className="text-[#10b981]" />
-                <span className="text-xs font-semibold text-gray-300">Status: {overallPerformance}</span>
+                <span className="text-xs font-semibold text-slate-700">Status: {overallPerformance}</span>
               </div>
             </div>
           </div>
           
-          <div className="flex items-center gap-6 bg-[#12141c]/50 p-6 rounded-2xl border border-white/5 backdrop-blur-md">
+          <div className="flex items-center gap-6 bg-slate-1000 p-6 rounded-2xl border border-slate-200 backdrop-blur-md">
             <div className="text-center">
-              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Overall CGPA</p>
-              <h2 className="text-4xl font-extrabold text-white drop-shadow-lg">{cgpa.toFixed(2)}</h2>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Overall CGPA</p>
+              <h2 className="text-4xl font-extrabold text-slate-900 drop-shadow-lg">{cgpa.toFixed(2)}</h2>
             </div>
             <div className="w-px h-12 bg-white/10" />
             <div className="text-center">
-              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">Attendance</p>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Attendance</p>
               <h2 className="text-4xl font-extrabold text-[#06b6d4] drop-shadow-lg">{attendanceRate.toFixed(1)}%</h2>
             </div>
           </div>
@@ -221,40 +221,40 @@ export default function StudentDashboard() {
 
       {/* Academic Overview Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="p-6 bg-[#12141c]/50 border border-white/5 rounded-3xl shadow-card flex items-center gap-4 hover:-translate-y-1 transition-transform group">
+        <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card flex items-center gap-4 hover:-translate-y-1 transition-transform group">
           <div className="h-12 w-12 rounded-xl bg-[#8a5cf6]/10 flex items-center justify-center text-[#8a5cf6] group-hover:scale-110 transition-transform">
             <BookOpen size={24} />
           </div>
           <div>
-            <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">Enrolled Courses</p>
-            <p className="text-2xl font-extrabold text-white mt-1"><AnimatedCounter value={totalCourses} /></p>
+            <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">Enrolled Courses</p>
+            <p className="text-2xl font-extrabold text-slate-900 mt-1"><AnimatedCounter value={totalCourses} /></p>
           </div>
         </div>
-        <div className="p-6 bg-[#12141c]/50 border border-white/5 rounded-3xl shadow-card flex items-center gap-4 hover:-translate-y-1 transition-transform group">
+        <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card flex items-center gap-4 hover:-translate-y-1 transition-transform group">
           <div className="h-12 w-12 rounded-xl bg-[#06b6d4]/10 flex items-center justify-center text-[#06b6d4] group-hover:scale-110 transition-transform">
             <CheckCircle size={24} />
           </div>
           <div>
-            <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">Credits Earned</p>
-            <p className="text-2xl font-extrabold text-white mt-1"><AnimatedCounter value={earnedCredits} /> / {totalCredits || 120}</p>
+            <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">Credits Earned</p>
+            <p className="text-2xl font-extrabold text-slate-900 mt-1"><AnimatedCounter value={earnedCredits} /> / {totalCredits || 120}</p>
           </div>
         </div>
-        <div className="p-6 bg-[#12141c]/50 border border-white/5 rounded-3xl shadow-card flex items-center gap-4 hover:-translate-y-1 transition-transform group">
+        <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card flex items-center gap-4 hover:-translate-y-1 transition-transform group">
           <div className="h-12 w-12 rounded-xl bg-[#10b981]/10 flex items-center justify-center text-[#10b981] group-hover:scale-110 transition-transform">
             <TrendingUp size={24} />
           </div>
           <div>
-            <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">Avg. Marks</p>
-            <p className="text-2xl font-extrabold text-white mt-1"><AnimatedCounter value={averageMarks} />%</p>
+            <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">Avg. Marks</p>
+            <p className="text-2xl font-extrabold text-slate-900 mt-1"><AnimatedCounter value={averageMarks} />%</p>
           </div>
         </div>
-        <div className="p-6 bg-[#12141c]/50 border border-white/5 rounded-3xl shadow-card flex items-center gap-4 hover:-translate-y-1 transition-transform group">
+        <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card flex items-center gap-4 hover:-translate-y-1 transition-transform group">
           <div className="h-12 w-12 rounded-xl bg-[#f59e0b]/10 flex items-center justify-center text-[#f59e0b] group-hover:scale-110 transition-transform">
             <FileText size={24} />
           </div>
           <div>
-            <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">Pending Assignments</p>
-            <p className="text-2xl font-extrabold text-white mt-1"><AnimatedCounter value={activities.filter(a => a.type === 'Assignment').length} /></p>
+            <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">Pending Assignments</p>
+            <p className="text-2xl font-extrabold text-slate-900 mt-1"><AnimatedCounter value={activities.filter(a => a.type === 'Assignment').length} /></p>
           </div>
         </div>
       </div>
@@ -265,8 +265,8 @@ export default function StudentDashboard() {
         <div className="lg:col-span-2 space-y-8">
           
           {/* GPA Trend */}
-          <div className="p-6 bg-[#12141c]/50 border border-white/5 rounded-3xl shadow-card">
-            <h3 className="font-title font-bold text-lg mb-6 flex items-center gap-2 text-white">
+          <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card">
+            <h3 className="font-title font-bold text-lg mb-6 flex items-center gap-2 text-slate-900">
               <TrendingUp size={20} className="text-[#8a5cf6]" />
               Semester GPA Trend
             </h3>
@@ -288,7 +288,7 @@ export default function StudentDashboard() {
                   </AreaChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-full flex items-center justify-center text-sm text-gray-500 italic bg-white/2 rounded-2xl border border-dashed border-white/10">
+                <div className="h-full flex items-center justify-center text-sm text-slate-400 italic bg-slate-50 rounded-2xl border border-dashed border-slate-300">
                   Not enough result data to plot GPA trend.
                 </div>
               )}
@@ -296,8 +296,8 @@ export default function StudentDashboard() {
           </div>
 
           {/* Subject-wise Marks */}
-          <div className="p-6 bg-[#12141c]/50 border border-white/5 rounded-3xl shadow-card">
-            <h3 className="font-title font-bold text-lg mb-6 flex items-center gap-2 text-white">
+          <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card">
+            <h3 className="font-title font-bold text-lg mb-6 flex items-center gap-2 text-slate-900">
               <Award size={20} className="text-[#06b6d4]" />
               Subject Performance Comparison
             </h3>
@@ -317,7 +317,7 @@ export default function StudentDashboard() {
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-full flex items-center justify-center text-sm text-gray-500 italic bg-white/2 rounded-2xl border border-dashed border-white/10">
+                <div className="h-full flex items-center justify-center text-sm text-slate-400 italic bg-slate-50 rounded-2xl border border-dashed border-slate-300">
                   No subject marks recorded yet.
                 </div>
               )}
@@ -330,33 +330,33 @@ export default function StudentDashboard() {
         <div className="space-y-8">
           
           {/* AI Insights & Quick Actions */}
-          <div className="p-6 bg-[#12141c]/50 border border-white/5 rounded-3xl shadow-card relative overflow-hidden">
+          <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card relative overflow-hidden">
             <div className="absolute top-0 right-0 h-24 w-24 bg-[#8a5cf6]/10 rounded-full filter blur-2xl" />
             
-            <h3 className="font-title font-bold text-lg mb-4 flex items-center gap-2 text-white relative z-10">
+            <h3 className="font-title font-bold text-lg mb-4 flex items-center gap-2 text-slate-900 relative z-10">
               <BrainCircuit size={20} className="text-[#8a5cf6]" />
               AI Academic Insights
             </h3>
             
-            <div className="text-xs text-gray-300 leading-relaxed bg-white/2 p-4 rounded-2xl border border-white/5 font-medium prose prose-invert max-w-none relative z-10 mb-4 h-48 overflow-y-auto custom-scrollbar">
+            <div className="text-xs text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-200 font-medium prose prose-invert max-w-none relative z-10 mb-4 h-48 overflow-y-auto custom-scrollbar">
               {aiLoading ? (
                 <div className="flex flex-col gap-2">
-                  <div className="h-3 w-3/4 bg-white/5 rounded animate-pulse" />
-                  <div className="h-3 w-full bg-white/5 rounded animate-pulse" />
-                  <div className="h-3 w-5/6 bg-white/5 rounded animate-pulse" />
+                  <div className="h-3 w-3/4 bg-slate-100 rounded animate-pulse" />
+                  <div className="h-3 w-full bg-slate-100 rounded animate-pulse" />
+                  <div className="h-3 w-5/6 bg-slate-100 rounded animate-pulse" />
                 </div>
               ) : aiSummary ? (
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{aiSummary}</ReactMarkdown>
               ) : (
-                <p className="text-gray-500 italic">No AI insights generated yet. Check back later after exams.</p>
+                <p className="text-slate-400 italic">No AI insights generated yet. Check back later after exams.</p>
               )}
             </div>
 
             <div className="space-y-2 relative z-10">
-              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-2">AI Quick Actions</p>
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">AI Quick Actions</p>
               <button 
                 onClick={() => navigate('/ai-assistant')}
-                className="w-full p-3 bg-white/5 hover:bg-[#8a5cf6]/10 border border-white/5 hover:border-[#8a5cf6]/30 rounded-xl flex items-center justify-between transition-all text-xs text-gray-300 hover:text-white group"
+                className="w-full p-3 bg-slate-100 hover:bg-[#8a5cf6]/10 border border-slate-200 hover:border-[#8a5cf6]/30 rounded-xl flex items-center justify-between transition-all text-xs text-slate-700 hover:text-slate-900 group"
               >
                 <div className="flex items-center gap-2">
                   <Sparkles size={14} className="text-[#8a5cf6] group-hover:scale-110 transition-transform" />
@@ -366,7 +366,7 @@ export default function StudentDashboard() {
               </button>
               <button 
                 onClick={() => navigate('/ai-assistant')}
-                className="w-full p-3 bg-white/5 hover:bg-[#06b6d4]/10 border border-white/5 hover:border-[#06b6d4]/30 rounded-xl flex items-center justify-between transition-all text-xs text-gray-300 hover:text-white group"
+                className="w-full p-3 bg-slate-100 hover:bg-[#06b6d4]/10 border border-slate-200 hover:border-[#06b6d4]/30 rounded-xl flex items-center justify-between transition-all text-xs text-slate-700 hover:text-slate-900 group"
               >
                 <div className="flex items-center gap-2">
                   <Lightbulb size={14} className="text-[#06b6d4] group-hover:scale-110 transition-transform" />
@@ -378,19 +378,19 @@ export default function StudentDashboard() {
           </div>
 
           {/* Performance Summary Details */}
-          <div className="p-6 bg-[#12141c]/50 border border-white/5 rounded-3xl shadow-card">
-            <h3 className="font-title font-bold text-lg mb-4 flex items-center gap-2 text-white">
+          <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card">
+            <h3 className="font-title font-bold text-lg mb-4 flex items-center gap-2 text-slate-900">
               <Award size={20} className="text-[#10b981]" />
               Performance Breakdown
             </h3>
             
             <div className="space-y-4">
-              <div className="flex justify-between items-center p-3 bg-white/2 border border-white/5 rounded-xl">
-                <span className="text-xs text-gray-400 font-semibold">Highest Subject</span>
+              <div className="flex justify-between items-center p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                <span className="text-xs text-slate-500 font-semibold">Highest Subject</span>
                 <span className="text-xs font-bold text-emerald-400">{highestSubject} ({highestMarks})</span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-white/2 border border-white/5 rounded-xl">
-                <span className="text-xs text-gray-400 font-semibold">Lowest Subject</span>
+              <div className="flex justify-between items-center p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                <span className="text-xs text-slate-500 font-semibold">Lowest Subject</span>
                 <span className="text-xs font-bold text-red-400">{lowestSubject} ({lowestMarks === 100 ? 0 : lowestMarks})</span>
               </div>
               
@@ -406,20 +406,20 @@ export default function StudentDashboard() {
           </div>
 
           {/* Upcoming Activities */}
-          <div className="p-6 bg-[#12141c]/50 border border-white/5 rounded-3xl shadow-card">
-            <h3 className="font-title font-bold text-lg mb-4 flex items-center gap-2 text-white">
+          <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card">
+            <h3 className="font-title font-bold text-lg mb-4 flex items-center gap-2 text-slate-900">
               <Calendar size={20} className="text-[#f59e0b]" />
               Upcoming Activities
             </h3>
             
             <div className="space-y-3">
               {activities.length === 0 ? (
-                <div className="p-6 bg-white/2 border border-white/5 rounded-3xl text-center text-gray-500 italic">
+                <div className="p-6 bg-slate-50 border border-slate-200 rounded-3xl text-center text-slate-400 italic">
                   No upcoming activities at this time.
                 </div>
               ) : (
                 activities.map((act, i) => (
-                <div key={i} className="p-3 bg-white/2 border border-white/5 hover:border-white/10 rounded-xl transition-all flex gap-3 items-start">
+                <div key={i} className="p-3 bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-xl transition-all flex gap-3 items-start">
                   <div className={`p-2 rounded-lg ${
                     act.type === 'Exam' ? 'bg-red-500/10 text-red-400' :
                     act.type === 'Assignment' ? 'bg-[#8a5cf6]/10 text-[#8a5cf6]' :
@@ -430,8 +430,8 @@ export default function StudentDashboard() {
                      <Clock size={14} />}
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-white mb-1">{act.title}</h4>
-                    <p className="text-[10px] text-gray-400 font-medium">{act.date}</p>
+                    <h4 className="text-xs font-bold text-slate-900 mb-1">{act.title}</h4>
+                    <p className="text-[10px] text-slate-500 font-medium">{act.date}</p>
                   </div>
                 </div>
               ))

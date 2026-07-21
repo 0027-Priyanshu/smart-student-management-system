@@ -1,6 +1,6 @@
 export default function Skeleton({ className }: { className?: string }) {
   return (
-    <div className={`animate-pulse bg-white/5 rounded-md ${className}`} />
+    <div className={`animate-pulse bg-slate-100 rounded-md ${className}`} />
   );
 }
 
@@ -17,7 +17,7 @@ export function TableSkeleton({ rows = 5, cols = 4 }: { rows?: number; cols?: nu
       {[...Array(rows)].map((_, r) => (
         <div key={`r-${r}`} className="flex gap-4 pt-2">
           {[...Array(cols)].map((_, c) => (
-            <Skeleton key={`c-${c}`} className="h-8 flex-1 bg-white/5" />
+            <Skeleton key={`c-${c}`} className="h-8 flex-1 bg-slate-100" />
           ))}
         </div>
       ))}
@@ -27,7 +27,7 @@ export function TableSkeleton({ rows = 5, cols = 4 }: { rows?: number; cols?: nu
 
 export function CardSkeleton() {
   return (
-    <div className="p-6 bg-[#12141c]/40 border border-white/5 rounded-3xl space-y-4">
+    <div className="p-6 bg-white/40 border border-slate-200 rounded-3xl space-y-4">
       <Skeleton className="h-5 w-1/3 bg-white/10" />
       <Skeleton className="h-10 w-full" />
       <div className="space-y-2">

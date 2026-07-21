@@ -143,18 +143,18 @@ export default function Marks() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           
           {/* CGPA Card */}
-          <div className="p-6 bg-[#12141c]/50 border border-[#06b6d4]/20 rounded-3xl shadow-card md:col-span-1 flex items-center gap-5">
+          <div className="p-6 bg-slate-1000 border border-[#06b6d4]/20 rounded-3xl shadow-card md:col-span-1 flex items-center gap-5">
             <div className="h-14 w-14 rounded-2xl bg-[#06b6d4]/10 flex items-center justify-center text-[#06b6d4]">
               <Award size={26} />
             </div>
             <div>
-              <h3 className="text-gray-400 text-xs font-semibold uppercase tracking-wider">Cumulative CGPA</h3>
-              <p className="text-3.5xl font-title font-extrabold mt-1 text-white">{cgpa.toFixed(2)} <span className="text-xs text-gray-500 font-medium">/ 4.00</span></p>
+              <h3 className="text-slate-500 text-xs font-semibold uppercase tracking-wider">Cumulative CGPA</h3>
+              <p className="text-3.5xl font-title font-extrabold mt-1 text-slate-900">{cgpa.toFixed(2)} <span className="text-xs text-slate-400 font-medium">/ 4.00</span></p>
             </div>
           </div>
 
           {/* GPA Progress Trend Chart */}
-          <div className="p-6 bg-[#12141c]/50 border border-white/5 rounded-3xl shadow-card md:col-span-2">
+          <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card md:col-span-2">
             <div className="h-28">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={gpaTrendData} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
@@ -174,8 +174,8 @@ export default function Marks() {
         
         {/* Record Marks Interface (Admin/Faculty view only) */}
         {isAdminOrFaculty && (
-          <div className="lg:col-span-1 p-6 bg-[#12141c]/50 border border-white/5 rounded-3xl shadow-card h-fit">
-            <h4 className="font-title font-extrabold text-base mb-4 text-white flex items-center gap-1.5">
+          <div className="lg:col-span-1 p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card h-fit">
+            <h4 className="font-title font-extrabold text-base mb-4 text-slate-900 flex items-center gap-1.5">
               <FileSpreadsheet size={18} className="text-[#8a5cf6]" />
               Enter Student Grades
             </h4>
@@ -196,11 +196,11 @@ export default function Marks() {
               
               {/* Student selection */}
               <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Choose Student</label>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Choose Student</label>
                 <select
                   value={selectedStudent}
                   onChange={(e) => setSelectedStudent(e.target.value)}
-                  className="w-full px-3 py-2 bg-white/2 border border-white/5 focus:border-[#8a5cf6] rounded-lg text-xs text-gray-300 focus:outline-none cursor-pointer"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-700 focus:outline-none cursor-pointer"
                 >
                   <option value="">-- Choose student --</option>
                   {students.map(s => (
@@ -213,11 +213,11 @@ export default function Marks() {
 
               {/* Course selection */}
               <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Target Course</label>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Target Course</label>
                 <select
                   value={selectedCourse}
                   onChange={(e) => setSelectedCourse(e.target.value)}
-                  className="w-full px-3 py-2 bg-white/2 border border-white/5 focus:border-[#8a5cf6] rounded-lg text-xs text-gray-300 focus:outline-none cursor-pointer"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-700 focus:outline-none cursor-pointer"
                 >
                   <option value="">-- Choose course --</option>
                   {courses.map(c => (
@@ -231,7 +231,7 @@ export default function Marks() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Semester */}
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Semester</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Semester</label>
                   <input
                     type="number"
                     min="1"
@@ -239,12 +239,12 @@ export default function Marks() {
                     required
                     value={selectedSem}
                     onChange={(e) => setSelectedSem(e.target.value)}
-                    className="w-full px-3 py-2 bg-white/2 border border-white/5 focus:border-[#8a5cf6] rounded-lg text-xs text-white focus:outline-none transition-all"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
                   />
                 </div>
                 {/* Internal */}
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Internal (Max 20)</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Internal (Max 20)</label>
                   <input
                     type="number"
                     step="0.5"
@@ -252,7 +252,7 @@ export default function Marks() {
                     placeholder="0"
                     value={marksData.internal}
                     onChange={(e) => setMarksData({ ...marksData, internal: e.target.value })}
-                    className="w-full px-3 py-2 bg-white/2 border border-white/5 focus:border-[#8a5cf6] rounded-lg text-xs text-white focus:outline-none transition-all"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
                   />
                 </div>
               </div>
@@ -260,7 +260,7 @@ export default function Marks() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {/* External */}
                 <div className="space-y-1 col-span-1">
-                  <label className="text-[9px] font-bold uppercase tracking-wider text-gray-400">External (Max 50)</label>
+                  <label className="text-[9px] font-bold uppercase tracking-wider text-slate-500">External (Max 50)</label>
                   <input
                     type="number"
                     step="0.5"
@@ -268,12 +268,12 @@ export default function Marks() {
                     placeholder="0"
                     value={marksData.external}
                     onChange={(e) => setMarksData({ ...marksData, external: e.target.value })}
-                    className="w-full px-3 py-2 bg-white/2 border border-white/5 focus:border-[#8a5cf6] rounded-lg text-xs text-white focus:outline-none transition-all"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
                   />
                 </div>
                 {/* Assignment */}
                 <div className="space-y-1 col-span-1">
-                  <label className="text-[9px] font-bold uppercase tracking-wider text-gray-400">Assign. (Max 15)</label>
+                  <label className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Assign. (Max 15)</label>
                   <input
                     type="number"
                     step="0.5"
@@ -281,12 +281,12 @@ export default function Marks() {
                     placeholder="0"
                     value={marksData.assignment}
                     onChange={(e) => setMarksData({ ...marksData, assignment: e.target.value })}
-                    className="w-full px-3 py-2 bg-white/2 border border-white/5 focus:border-[#8a5cf6] rounded-lg text-xs text-white focus:outline-none transition-all"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
                   />
                 </div>
                 {/* Practical */}
                 <div className="space-y-1 col-span-1">
-                  <label className="text-[9px] font-bold uppercase tracking-wider text-gray-400">Practical (Max 15)</label>
+                  <label className="text-[9px] font-bold uppercase tracking-wider text-slate-500">Practical (Max 15)</label>
                   <input
                     type="number"
                     step="0.5"
@@ -294,7 +294,7 @@ export default function Marks() {
                     placeholder="0"
                     value={marksData.practical}
                     onChange={(e) => setMarksData({ ...marksData, practical: e.target.value })}
-                    className="w-full px-3 py-2 bg-white/2 border border-white/5 focus:border-[#8a5cf6] rounded-lg text-xs text-white focus:outline-none transition-all"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
                   />
                 </div>
               </div>
@@ -302,7 +302,7 @@ export default function Marks() {
               <button
                 type="submit"
                 disabled={actionLoading}
-                className="w-full py-3 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] text-white font-bold rounded-xl text-xs shadow-card transition-all flex items-center justify-center gap-1.5"
+                className="w-full py-3 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] text-slate-900 font-bold rounded-xl text-xs shadow-card transition-all flex items-center justify-center gap-1.5"
               >
                 <Save size={14} />
                 {actionLoading ? 'Saving...' : 'Save Grades'}
@@ -312,21 +312,21 @@ export default function Marks() {
         )}
 
         {/* Grade Sheet Display */}
-        <div className={`${isAdminOrFaculty ? 'lg:col-span-2' : 'lg:col-span-3'} p-6 bg-[#12141c]/50 border border-white/5 rounded-3xl shadow-card`}>
-          <h4 className="font-title font-extrabold text-base mb-4 text-white">Student Grade Sheet</h4>
+        <div className={`${isAdminOrFaculty ? 'lg:col-span-2' : 'lg:col-span-3'} p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card`}>
+          <h4 className="font-title font-extrabold text-base mb-4 text-slate-900">Student Grade Sheet</h4>
 
           {results.length === 0 ? (
-            <div className="flex flex-col justify-center items-center py-20 text-gray-500 text-center gap-2">
+            <div className="flex flex-col justify-center items-center py-20 text-slate-400 text-center gap-2">
               <HelpCircle size={32} className="opacity-45" />
               <p className="text-xs italic">
                 {isAdminOrFaculty ? 'Please select a student on the left to review their report card.' : 'No marks records logged for your profile yet.'}
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-2xl border border-white/5 scrollbar-thin">
+            <div className="overflow-x-auto rounded-2xl border border-slate-200 scrollbar-thin">
               <table className="w-full border-collapse text-left text-xs min-w-[800px]">
                 <thead>
-                  <tr className="bg-white/2 border-b border-white/5 text-gray-400 uppercase tracking-wider font-semibold">
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-semibold">
                     <th className="px-5 py-3.5">Course</th>
                     <th className="px-5 py-3.5">Sem</th>
                     <th className="px-5 py-3.5">Int (20)</th>
@@ -338,14 +338,14 @@ export default function Marks() {
                     <th className="px-5 py-3.5 text-right">GPA Points</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5 text-gray-300">
+                <tbody className="divide-y divide-slate-200 text-slate-700">
                   {results.map((r) => {
                     const total = r.internal + r.external + r.assignment + r.practical;
                     const gradeColor = r.grade === 'F' ? 'text-[#ef4444] bg-[#ef4444]/10 border-[#ef4444]/20' : 'text-[#10b981] bg-[#10b981]/10 border-[#10b981]/20';
                     
                     return (
-                      <tr key={r._id || r.id} className="hover:bg-white/1 transition-colors">
-                        <td className="px-5 py-4 font-semibold text-white">
+                      <tr key={r._id || r.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-5 py-4 font-semibold text-slate-900">
                           {r.courseId?.code} - {r.courseId?.name}
                         </td>
                         <td className="px-5 py-4">{r.semester}</td>
@@ -353,7 +353,7 @@ export default function Marks() {
                         <td className="px-5 py-4">{r.external}</td>
                         <td className="px-5 py-4">{r.assignment}</td>
                         <td className="px-5 py-4">{r.practical}</td>
-                        <td className="px-5 py-4 font-bold text-white">{total.toFixed(1)}</td>
+                        <td className="px-5 py-4 font-bold text-slate-900">{total.toFixed(1)}</td>
                         <td className="px-5 py-4">
                           <span className={`px-2 py-0.5 rounded font-extrabold text-[10px] border ${gradeColor}`}>
                             {r.grade}

@@ -264,16 +264,7 @@ export async function predictRisk(
     
     Provide EXACTLY ONE concise sentence (max 15 words) explaining why this student is at risk, mentioning the specific data points.`;
     
-    if (ai) {
-      try {
-        const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
-        warningMessage = (response.text || '').trim().replace(/"/g, '');
-      } catch (error) {
-        warningMessage = `Student flagged as ${prediction.riskLevel} risk due to combination of GPA (${gpa.toFixed(2)}) and attendance (${attendanceRate.toFixed(1)}%).`;
-      }
-    } else {
-       warningMessage = `Student flagged as ${prediction.riskLevel} risk due to combination of GPA (${gpa.toFixed(2)}) and attendance (${attendanceRate.toFixed(1)}%).`;
-    }
+    warningMessage = `Student flagged as ${prediction.riskLevel} risk due to combination of GPA (${gpa.toFixed(2)}) and attendance (${attendanceRate.toFixed(1)}%).`;
   }
 
   return {

@@ -155,7 +155,7 @@ export default function Attendance() {
       {/* Attendance Heatmap Widget */}
       <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl mb-8 shadow-card">
         <h3 className="font-title font-bold text-lg mb-4 flex items-center gap-2">
-          <Calendar size={20} className="text-[#8a5cf6]" />
+          <Calendar size={20} className="text-[#f97316]" />
           {isStudent ? 'Your Attendance Activity Tracker' : 'Overall Institute Attendance Frequency'}
         </h3>
         
@@ -171,7 +171,7 @@ export default function Attendance() {
             heatmap.map((item, idx) => {
               const count = item.count;
               // Coloring thresholds based on counts
-              const colorBg = count > 3 ? 'bg-[#10b981]' : count > 1 ? 'bg-[#10b981]/70' : 'bg-[#10b981]/40';
+              const colorBg = count > 3 ? 'bg-[#eab308]' : count > 1 ? 'bg-[#eab308]/70' : 'bg-[#eab308]/40';
               return (
                 <div 
                   key={idx} 
@@ -202,7 +202,7 @@ export default function Attendance() {
                 <select
                   value={selectedCourse}
                   onChange={(e) => setSelectedCourse(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-xs text-slate-700 focus:outline-none cursor-pointer"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-xs text-slate-700 focus:outline-none cursor-pointer"
                 >
                   <option value="">-- Select Course --</option>
                   {courses.map(c => (
@@ -221,7 +221,7 @@ export default function Attendance() {
                     type="date"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-xs text-slate-900 focus:outline-none"
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-xs text-slate-900 focus:outline-none"
                   />
                 </div>
               )}
@@ -232,10 +232,10 @@ export default function Attendance() {
           {isStudent && (
             <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card relative overflow-hidden">
               {/* Glow light */}
-              <div className="absolute top-0 right-0 h-16 w-16 bg-[#06b6d4]/5 rounded-full filter blur-xl" />
+              <div className="absolute top-0 right-0 h-16 w-16 bg-[#ef4444]/5 rounded-full filter blur-xl" />
 
               <h4 className="font-title font-extrabold text-base mb-4 text-slate-900 flex items-center gap-1.5">
-                <Scan size={18} className="text-[#06b6d4]" />
+                <Scan size={18} className="text-[#ef4444]" />
                 Self QR Scanner Mock
               </h4>
               
@@ -251,7 +251,7 @@ export default function Attendance() {
               )}
 
               {success && (
-                <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-[#10b981] rounded-xl text-xs flex items-center gap-2">
+                <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-[#eab308] rounded-xl text-xs flex items-center gap-2">
                   <CheckCircle size={14} />
                   <span>{success}</span>
                 </div>
@@ -260,7 +260,7 @@ export default function Attendance() {
               <button
                 onClick={handleSimulateQRScan}
                 disabled={!selectedCourse || actionLoading}
-                className="w-full py-3 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] hover:shadow-glow text-slate-900 font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5"
+                className="w-full py-3 bg-gradient-to-r from-[#f97316] to-[#ef4444] hover:shadow-glow text-slate-900 font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5"
               >
                 {actionLoading ? 'Recording entry...' : 'Scan Classroom QR'}
               </button>
@@ -277,7 +277,7 @@ export default function Attendance() {
                 <button
                   onClick={handleSaveAttendance}
                   disabled={actionLoading}
-                  className="px-4 py-2 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] hover:shadow-glow text-slate-900 font-bold rounded-xl text-xs transition-all"
+                  className="px-4 py-2 bg-gradient-to-r from-[#f97316] to-[#ef4444] hover:shadow-glow text-slate-900 font-bold rounded-xl text-xs transition-all"
                 >
                   {actionLoading ? 'Saving...' : 'Confirm Attendance'}
                 </button>
@@ -324,13 +324,13 @@ export default function Attendance() {
                         <div className="flex gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200">
                           <button 
                             onClick={() => handleMarkStatus(studentId, 'Present')}
-                            className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold uppercase transition-all ${status === 'Present' ? 'bg-[#10b981] text-slate-900' : 'text-slate-400 hover:text-slate-700'}`}
+                            className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold uppercase transition-all ${status === 'Present' ? 'bg-[#eab308] text-slate-900' : 'text-slate-400 hover:text-slate-700'}`}
                           >
                             Present
                           </button>
                           <button 
                             onClick={() => handleMarkStatus(studentId, 'On Leave')}
-                            className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold uppercase transition-all ${status === 'On Leave' ? 'bg-[#f59e0b] text-slate-900' : 'text-slate-400 hover:text-slate-700'}`}
+                            className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold uppercase transition-all ${status === 'On Leave' ? 'bg-[#ef4444] text-slate-900' : 'text-slate-400 hover:text-slate-700'}`}
                           >
                             On Leave
                           </button>

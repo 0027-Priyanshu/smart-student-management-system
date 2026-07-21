@@ -130,16 +130,16 @@ export default function Faculty() {
             return (
               <div 
                 key={facId} 
-                className="bg-slate-1000 border border-slate-200 p-6 rounded-3xl shadow-card flex flex-col justify-between hover:border-[#8a5cf6]/20 transition-all duration-300 group"
+                className="bg-slate-1000 border border-slate-200 p-6 rounded-3xl shadow-card flex flex-col justify-between hover:border-[#f97316]/20 transition-all duration-300 group"
               >
                 <div>
                   <div className="flex items-center gap-4 mb-4 pb-4 border-b border-slate-200">
-                    <div className="h-12 w-12 rounded-full bg-gradient-to-tr from-[#8a5cf6] to-[#06b6d4] flex items-center justify-center font-bold text-slate-900 text-base">
+                    <div className="h-12 w-12 rounded-full bg-gradient-to-tr from-[#f97316] to-[#ef4444] flex items-center justify-center font-bold text-slate-900 text-base">
                       {initials}
                     </div>
                     <div>
                       <h4 className="font-title font-extrabold text-base text-slate-900 truncate">{fac.name}</h4>
-                      <p className="text-[10px] text-slate-500 font-semibold">{fac.designation} • <span className="text-[#06b6d4]">{fac.department}</span></p>
+                      <p className="text-[10px] text-slate-500 font-semibold">{fac.designation} • <span className="text-[#ef4444]">{fac.department}</span></p>
                     </div>
                   </div>
 
@@ -150,7 +150,7 @@ export default function Faculty() {
                         {fac.assignedCourses.map((c: any) => (
                           <span 
                             key={c._id || c.id} 
-                            className="px-2.5 py-1 bg-[#8a5cf6]/10 text-[#8a5cf6] font-semibold border border-[#8a5cf6]/20 rounded-lg text-[10px]"
+                            className="px-2.5 py-1 bg-[#f97316]/10 text-[#f97316] font-semibold border border-[#f97316]/20 rounded-lg text-[10px]"
                           >
                             {c.code} - {c.name}
                           </span>
@@ -173,7 +173,7 @@ export default function Faculty() {
                         setSuccess('');
                         setShowEditModal(true);
                       }} 
-                      className="px-3.5 py-1.5 bg-slate-100 hover:bg-[#8a5cf6] hover:text-slate-900 border border-slate-200 hover:border-transparent text-slate-900 font-semibold rounded-xl text-[11px] flex items-center gap-1.5 transition-all"
+                      className="px-3.5 py-1.5 bg-slate-100 hover:bg-[#f97316] hover:text-slate-900 border border-slate-200 hover:border-transparent text-slate-900 font-semibold rounded-xl text-[11px] flex items-center gap-1.5 transition-all"
                     >
                       <Edit2 size={12} />
                       Edit Profile
@@ -186,7 +186,7 @@ export default function Faculty() {
                         setSuccess('');
                         setShowAssignModal(true);
                       }} 
-                      className="px-3.5 py-1.5 bg-slate-100 hover:bg-[#06b6d4] hover:text-slate-900 border border-slate-200 hover:border-transparent text-slate-900 font-semibold rounded-xl text-[11px] flex items-center gap-1.5 transition-all"
+                      className="px-3.5 py-1.5 bg-slate-100 hover:bg-[#ef4444] hover:text-slate-900 border border-slate-200 hover:border-transparent text-slate-900 font-semibold rounded-xl text-[11px] flex items-center gap-1.5 transition-all"
                     >
                       <Plus size={12} />
                       Assign Course
@@ -202,7 +202,7 @@ export default function Faculty() {
       {/* ASSIGN COURSE MODAL */}
       {showAssignModal && activeFaculty && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-[#8a5cf6]/20 rounded-3xl w-full max-w-sm p-6 relative overflow-hidden shadow-card animate-slideUp">
+          <div className="bg-white border border-[#f97316]/20 rounded-3xl w-full max-w-sm p-6 relative overflow-hidden shadow-card animate-slideUp">
             <button 
               onClick={() => setShowAssignModal(false)} 
               className="absolute top-4 right-4 text-slate-500 hover:text-slate-900 transition-colors"
@@ -221,7 +221,7 @@ export default function Faculty() {
               </div>
             )}
             {success && (
-              <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-[#10b981] rounded-xl text-xs">
+              <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-[#eab308] rounded-xl text-xs">
                 {success}
               </div>
             )}
@@ -232,7 +232,7 @@ export default function Faculty() {
                 <select
                   value={selectedCourseId}
                   onChange={(e) => setSelectedCourseId(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-xs text-slate-700 focus:outline-none cursor-pointer"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-xs text-slate-700 focus:outline-none cursor-pointer"
                 >
                   <option value="">-- Choose course --</option>
                   {courses.map(c => {
@@ -254,7 +254,7 @@ export default function Faculty() {
               <button
                 type="submit"
                 disabled={actionLoading}
-                className="w-full py-3 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] text-slate-900 font-bold rounded-xl text-xs shadow-card transition-all"
+                className="w-full py-3 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-slate-900 font-bold rounded-xl text-xs shadow-card transition-all"
               >
                 {actionLoading ? 'Assigning...' : 'Confirm Assignment'}
               </button>
@@ -266,7 +266,7 @@ export default function Faculty() {
       {/* EDIT FACULTY MODAL */}
       {showEditModal && activeFaculty && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-[#8a5cf6]/20 rounded-3xl w-full max-w-sm p-6 relative overflow-hidden shadow-card animate-slideUp">
+          <div className="bg-white border border-[#f97316]/20 rounded-3xl w-full max-w-sm p-6 relative overflow-hidden shadow-card animate-slideUp">
             <button 
               onClick={() => setShowEditModal(false)} 
               className="absolute top-4 right-4 text-slate-500 hover:text-slate-900 transition-colors"
@@ -285,7 +285,7 @@ export default function Faculty() {
               </div>
             )}
             {success && (
-              <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-[#10b981] rounded-xl text-xs">
+              <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-[#eab308] rounded-xl text-xs">
                 {success}
               </div>
             )}
@@ -297,7 +297,7 @@ export default function Faculty() {
                   type="text"
                   value={editDepartment}
                   onChange={(e) => setEditDepartment(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-xs text-slate-700 focus:outline-none"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-xs text-slate-700 focus:outline-none"
                   placeholder="e.g. Computer Science"
                 />
               </div>
@@ -307,7 +307,7 @@ export default function Faculty() {
                 <select
                   value={editDesignation}
                   onChange={(e) => setEditDesignation(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-xs text-slate-700 focus:outline-none cursor-pointer"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-xs text-slate-700 focus:outline-none cursor-pointer"
                 >
                   <option value="Assistant Professor">Assistant Professor</option>
                   <option value="Associate Professor">Associate Professor</option>
@@ -320,7 +320,7 @@ export default function Faculty() {
               <button
                 type="submit"
                 disabled={actionLoading}
-                className="w-full py-3 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] text-slate-900 font-bold rounded-xl text-xs shadow-card transition-all"
+                className="w-full py-3 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-slate-900 font-bold rounded-xl text-xs shadow-card transition-all"
               >
                 {actionLoading ? 'Saving...' : 'Save Changes'}
               </button>

@@ -104,10 +104,10 @@ export default function Login() {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="w-full max-w-md bg-white/80 backdrop-blur-xl border border-[#8a5cf6]/20 p-6 sm:p-8 rounded-3xl shadow-card relative z-10"
+            className="w-full max-w-md bg-white/80 backdrop-blur-xl border border-[#f97316]/20 p-6 sm:p-8 rounded-3xl shadow-card relative z-10"
           >
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-title font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4]">
+              <h2 className="text-3xl font-title font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#f97316] to-[#ef4444]">
                 EduManager
               </h2>
               <p className="text-sm text-slate-500 mt-2">Sign in to your administration panel</p>
@@ -131,7 +131,7 @@ export default function Login() {
                     placeholder="e.g. admin@sms.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
+                    className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
                   />
                 </div>
               </div>
@@ -146,7 +146,7 @@ export default function Login() {
                       setError('');
                       setSuccess('');
                     }} 
-                    className="text-xs text-[#8a5cf6] hover:underline"
+                    className="text-xs text-[#f97316] hover:underline"
                   >
                     Forgot?
                   </button>
@@ -159,7 +159,7 @@ export default function Login() {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
+                    className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
                   />
                 </div>
               </div>
@@ -167,7 +167,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] hover:shadow-glow text-slate-900 font-bold rounded-xl text-sm shadow-card transition-all"
+                className="w-full py-3.5 bg-gradient-to-r from-[#f97316] to-[#ef4444] hover:shadow-glow text-slate-900 font-bold rounded-xl text-sm shadow-card transition-all"
               >
                 {loading ? 'Authenticating...' : 'Sign In'}
               </button>
@@ -175,7 +175,7 @@ export default function Login() {
 
             <div className="mt-8 text-center text-xs text-slate-500">
               New here?{' '}
-              <Link to="/register" className="text-[#8a5cf6] font-semibold hover:underline">
+              <Link to="/register" className="text-[#f97316] font-semibold hover:underline">
                 Create an account
               </Link>
             </div>
@@ -187,13 +187,13 @@ export default function Login() {
                 onClick={() => { setEmail('admin@sms.com'); setPassword('admin123'); }}
                 className="cursor-pointer hover:bg-slate-100 p-1.5 -ml-1.5 rounded-lg transition-colors flex items-center gap-1"
               >
-                • Admin: <code className="text-[#06b6d4]">admin@sms.com</code> / <code className="text-[#06b6d4]">admin123</code>
+                • Admin: <code className="text-[#ef4444]">admin@sms.com</code> / <code className="text-[#ef4444]">admin123</code>
               </div>
               <div 
                 onClick={() => { setEmail('student@sms.com'); setPassword('student123'); }}
                 className="cursor-pointer hover:bg-slate-100 p-1.5 -ml-1.5 rounded-lg transition-colors flex items-center gap-1"
               >
-                • Student: <code className="text-[#06b6d4]">student@sms.com</code> / <code className="text-[#06b6d4]">student123</code>
+                • Student: <code className="text-[#ef4444]">student@sms.com</code> / <code className="text-[#ef4444]">student123</code>
               </div>
             </div>
           </motion.div>
@@ -206,7 +206,7 @@ export default function Login() {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="w-full max-w-md bg-white/80 backdrop-blur-xl border border-[#8a5cf6]/20 p-8 rounded-3xl shadow-card relative z-10"
+            className="w-full max-w-md bg-white/80 backdrop-blur-xl border border-[#f97316]/20 p-8 rounded-3xl shadow-card relative z-10"
           >
             <div className="text-center mb-8">
               <h2 className="text-2xl font-title font-extrabold text-slate-900">Reset Password</h2>
@@ -221,7 +221,7 @@ export default function Login() {
             )}
 
             {success && (
-              <div className="mb-5 p-3.5 bg-emerald-500/10 border border-emerald-500/20 text-[#10b981] rounded-xl text-xs flex items-center gap-2.5">
+              <div className="mb-5 p-3.5 bg-emerald-500/10 border border-emerald-500/20 text-[#eab308] rounded-xl text-xs flex items-center gap-2.5">
                 <CheckCircle size={16} />
                 <span>{success}</span>
               </div>
@@ -238,7 +238,7 @@ export default function Login() {
                     placeholder="e.g. admin@sms.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
+                    className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
                   />
                 </div>
               </div>
@@ -246,7 +246,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] text-slate-900 font-bold rounded-xl text-sm shadow-card transition-all"
+                className="w-full py-3.5 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-slate-900 font-bold rounded-xl text-sm shadow-card transition-all"
               >
                 {loading ? 'Sending...' : 'Send Reset Link'}
               </button>
@@ -275,7 +275,7 @@ export default function Login() {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="w-full max-w-md bg-white/80 backdrop-blur-xl border border-[#8a5cf6]/20 p-8 rounded-3xl shadow-card relative z-10"
+            className="w-full max-w-md bg-white/80 backdrop-blur-xl border border-[#f97316]/20 p-8 rounded-3xl shadow-card relative z-10"
           >
             <div className="text-center mb-8">
               <h2 className="text-2xl font-title font-extrabold text-slate-900">Choose New Password</h2>
@@ -290,7 +290,7 @@ export default function Login() {
             )}
 
             {success && (
-              <div className="mb-5 p-3.5 bg-emerald-500/10 border border-emerald-500/20 text-[#10b981] rounded-xl text-xs flex items-center gap-2.5">
+              <div className="mb-5 p-3.5 bg-emerald-500/10 border border-emerald-500/20 text-[#eab308] rounded-xl text-xs flex items-center gap-2.5">
                 <CheckCircle size={16} />
                 <span>{success}</span>
               </div>
@@ -305,7 +305,7 @@ export default function Login() {
                   placeholder="e.g. k4l5h..."
                   value={resetToken}
                   onChange={(e) => setResetToken(e.target.value)}
-                  className="w-full px-4 py-3.5 bg-white border border-gray-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
+                  className="w-full px-4 py-3.5 bg-white border border-gray-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
                 />
               </div>
 
@@ -319,7 +319,7 @@ export default function Login() {
                     placeholder="••••••••"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
+                    className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
                   />
                 </div>
               </div>
@@ -327,7 +327,7 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] text-slate-900 font-bold rounded-xl text-sm shadow-card transition-all"
+                className="w-full py-3.5 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-slate-900 font-bold rounded-xl text-sm shadow-card transition-all"
               >
                 {loading ? 'Updating...' : 'Update Password'}
               </button>

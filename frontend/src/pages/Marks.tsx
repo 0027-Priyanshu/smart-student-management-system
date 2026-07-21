@@ -143,8 +143,8 @@ export default function Marks() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           
           {/* CGPA Card */}
-          <div className="p-6 bg-slate-1000 border border-[#06b6d4]/20 rounded-3xl shadow-card md:col-span-1 flex items-center gap-5">
-            <div className="h-14 w-14 rounded-2xl bg-[#06b6d4]/10 flex items-center justify-center text-[#06b6d4]">
+          <div className="p-6 bg-slate-1000 border border-[#ef4444]/20 rounded-3xl shadow-card md:col-span-1 flex items-center gap-5">
+            <div className="h-14 w-14 rounded-2xl bg-[#ef4444]/10 flex items-center justify-center text-[#ef4444]">
               <Award size={26} />
             </div>
             <div>
@@ -162,7 +162,7 @@ export default function Marks() {
                   <XAxis dataKey="name" stroke="#6b7280" fontSize={9} />
                   <YAxis stroke="#6b7280" fontSize={9} domain={[0, 4.0]} />
                   <Tooltip contentStyle={{ backgroundColor: '#12141c', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '10px', fontSize: '11px' }} />
-                  <Line type="monotone" dataKey="gpa" stroke="#06b6d4" strokeWidth={2.5} activeDot={{ r: 6 }} dot={{ r: 4 }} />
+                  <Line type="monotone" dataKey="gpa" stroke="#ef4444" strokeWidth={2.5} activeDot={{ r: 6 }} dot={{ r: 4 }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -176,7 +176,7 @@ export default function Marks() {
         {isAdminOrFaculty && (
           <div className="lg:col-span-1 p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card h-fit">
             <h4 className="font-title font-extrabold text-base mb-4 text-slate-900 flex items-center gap-1.5">
-              <FileSpreadsheet size={18} className="text-[#8a5cf6]" />
+              <FileSpreadsheet size={18} className="text-[#f97316]" />
               Enter Student Grades
             </h4>
 
@@ -187,7 +187,7 @@ export default function Marks() {
             )}
 
             {success && (
-              <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-[#10b981] rounded-xl text-xs">
+              <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-[#eab308] rounded-xl text-xs">
                 {success}
               </div>
             )}
@@ -200,7 +200,7 @@ export default function Marks() {
                 <select
                   value={selectedStudent}
                   onChange={(e) => setSelectedStudent(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-700 focus:outline-none cursor-pointer"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-700 focus:outline-none cursor-pointer"
                 >
                   <option value="">-- Choose student --</option>
                   {students.map(s => (
@@ -217,7 +217,7 @@ export default function Marks() {
                 <select
                   value={selectedCourse}
                   onChange={(e) => setSelectedCourse(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-700 focus:outline-none cursor-pointer"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-700 focus:outline-none cursor-pointer"
                 >
                   <option value="">-- Choose course --</option>
                   {courses.map(c => (
@@ -239,7 +239,7 @@ export default function Marks() {
                     required
                     value={selectedSem}
                     onChange={(e) => setSelectedSem(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
                   />
                 </div>
                 {/* Internal */}
@@ -252,7 +252,7 @@ export default function Marks() {
                     placeholder="0"
                     value={marksData.internal}
                     onChange={(e) => setMarksData({ ...marksData, internal: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
                   />
                 </div>
               </div>
@@ -268,7 +268,7 @@ export default function Marks() {
                     placeholder="0"
                     value={marksData.external}
                     onChange={(e) => setMarksData({ ...marksData, external: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
                   />
                 </div>
                 {/* Assignment */}
@@ -281,7 +281,7 @@ export default function Marks() {
                     placeholder="0"
                     value={marksData.assignment}
                     onChange={(e) => setMarksData({ ...marksData, assignment: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
                   />
                 </div>
                 {/* Practical */}
@@ -294,7 +294,7 @@ export default function Marks() {
                     placeholder="0"
                     value={marksData.practical}
                     onChange={(e) => setMarksData({ ...marksData, practical: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
                   />
                 </div>
               </div>
@@ -302,7 +302,7 @@ export default function Marks() {
               <button
                 type="submit"
                 disabled={actionLoading}
-                className="w-full py-3 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] text-slate-900 font-bold rounded-xl text-xs shadow-card transition-all flex items-center justify-center gap-1.5"
+                className="w-full py-3 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-slate-900 font-bold rounded-xl text-xs shadow-card transition-all flex items-center justify-center gap-1.5"
               >
                 <Save size={14} />
                 {actionLoading ? 'Saving...' : 'Save Grades'}
@@ -341,7 +341,7 @@ export default function Marks() {
                 <tbody className="divide-y divide-slate-200 text-slate-700">
                   {results.map((r) => {
                     const total = r.internal + r.external + r.assignment + r.practical;
-                    const gradeColor = r.grade === 'F' ? 'text-[#ef4444] bg-[#ef4444]/10 border-[#ef4444]/20' : 'text-[#10b981] bg-[#10b981]/10 border-[#10b981]/20';
+                    const gradeColor = r.grade === 'F' ? 'text-[#ef4444] bg-[#ef4444]/10 border-[#ef4444]/20' : 'text-[#eab308] bg-[#eab308]/10 border-[#eab308]/20';
                     
                     return (
                       <tr key={r._id || r.id} className="hover:bg-slate-50 transition-colors">
@@ -359,7 +359,7 @@ export default function Marks() {
                             {r.grade}
                           </span>
                         </td>
-                        <td className="px-5 py-4 text-right font-mono font-bold text-[#06b6d4]">
+                        <td className="px-5 py-4 text-right font-mono font-bold text-[#ef4444]">
                           {r.gpa.toFixed(1)}
                         </td>
                       </tr>

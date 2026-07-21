@@ -241,21 +241,21 @@ export default function AiAssistant() {
         {!isStudent && (
           <button 
             onClick={() => setActiveTab('chat')} 
-            className={`px-5 py-3 text-xs font-semibold border-b-2 transition-colors ${activeTab === 'chat' ? 'border-[#8a5cf6] text-[#8a5cf6]' : 'border-transparent text-slate-500 hover:text-slate-900'}`}
+            className={`px-5 py-3 text-xs font-semibold border-b-2 transition-colors ${activeTab === 'chat' ? 'border-[#f97316] text-[#f97316]' : 'border-transparent text-slate-500 hover:text-slate-900'}`}
           >
             AI Chat Companion
           </button>
         )}
         <button 
           onClick={() => setActiveTab('profiler')} 
-          className={`px-5 py-3 text-xs font-semibold border-b-2 transition-colors ${activeTab === 'profiler' ? 'border-[#8a5cf6] text-[#8a5cf6]' : 'border-transparent text-slate-500 hover:text-slate-900'}`}
+          className={`px-5 py-3 text-xs font-semibold border-b-2 transition-colors ${activeTab === 'profiler' ? 'border-[#f97316] text-[#f97316]' : 'border-transparent text-slate-500 hover:text-slate-900'}`}
         >
           {isStudent ? 'Your AI Profile Analyzer' : 'Student Performance Analyzer'}
         </button>
         {isAdmin && (
           <button 
             onClick={() => setActiveTab('insights')} 
-            className={`px-5 py-3 text-xs font-semibold border-b-2 transition-colors ${activeTab === 'insights' ? 'border-[#8a5cf6] text-[#8a5cf6]' : 'border-transparent text-slate-500 hover:text-slate-900'}`}
+            className={`px-5 py-3 text-xs font-semibold border-b-2 transition-colors ${activeTab === 'insights' ? 'border-[#f97316] text-[#f97316]' : 'border-transparent text-slate-500 hover:text-slate-900'}`}
           >
             Strategic Admin Insights
           </button>
@@ -268,7 +268,7 @@ export default function AiAssistant() {
           {/* Header area */}
           <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 bg-gradient-to-br from-[#8a5cf6] to-[#06b6d4] rounded-xl flex items-center justify-center text-slate-900 shadow-glow">
+              <div className="h-10 w-10 bg-gradient-to-br from-[#f97316] to-[#ef4444] rounded-xl flex items-center justify-center text-slate-900 shadow-glow">
                 <Bot size={20} />
               </div>
               <div>
@@ -279,7 +279,7 @@ export default function AiAssistant() {
             
             <button 
               onClick={() => setIsSpeaking(!isSpeaking)}
-              className={`p-2 rounded-lg transition-all ${isSpeaking ? 'text-[#06b6d4] bg-[#06b6d4]/10' : 'text-slate-400 bg-slate-100'}`}
+              className={`p-2 rounded-lg transition-all ${isSpeaking ? 'text-[#ef4444] bg-[#ef4444]/10' : 'text-slate-400 bg-slate-100'}`}
               title="Toggle AI Voice Response"
             >
               {isSpeaking ? <Volume2 size={18} /> : <VolumeX size={18} />}
@@ -292,11 +292,11 @@ export default function AiAssistant() {
               const isAI = msg.role === 'model';
               return (
                 <div key={idx} className={`flex gap-3.5 max-w-[90%] md:max-w-[80%] ${isAI ? 'mr-auto' : 'ml-auto flex-row-reverse'}`}>
-                  <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${isAI ? 'bg-[#8a5cf6]/20 text-[#8a5cf6]' : 'bg-[#06b6d4]/20 text-[#06b6d4]'}`}>
+                  <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${isAI ? 'bg-[#f97316]/20 text-[#f97316]' : 'bg-[#ef4444]/20 text-[#ef4444]'}`}>
                     {isAI ? <Bot size={16} /> : <User size={16} />}
                   </div>
                   <div className={`p-4 rounded-2xl text-xs leading-normal border overflow-x-auto prose prose-invert max-w-none ${
-                    isAI ? 'bg-slate-50 border-slate-200 text-slate-700' : 'bg-[#8a5cf6]/10 border-[#8a5cf6]/20 text-slate-900'
+                    isAI ? 'bg-slate-50 border-slate-200 text-slate-700' : 'bg-[#f97316]/10 border-[#f97316]/20 text-slate-900'
                   }`}>
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {msg.parts.join('\n')}
@@ -307,13 +307,13 @@ export default function AiAssistant() {
             })}
             {chatLoading && (
               <div className="flex gap-3.5 mr-auto max-w-[90%] md:max-w-[80%] items-center">
-                <div className="h-8 w-8 rounded-full bg-[#8a5cf6]/20 text-[#8a5cf6] flex items-center justify-center animate-pulse">
+                <div className="h-8 w-8 rounded-full bg-[#f97316]/20 text-[#f97316] flex items-center justify-center animate-pulse">
                   <Bot size={16} />
                 </div>
                 <div className="flex gap-1.5 p-3 rounded-xl bg-slate-50 border border-slate-200">
-                  <span className="h-1.5 w-1.5 bg-[#8a5cf6] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="h-1.5 w-1.5 bg-[#8a5cf6] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="h-1.5 w-1.5 bg-[#8a5cf6] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <span className="h-1.5 w-1.5 bg-[#f97316] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="h-1.5 w-1.5 bg-[#f97316] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="h-1.5 w-1.5 bg-[#f97316] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
               </div>
             )}
@@ -338,11 +338,11 @@ export default function AiAssistant() {
               placeholder="Ask me something..."
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
-              className="flex-1 px-4 py-3 bg-slate-50/80 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-xs text-slate-900 focus:outline-none transition-all"
+              className="flex-1 px-4 py-3 bg-slate-50/80 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-xs text-slate-900 focus:outline-none transition-all"
             />
             <button 
               type="submit" 
-              className="px-4.5 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] text-slate-900 font-bold rounded-xl text-xs shadow-card flex items-center justify-center"
+              className="px-4.5 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-slate-900 font-bold rounded-xl text-xs shadow-card flex items-center justify-center"
             >
               <Send size={16} />
             </button>
@@ -363,7 +363,7 @@ export default function AiAssistant() {
                   setSelectedStudent(e.target.value);
                   handleAnalyzeStudent(e.target.value);
                 }}
-                className="px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-xs text-slate-700 focus:outline-none cursor-pointer min-w-[200px]"
+                className="px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-xs text-slate-700 focus:outline-none cursor-pointer min-w-[200px]"
               >
                 <option value="">-- Choose student --</option>
                 {students.map(s => (
@@ -397,11 +397,11 @@ export default function AiAssistant() {
                 
                 {/* Academic Profile summary */}
                 <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card relative overflow-hidden">
-                  <div className="absolute top-0 right-0 h-16 w-16 bg-[#8a5cf6]/5 rounded-full filter blur-xl" />
+                  <div className="absolute top-0 right-0 h-16 w-16 bg-[#f97316]/5 rounded-full filter blur-xl" />
                   
                   <div className="flex items-center justify-between mb-4">
                     <h4 className="font-title font-extrabold text-base text-slate-900 flex items-center gap-2">
-                      <BrainCircuit size={18} className="text-[#8a5cf6]" />
+                      <BrainCircuit size={18} className="text-[#f97316]" />
                       AI Academic Summary Profile
                     </h4>
                     <div className="flex gap-2">
@@ -415,7 +415,7 @@ export default function AiAssistant() {
                       )}
                       <button
                         onClick={downloadPDFReport}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#8a5cf6]/10 hover:bg-[#8a5cf6] text-[#8a5cf6] hover:text-slate-900 rounded-xl border border-[#8a5cf6]/20 transition-all text-[10px] font-bold"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#f97316]/10 hover:bg-[#f97316] text-[#f97316] hover:text-slate-900 rounded-xl border border-[#f97316]/20 transition-all text-[10px] font-bold"
                       >
                         <FileText size={12} />
                         Export PDF
@@ -424,7 +424,7 @@ export default function AiAssistant() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Summary Text */}
-                    <div className="text-sm text-gray-200 leading-relaxed bg-slate-100 p-6 rounded-2xl border border-slate-300 font-sans shadow-inner prose prose-invert prose-p:text-slate-700 prose-headings:text-slate-900 prose-strong:text-[#06b6d4] prose-li:text-slate-700 max-w-none">
+                    <div className="text-sm text-gray-200 leading-relaxed bg-slate-100 p-6 rounded-2xl border border-slate-300 font-sans shadow-inner prose prose-invert prose-p:text-slate-700 prose-headings:text-slate-900 prose-strong:text-[#ef4444] prose-li:text-slate-700 max-w-none">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {summary}
                       </ReactMarkdown>
@@ -433,7 +433,7 @@ export default function AiAssistant() {
                     {/* Historical Trend Chart */}
                     <div className="bg-slate-100 p-6 rounded-2xl border border-slate-300 shadow-inner flex flex-col">
                       <h5 className="text-sm font-bold text-gray-200 mb-4 flex items-center gap-2">
-                        <TrendingUp size={16} className="text-[#10b981]" />
+                        <TrendingUp size={16} className="text-[#eab308]" />
                         Historical GPA Trend
                       </h5>
                       <div className="flex-1 min-h-[200px]">
@@ -444,7 +444,7 @@ export default function AiAssistant() {
                               <XAxis dataKey="name" stroke="#6b7280" fontSize={11} />
                               <YAxis domain={[0, 4]} stroke="#6b7280" fontSize={11} />
                               <Tooltip contentStyle={{ backgroundColor: '#12141c', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '12px' }} />
-                              <Line type="monotone" dataKey="gpa" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: '#12141c', stroke: '#10b981', strokeWidth: 2 }} activeDot={{ r: 6 }} isAnimationActive={true} />
+                              <Line type="monotone" dataKey="gpa" stroke="#eab308" strokeWidth={3} dot={{ r: 4, fill: '#12141c', stroke: '#eab308', strokeWidth: 2 }} activeDot={{ r: 6 }} isAnimationActive={true} />
                             </LineChart>
                           </ResponsiveContainer>
                         ) : (
@@ -491,7 +491,7 @@ export default function AiAssistant() {
                 {/* Recommendations */}
                 <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card">
                   <h4 className="font-title font-extrabold text-base mb-4 text-slate-900 flex items-center gap-2">
-                    <Sparkles size={18} className="text-[#06b6d4]" />
+                    <Sparkles size={18} className="text-[#ef4444]" />
                     Personalized Study Recommendations
                   </h4>
                   <div className="space-y-3">
@@ -500,7 +500,7 @@ export default function AiAssistant() {
                     ) : (
                       recommendations.map((rec, idx) => (
                         <div key={idx} className="flex gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700 font-semibold leading-normal items-start">
-                          <span className="h-5 w-5 rounded-full bg-[#06b6d4]/15 border border-[#06b6d4]/20 text-[#06b6d4] flex items-center justify-center text-[10px] font-bold shrink-0">{idx + 1}</span>
+                          <span className="h-5 w-5 rounded-full bg-[#ef4444]/15 border border-[#ef4444]/20 text-[#ef4444] flex items-center justify-center text-[10px] font-bold shrink-0">{idx + 1}</span>
                           <span>{rec}</span>
                         </div>
                       ))
@@ -521,7 +521,7 @@ export default function AiAssistant() {
                     <div>
                       <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mb-2">Weak Subjects Detected</span>
                       {weakSubjects.length === 0 ? (
-                        <span className="px-2.5 py-1 rounded-full bg-[#10b981]/10 text-[#10b981] font-semibold border border-[#10b981]/25 text-[10px] uppercase">
+                        <span className="px-2.5 py-1 rounded-full bg-[#eab308]/10 text-[#eab308] font-semibold border border-[#eab308]/25 text-[10px] uppercase">
                           No Risk Found
                         </span>
                       ) : (
@@ -553,12 +553,12 @@ export default function AiAssistant() {
       {activeTab === 'insights' && isAdmin && (
         <div className="space-y-6">
           <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card relative overflow-hidden">
-            <div className="absolute top-0 right-0 h-28 w-28 bg-[#8a5cf6]/5 rounded-full filter blur-2xl" />
+            <div className="absolute top-0 right-0 h-28 w-28 bg-[#f97316]/5 rounded-full filter blur-2xl" />
 
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h4 className="font-title font-extrabold text-base text-slate-900 flex items-center gap-2">
-                  <FileText size={18} className="text-[#8a5cf6]" />
+                  <FileText size={18} className="text-[#f97316]" />
                   AI Strategic Insight Report
                 </h4>
                 <p className="text-[10px] text-slate-400 mt-1 uppercase font-semibold">Generates real-time institute-wide evaluation and targets</p>
@@ -567,7 +567,7 @@ export default function AiAssistant() {
               <button
                 onClick={handleGenerateInsights}
                 disabled={insightsLoading}
-                className="px-4 py-2.5 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] text-slate-900 font-bold rounded-xl text-xs hover:shadow-glow transition-all"
+                className="px-4 py-2.5 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-slate-900 font-bold rounded-xl text-xs hover:shadow-glow transition-all"
               >
                 {insightsLoading ? 'Generating report...' : 'Generate New Insights'}
               </button>
@@ -595,14 +595,14 @@ export default function AiAssistant() {
                       <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
                         <XAxis dataKey="month" stroke="#9ca3af" fontSize={10} tickLine={false} axisLine={false} />
-                        <YAxis yAxisId="left" stroke="#8a5cf6" fontSize={10} tickLine={false} axisLine={false} />
-                        <YAxis yAxisId="right" orientation="right" stroke="#06b6d4" fontSize={10} tickLine={false} axisLine={false} />
+                        <YAxis yAxisId="left" stroke="#f97316" fontSize={10} tickLine={false} axisLine={false} />
+                        <YAxis yAxisId="right" orientation="right" stroke="#ef4444" fontSize={10} tickLine={false} axisLine={false} />
                         <Tooltip 
                           contentStyle={{ backgroundColor: '#12141c', borderColor: '#ffffff10', borderRadius: '12px', fontSize: '12px' }}
                         />
                         <Legend wrapperStyle={{ fontSize: '10px' }} />
-                        <Line yAxisId="left" type="monotone" dataKey="gpa" stroke="#8a5cf6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Avg GPA" />
-                        <Line yAxisId="right" type="monotone" dataKey="attendance" stroke="#06b6d4" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Attendance %" />
+                        <Line yAxisId="left" type="monotone" dataKey="gpa" stroke="#f97316" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Avg GPA" />
+                        <Line yAxisId="right" type="monotone" dataKey="attendance" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Attendance %" />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>

@@ -149,7 +149,7 @@ export default function Courses() {
         {isAdmin && (
           <button 
             onClick={openAddModal} 
-            className="px-4 py-2.5 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] text-slate-900 font-bold rounded-xl text-xs flex items-center gap-2 hover:shadow-glow transition-all"
+            className="px-4 py-2.5 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-slate-900 font-bold rounded-xl text-xs flex items-center gap-2 hover:shadow-glow transition-all"
           >
             <Plus size={16} />
             Create Course
@@ -174,18 +174,18 @@ export default function Courses() {
             return (
               <div 
                 key={courseIdStr} 
-                className="bg-slate-1000 border border-slate-200 hover:border-[#06b6d4]/20 p-6 rounded-3xl shadow-card flex flex-col justify-between min-h-[240px] hover:-translate-y-1 transition-all duration-300 relative group"
+                className="bg-slate-1000 border border-slate-200 hover:border-[#ef4444]/20 p-6 rounded-3xl shadow-card flex flex-col justify-between min-h-[240px] hover:-translate-y-1 transition-all duration-300 relative group"
               >
                 {/* Accent glow on hover */}
-                <div className="absolute top-0 right-0 h-16 w-16 bg-[#06b6d4]/3 rounded-full filter blur-lg opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute top-0 right-0 h-16 w-16 bg-[#ef4444]/3 rounded-full filter blur-lg opacity-0 group-hover:opacity-100 transition-opacity" />
 
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-mono font-bold text-[#06b6d4] tracking-wider uppercase">{course.code}</span>
+                    <span className="text-xs font-mono font-bold text-[#ef4444] tracking-wider uppercase">{course.code}</span>
                     <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-50 text-slate-500 uppercase">{course.department}</span>
                   </div>
                   
-                  <h4 className="font-title font-extrabold text-base text-slate-900 leading-tight mb-2 truncate group-hover:text-[#06b6d4] transition-colors">
+                  <h4 className="font-title font-extrabold text-base text-slate-900 leading-tight mb-2 truncate group-hover:text-[#ef4444] transition-colors">
                     {course.name}
                   </h4>
                   
@@ -222,7 +222,7 @@ export default function Courses() {
                         Assign Student
                       </button>
                     ) : isStudent && enrolled ? (
-                      <span className="px-2.5 py-1 rounded-full bg-[#10b981]/10 text-[#10b981] font-semibold border border-[#10b981]/25 flex items-center gap-1 text-[10px] uppercase">
+                      <span className="px-2.5 py-1 rounded-full bg-[#eab308]/10 text-[#eab308] font-semibold border border-[#eab308]/25 flex items-center gap-1 text-[10px] uppercase">
                         ✓ Enrolled
                       </span>
                     ) : isStudent ? (
@@ -239,7 +239,7 @@ export default function Courses() {
       {/* CREATE COURSE MODAL */}
       {showAddModal && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-[#8a5cf6]/20 rounded-3xl w-full max-w-md p-6 relative overflow-hidden shadow-card animate-slideUp">
+          <div className="bg-white border border-[#f97316]/20 rounded-3xl w-full max-w-md p-6 relative overflow-hidden shadow-card animate-slideUp">
             <button 
               onClick={() => setShowAddModal(false)} 
               className="absolute top-4 right-4 text-slate-500 hover:text-slate-900 transition-colors"
@@ -255,7 +255,7 @@ export default function Courses() {
               </div>
             )}
             {success && (
-              <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-[#10b981] rounded-xl text-xs">
+              <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-[#eab308] rounded-xl text-xs">
                 {success}
               </div>
             )}
@@ -270,7 +270,7 @@ export default function Courses() {
                     placeholder="e.g. Web Development"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
                   />
                 </div>
                 <div className="space-y-1">
@@ -281,7 +281,7 @@ export default function Courses() {
                     placeholder="e.g. CS303"
                     value={formData.code}
                     onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
                   />
                 </div>
               </div>
@@ -296,7 +296,7 @@ export default function Courses() {
                     required
                     value={formData.credits}
                     onChange={(e) => setFormData({ ...formData, credits: parseInt(e.target.value, 10) || 0 })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
                   />
                 </div>
                 <div className="space-y-1">
@@ -308,7 +308,7 @@ export default function Courses() {
                     required
                     value={formData.semester}
                     onChange={(e) => setFormData({ ...formData, semester: parseInt(e.target.value, 10) || 0 })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
                   />
                 </div>
                 <div className="space-y-1">
@@ -320,7 +320,7 @@ export default function Courses() {
                     required
                     value={formData.capacity}
                     onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value, 10) || 0 })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
                   />
                 </div>
               </div>
@@ -331,7 +331,7 @@ export default function Courses() {
                   <select
                     value={formData.department}
                     onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-700 focus:outline-none cursor-pointer"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-700 focus:outline-none cursor-pointer"
                   >
                     <option value="CSE">Computer Science (CSE)</option>
                     <option value="ECE">Electronics (ECE)</option>
@@ -347,7 +347,7 @@ export default function Courses() {
                     placeholder="e.g. CS101, CS202"
                     value={formData.prerequisites}
                     onChange={(e) => setFormData({ ...formData, prerequisites: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
                   />
                 </div>
               </div>
@@ -360,14 +360,14 @@ export default function Courses() {
                   placeholder="Course content overview..."
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-900 focus:outline-none resize-none transition-all"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-900 focus:outline-none resize-none transition-all"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={actionLoading}
-                className="w-full py-3 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] text-slate-900 font-bold rounded-xl text-xs shadow-card transition-all"
+                className="w-full py-3 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-slate-900 font-bold rounded-xl text-xs shadow-card transition-all"
               >
                 {actionLoading ? 'Creating course...' : 'Create Course'}
               </button>
@@ -379,7 +379,7 @@ export default function Courses() {
       {/* ASSIGN ENROLLMENT MODAL */}
       {showAssignModal && activeCourse && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-[#8a5cf6]/20 rounded-3xl w-full max-w-sm p-6 relative overflow-hidden shadow-card animate-slideUp">
+          <div className="bg-white border border-[#f97316]/20 rounded-3xl w-full max-w-sm p-6 relative overflow-hidden shadow-card animate-slideUp">
             <button 
               onClick={() => setShowAssignModal(false)} 
               className="absolute top-4 right-4 text-slate-500 hover:text-slate-900 transition-colors"
@@ -398,7 +398,7 @@ export default function Courses() {
               </div>
             )}
             {success && (
-              <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-[#10b981] rounded-xl text-xs">
+              <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-[#eab308] rounded-xl text-xs">
                 {success}
               </div>
             )}
@@ -409,7 +409,7 @@ export default function Courses() {
                 <select
                   value={selectedStudentId}
                   onChange={(e) => setSelectedStudentId(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-xs text-slate-700 focus:outline-none cursor-pointer"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-xs text-slate-700 focus:outline-none cursor-pointer"
                 >
                   <option value="">-- Choose student --</option>
                   {students.map(s => {
@@ -432,7 +432,7 @@ export default function Courses() {
               <button
                 type="submit"
                 disabled={actionLoading}
-                className="w-full py-3 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] text-slate-900 font-bold rounded-xl text-xs shadow-card transition-all"
+                className="w-full py-3 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-slate-900 font-bold rounded-xl text-xs shadow-card transition-all"
               >
                 {actionLoading ? 'Enrolling...' : 'Confirm Enrollment'}
               </button>

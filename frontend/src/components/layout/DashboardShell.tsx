@@ -95,10 +95,10 @@ export default function DashboardShell({ children, title }: DashboardShellProps)
             {/* Mobile Brand */}
             <div className="h-20 flex items-center justify-between px-6 border-b border-slate-200">
               <Link to="/dashboard" className="flex items-center gap-3" onClick={() => setIsSidebarOpen(false)}>
-                <div className="h-9 w-9 bg-gradient-to-tr from-[#8a5cf6] to-[#06b6d4] rounded-lg shadow-glow flex items-center justify-center font-bold text-slate-900 text-lg">
+                <div className="h-9 w-9 bg-gradient-to-tr from-[#f97316] to-[#ef4444] rounded-lg shadow-glow flex items-center justify-center font-bold text-slate-900 text-lg">
                   E
                 </div>
-                <span className="font-title font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4]">
+                <span className="font-title font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#f97316] to-[#ef4444]">
                   EduManager
                 </span>
               </Link>
@@ -119,11 +119,11 @@ export default function DashboardShell({ children, title }: DashboardShellProps)
                     onClick={() => setIsSidebarOpen(false)}
                     className={`flex items-center gap-4 px-4 py-3.5 rounded-xl font-medium transition-all duration-200 group relative ${
                       isActive 
-                        ? 'bg-gradient-to-r from-[#8a5cf6]/10 to-transparent text-[#8a5cf6] border-l-3 border-[#8a5cf6] pl-[13px]' 
+                        ? 'bg-gradient-to-r from-[#f97316]/10 to-transparent text-[#f97316] border-l-3 border-[#f97316] pl-[13px]' 
                         : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
                     }`}
                   >
-                    <Icon size={20} className={isActive ? 'text-[#8a5cf6]' : 'text-slate-500 group-hover:text-slate-900 transition-colors'} />
+                    <Icon size={20} className={isActive ? 'text-[#f97316]' : 'text-slate-500 group-hover:text-slate-900 transition-colors'} />
                     <span>{item.name}</span>
                   </Link>
                 );
@@ -133,7 +133,7 @@ export default function DashboardShell({ children, title }: DashboardShellProps)
             {/* Mobile Sidebar Footer */}
             <div className="p-4 border-t border-slate-200 bg-[#0f1118]">
               <div className="flex items-center gap-3.5 px-2 py-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer" onClick={() => setShowProfileMenu(!showProfileMenu)}>
-                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#4f46e5] to-[#8a5cf6] flex items-center justify-center font-semibold text-slate-900">
+                <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#4f46e5] to-[#f97316] flex items-center justify-center font-semibold text-slate-900">
                   {initials}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -159,14 +159,14 @@ export default function DashboardShell({ children, title }: DashboardShellProps)
         {/* Brand */}
         <div className="h-20 flex items-center justify-between px-6 border-b border-slate-200">
           <Link to="/dashboard" className="flex items-center gap-3">
-            <div className="h-9 w-9 bg-gradient-to-tr from-[#8a5cf6] to-[#06b6d4] rounded-lg shadow-glow flex items-center justify-center font-bold text-slate-900 text-lg">
+            <div className="h-9 w-9 bg-gradient-to-tr from-[#f97316] to-[#ef4444] rounded-lg shadow-glow flex items-center justify-center font-bold text-slate-900 text-lg">
               E
             </div>
             {isSidebarOpen && (
               <motion.span 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="font-title font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4]"
+                className="font-title font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#f97316] to-[#ef4444]"
               >
                 EduManager
               </motion.span>
@@ -190,11 +190,11 @@ export default function DashboardShell({ children, title }: DashboardShellProps)
                 to={item.path}
                 className={`flex items-center gap-4 px-4 py-3.5 rounded-xl font-medium transition-all duration-200 group relative ${
                   isActive 
-                    ? 'bg-gradient-to-r from-[#8a5cf6]/10 to-transparent text-[#8a5cf6] border-l-3 border-[#8a5cf6] pl-[13px]' 
+                    ? 'bg-gradient-to-r from-[#f97316]/10 to-transparent text-[#f97316] border-l-3 border-[#f97316] pl-[13px]' 
                     : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
                 }`}
               >
-                <Icon size={20} className={isActive ? 'text-[#8a5cf6]' : 'text-slate-500 group-hover:text-slate-900 transition-colors'} />
+                <Icon size={20} className={isActive ? 'text-[#f97316]' : 'text-slate-500 group-hover:text-slate-900 transition-colors'} />
                 {isSidebarOpen && <span>{item.name}</span>}
                 {!isSidebarOpen && (
                   <div className="absolute left-20 bg-white text-slate-900 text-xs rounded py-1 px-2.5 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-card border border-slate-200">
@@ -209,7 +209,7 @@ export default function DashboardShell({ children, title }: DashboardShellProps)
         {/* Sidebar Footer */}
         <div className="p-4 border-t border-slate-200 bg-[#0f1118]">
           <div className="flex items-center gap-3.5 px-2 py-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer" onClick={() => setShowProfileMenu(!showProfileMenu)}>
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#4f46e5] to-[#8a5cf6] flex items-center justify-center font-semibold text-slate-900">
+            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#4f46e5] to-[#f97316] flex items-center justify-center font-semibold text-slate-900">
               {initials}
             </div>
             {isSidebarOpen && (
@@ -246,7 +246,7 @@ export default function DashboardShell({ children, title }: DashboardShellProps)
           <div className="flex items-center gap-4 md:gap-6">
             
             {/* Online Counter Badge */}
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#06b6d4]/10 border border-[#06b6d4]/20 text-[#06b6d4] text-xs font-semibold">
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#ef4444]/10 border border-[#ef4444]/20 text-[#ef4444] text-xs font-semibold">
               <UserCheck size={14} />
               {onlineUsers.length} Online
             </div>
@@ -279,7 +279,7 @@ export default function DashboardShell({ children, title }: DashboardShellProps)
                     <div className="flex items-center justify-between border-b border-slate-200 pb-2.5 mb-3">
                       <span className="font-semibold text-sm">Real-Time Alerts</span>
                       <div className="flex gap-2">
-                        <button onClick={markAllAsRead} className="text-xs text-[#8a5cf6] hover:underline">Read All</button>
+                        <button onClick={markAllAsRead} className="text-xs text-[#f97316] hover:underline">Read All</button>
                         <button onClick={clearNotifications} className="text-xs text-slate-500 hover:underline">Clear</button>
                       </div>
                     </div>
@@ -292,7 +292,7 @@ export default function DashboardShell({ children, title }: DashboardShellProps)
                           <div 
                             key={notif.id} 
                             className={`p-2.5 rounded-xl border ${
-                              notif.read ? 'bg-white/1 border-slate-200' : 'bg-[#8a5cf6]/5 border-[#8a5cf6]/10'
+                              notif.read ? 'bg-white/1 border-slate-200' : 'bg-[#f97316]/5 border-[#f97316]/10'
                             }`}
                           >
                             <div className="flex items-center justify-between mb-0.5">

@@ -32,7 +32,7 @@ import AnimatedCounter from '../components/common/AnimatedCounter';
 import StudentDashboard from '../components/dashboard/StudentDashboard';
 import FacultyDashboard from '../components/dashboard/FacultyDashboard';
 
-const COLORS = ['#8a5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ec4899', '#3b82f6'];
+const COLORS = ['#f97316', '#ef4444', '#eab308', '#ef4444', '#ea580c', '#d97706'];
 
 export default function Dashboard() {
   const { user } = useAuthStore();
@@ -123,12 +123,12 @@ export default function Dashboard() {
   };
 
   const statCards = [
-    { title: 'Total Students', value: stats.totalStudents, icon: Users, color: 'text-[#8a5cf6]', bg: 'bg-[#8a5cf6]/10', border: 'border-[#8a5cf6]/20' },
-    { title: 'Total Faculty', value: stats.totalFaculty, icon: GraduationCap, color: 'text-[#06b6d4]', bg: 'bg-[#06b6d4]/10', border: 'border-[#06b6d4]/20' },
-    { title: 'Total Courses', value: stats.totalCourses, icon: BookOpen, color: 'text-[#10b981]', bg: 'bg-[#10b981]/10', border: 'border-[#10b981]/20' },
-    { title: 'Departments', value: stats.totalDepartments, icon: ShieldCheck, color: 'text-[#f59e0b]', bg: 'bg-[#f59e0b]/10', border: 'border-[#f59e0b]/20' },
-    { title: 'Enrollments', value: stats.totalEnrollments, icon: Bookmark, color: 'text-[#ec4899]', bg: 'bg-[#ec4899]/10', border: 'border-[#ec4899]/20' },
-    { title: "Today's Attendance", value: stats.todayAttendance, icon: Calendar, color: 'text-[#3b82f6]', bg: 'bg-[#3b82f6]/10', border: 'border-[#3b82f6]/20' }
+    { title: 'Total Students', value: stats.totalStudents, icon: Users, color: 'text-[#f97316]', bg: 'bg-[#f97316]/10', border: 'border-[#f97316]/20' },
+    { title: 'Total Faculty', value: stats.totalFaculty, icon: GraduationCap, color: 'text-[#ef4444]', bg: 'bg-[#ef4444]/10', border: 'border-[#ef4444]/20' },
+    { title: 'Total Courses', value: stats.totalCourses, icon: BookOpen, color: 'text-[#eab308]', bg: 'bg-[#eab308]/10', border: 'border-[#eab308]/20' },
+    { title: 'Departments', value: stats.totalDepartments, icon: ShieldCheck, color: 'text-[#ef4444]', bg: 'bg-[#ef4444]/10', border: 'border-[#ef4444]/20' },
+    { title: 'Enrollments', value: stats.totalEnrollments, icon: Bookmark, color: 'text-[#ea580c]', bg: 'bg-[#ea580c]/10', border: 'border-[#ea580c]/20' },
+    { title: "Today's Attendance", value: stats.todayAttendance, icon: Calendar, color: 'text-[#d97706]', bg: 'bg-[#d97706]/10', border: 'border-[#d97706]/20' }
   ];
 
   return (
@@ -164,7 +164,7 @@ export default function Dashboard() {
         <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card">
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-title font-bold text-lg flex items-center gap-2">
-              <TrendingUp size={20} className="text-[#8a5cf6]" />
+              <TrendingUp size={20} className="text-[#f97316]" />
               Student Registration Trend
             </h3>
           </div>
@@ -174,15 +174,15 @@ export default function Dashboard() {
                 <AreaChart data={data.monthlyRegistrationData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorRegs" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#8a5cf6" stopOpacity={0.2}/>
-                      <stop offset="95%" stopColor="#8a5cf6" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#f97316" stopOpacity={0.2}/>
+                      <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
                   <XAxis dataKey="name" stroke="#6b7280" fontSize={11} />
                   <YAxis stroke="#6b7280" fontSize={11} />
                   <Tooltip contentStyle={{ backgroundColor: '#12141c', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '12px' }} />
-                  <Area type="monotone" dataKey="count" stroke="#8a5cf6" strokeWidth={2.5} fillOpacity={1} fill="url(#colorRegs)" isAnimationActive={true} />
+                  <Area type="monotone" dataKey="count" stroke="#f97316" strokeWidth={2.5} fillOpacity={1} fill="url(#colorRegs)" isAnimationActive={true} />
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
@@ -194,7 +194,7 @@ export default function Dashboard() {
         {/* Course-wise Enrollment Stats (Bar Chart) */}
         <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card">
           <h3 className="font-title font-bold text-lg mb-6 flex items-center gap-2">
-            <BookOpen size={20} className="text-[#06b6d4]" />
+            <BookOpen size={20} className="text-[#ef4444]" />
             Course Enrollment Statistics
           </h3>
           <div className="h-72">
@@ -205,7 +205,7 @@ export default function Dashboard() {
                   <XAxis dataKey="code" stroke="#6b7280" fontSize={11} />
                   <YAxis stroke="#6b7280" fontSize={11} />
                   <Tooltip contentStyle={{ backgroundColor: '#12141c', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '12px' }} />
-                  <Bar dataKey="count" fill="#06b6d4" radius={[6, 6, 0, 0]} isAnimationActive={true}>
+                  <Bar dataKey="count" fill="#ef4444" radius={[6, 6, 0, 0]} isAnimationActive={true}>
                     {data.courseWiseData.map((_: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
@@ -224,7 +224,7 @@ export default function Dashboard() {
         {/* Department-wise Student Distribution (Pie Chart) */}
         <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card lg:col-span-1">
           <h3 className="font-title font-bold text-lg mb-6 flex items-center gap-2">
-            <Users size={20} className="text-[#10b981]" />
+            <Users size={20} className="text-[#eab308]" />
             Department Distribution
           </h3>
           <div className="h-56 relative flex items-center justify-center">
@@ -268,7 +268,7 @@ export default function Dashboard() {
         {/* Recent Activity Logs Timeline */}
         <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card lg:col-span-2">
           <h3 className="font-title font-bold text-lg mb-6 flex items-center gap-2">
-            <HistoryIcon size={20} className="text-[#ec4899]" />
+            <HistoryIcon size={20} className="text-[#ea580c]" />
             Recent Activity Logs
           </h3>
           <div className="flow-root max-h-[310px] overflow-y-auto pr-2 scrollbar-thin">

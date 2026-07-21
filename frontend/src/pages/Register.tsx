@@ -46,10 +46,10 @@ export default function Register() {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
-        className="w-full max-w-md bg-white/80 backdrop-blur-xl border border-[#8a5cf6]/20 p-6 sm:p-8 rounded-3xl shadow-card relative z-10"
+        className="w-full max-w-md bg-white/80 backdrop-blur-xl border border-[#f97316]/20 p-6 sm:p-8 rounded-3xl shadow-card relative z-10"
       >
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-title font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4]">
+          <h2 className="text-3xl font-title font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#f97316] to-[#ef4444]">
             Create Account
           </h2>
           <p className="text-sm text-slate-500 mt-2">Get started with EduManager system</p>
@@ -70,7 +70,7 @@ export default function Register() {
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-sm text-black focus:outline-none transition-all appearance-none cursor-pointer"
+                className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-sm text-black focus:outline-none transition-all appearance-none cursor-pointer"
               >
                 <option value="Student" className="bg-white">Student</option>
                 <option value="Faculty" className="bg-white">Faculty Member</option>
@@ -90,7 +90,7 @@ export default function Register() {
                 placeholder="e.g. John Doe"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
+                className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
               />
             </div>
           </div>
@@ -105,7 +105,7 @@ export default function Register() {
                 placeholder="e.g. john@sms.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
+                className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
               />
             </div>
           </div>
@@ -120,7 +120,7 @@ export default function Register() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
+                className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
               />
             </div>
           </div>
@@ -128,7 +128,7 @@ export default function Register() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] hover:shadow-glow text-slate-900 font-bold rounded-xl text-sm shadow-card transition-all"
+            className="w-full py-3.5 bg-gradient-to-r from-[#f97316] to-[#ef4444] hover:shadow-glow text-slate-900 font-bold rounded-xl text-sm shadow-card transition-all"
           >
             {loading ? 'Creating account...' : 'Register'}
           </button>
@@ -136,7 +136,7 @@ export default function Register() {
 
         <div className="mt-8 text-center text-xs text-slate-500">
           Already have an account?{' '}
-          <Link to="/login" className="text-[#8a5cf6] font-semibold hover:underline">
+          <Link to="/login" className="text-[#f97316] font-semibold hover:underline">
             Sign In
           </Link>
         </div>

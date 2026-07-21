@@ -33,7 +33,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useNavigate } from 'react-router-dom';
 
-const COLORS = ['#8a5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ec4899', '#3b82f6'];
+const COLORS = ['#f97316', '#ef4444', '#eab308', '#ef4444', '#ea580c', '#d97706'];
 
 export default function StudentDashboard() {
   const { user } = useAuthStore();
@@ -180,26 +180,26 @@ export default function StudentDashboard() {
   return (
     <div className="space-y-8">
       {/* Welcome Section */}
-      <div className="relative p-8 bg-gradient-to-br from-[#8a5cf6]/20 to-[#06b6d4]/20 border border-slate-300 rounded-3xl overflow-hidden shadow-glow">
+      <div className="relative p-8 bg-gradient-to-br from-[#f97316]/20 to-[#ef4444]/20 border border-slate-300 rounded-3xl overflow-hidden shadow-glow">
         <div className="absolute top-0 right-0 h-full w-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <h1 className="text-3xl font-title font-extrabold text-slate-900 mb-2">
-              Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4]">{user?.name}</span> 👋
+              Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#f97316] to-[#ef4444]">{user?.name}</span> 👋
             </h1>
             <p className="text-slate-700 font-medium">Ready to conquer another day in {student?.department}?</p>
             
             <div className="flex flex-wrap items-center gap-4 mt-6">
               <div className="px-4 py-2 bg-white/60 rounded-xl border border-slate-200 flex items-center gap-2">
-                <User size={16} className="text-[#8a5cf6]" />
+                <User size={16} className="text-[#f97316]" />
                 <span className="text-xs font-semibold text-slate-700">Roll: {student?.enrollmentNo}</span>
               </div>
               <div className="px-4 py-2 bg-white/60 rounded-xl border border-slate-200 flex items-center gap-2">
-                <BookOpen size={16} className="text-[#06b6d4]" />
+                <BookOpen size={16} className="text-[#ef4444]" />
                 <span className="text-xs font-semibold text-slate-700">Sem: {student?.semester}</span>
               </div>
               <div className="px-4 py-2 bg-white/60 rounded-xl border border-slate-200 flex items-center gap-2">
-                <Award size={16} className="text-[#10b981]" />
+                <Award size={16} className="text-[#eab308]" />
                 <span className="text-xs font-semibold text-slate-700">Status: {overallPerformance}</span>
               </div>
             </div>
@@ -213,7 +213,7 @@ export default function StudentDashboard() {
             <div className="w-px h-12 bg-white/10" />
             <div className="text-center">
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Attendance</p>
-              <h2 className="text-4xl font-extrabold text-[#06b6d4] drop-shadow-lg">{attendanceRate.toFixed(1)}%</h2>
+              <h2 className="text-4xl font-extrabold text-[#ef4444] drop-shadow-lg">{attendanceRate.toFixed(1)}%</h2>
             </div>
           </div>
         </div>
@@ -222,7 +222,7 @@ export default function StudentDashboard() {
       {/* Academic Overview Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card flex items-center gap-4 hover:-translate-y-1 transition-transform group">
-          <div className="h-12 w-12 rounded-xl bg-[#8a5cf6]/10 flex items-center justify-center text-[#8a5cf6] group-hover:scale-110 transition-transform">
+          <div className="h-12 w-12 rounded-xl bg-[#f97316]/10 flex items-center justify-center text-[#f97316] group-hover:scale-110 transition-transform">
             <BookOpen size={24} />
           </div>
           <div>
@@ -231,7 +231,7 @@ export default function StudentDashboard() {
           </div>
         </div>
         <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card flex items-center gap-4 hover:-translate-y-1 transition-transform group">
-          <div className="h-12 w-12 rounded-xl bg-[#06b6d4]/10 flex items-center justify-center text-[#06b6d4] group-hover:scale-110 transition-transform">
+          <div className="h-12 w-12 rounded-xl bg-[#ef4444]/10 flex items-center justify-center text-[#ef4444] group-hover:scale-110 transition-transform">
             <CheckCircle size={24} />
           </div>
           <div>
@@ -240,7 +240,7 @@ export default function StudentDashboard() {
           </div>
         </div>
         <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card flex items-center gap-4 hover:-translate-y-1 transition-transform group">
-          <div className="h-12 w-12 rounded-xl bg-[#10b981]/10 flex items-center justify-center text-[#10b981] group-hover:scale-110 transition-transform">
+          <div className="h-12 w-12 rounded-xl bg-[#eab308]/10 flex items-center justify-center text-[#eab308] group-hover:scale-110 transition-transform">
             <TrendingUp size={24} />
           </div>
           <div>
@@ -249,7 +249,7 @@ export default function StudentDashboard() {
           </div>
         </div>
         <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card flex items-center gap-4 hover:-translate-y-1 transition-transform group">
-          <div className="h-12 w-12 rounded-xl bg-[#f59e0b]/10 flex items-center justify-center text-[#f59e0b] group-hover:scale-110 transition-transform">
+          <div className="h-12 w-12 rounded-xl bg-[#ef4444]/10 flex items-center justify-center text-[#ef4444] group-hover:scale-110 transition-transform">
             <FileText size={24} />
           </div>
           <div>
@@ -267,7 +267,7 @@ export default function StudentDashboard() {
           {/* GPA Trend */}
           <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card">
             <h3 className="font-title font-bold text-lg mb-6 flex items-center gap-2 text-slate-900">
-              <TrendingUp size={20} className="text-[#8a5cf6]" />
+              <TrendingUp size={20} className="text-[#f97316]" />
               Semester GPA Trend
             </h3>
             <div className="h-64">
@@ -276,15 +276,15 @@ export default function StudentDashboard() {
                   <AreaChart data={gpaTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorGpa" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#8a5cf6" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#8a5cf6" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#f97316" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
                     <XAxis dataKey="name" stroke="#6b7280" fontSize={11} />
                     <YAxis stroke="#6b7280" fontSize={11} domain={[0, 4.0]} />
                     <Tooltip contentStyle={{ backgroundColor: '#12141c', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '12px' }} />
-                    <Area type="monotone" dataKey="gpa" stroke="#8a5cf6" strokeWidth={3} fillOpacity={1} fill="url(#colorGpa)" />
+                    <Area type="monotone" dataKey="gpa" stroke="#f97316" strokeWidth={3} fillOpacity={1} fill="url(#colorGpa)" />
                   </AreaChart>
                 </ResponsiveContainer>
               ) : (
@@ -298,7 +298,7 @@ export default function StudentDashboard() {
           {/* Subject-wise Marks */}
           <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card">
             <h3 className="font-title font-bold text-lg mb-6 flex items-center gap-2 text-slate-900">
-              <Award size={20} className="text-[#06b6d4]" />
+              <Award size={20} className="text-[#ef4444]" />
               Subject Performance Comparison
             </h3>
             <div className="h-64">
@@ -331,10 +331,10 @@ export default function StudentDashboard() {
           
           {/* AI Insights & Quick Actions */}
           <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card relative overflow-hidden">
-            <div className="absolute top-0 right-0 h-24 w-24 bg-[#8a5cf6]/10 rounded-full filter blur-2xl" />
+            <div className="absolute top-0 right-0 h-24 w-24 bg-[#f97316]/10 rounded-full filter blur-2xl" />
             
             <h3 className="font-title font-bold text-lg mb-4 flex items-center gap-2 text-slate-900 relative z-10">
-              <BrainCircuit size={20} className="text-[#8a5cf6]" />
+              <BrainCircuit size={20} className="text-[#f97316]" />
               AI Academic Insights
             </h3>
             
@@ -356,20 +356,20 @@ export default function StudentDashboard() {
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">AI Quick Actions</p>
               <button 
                 onClick={() => navigate('/ai-assistant')}
-                className="w-full p-3 bg-slate-100 hover:bg-[#8a5cf6]/10 border border-slate-200 hover:border-[#8a5cf6]/30 rounded-xl flex items-center justify-between transition-all text-xs text-slate-700 hover:text-slate-900 group"
+                className="w-full p-3 bg-slate-100 hover:bg-[#f97316]/10 border border-slate-200 hover:border-[#f97316]/30 rounded-xl flex items-center justify-between transition-all text-xs text-slate-700 hover:text-slate-900 group"
               >
                 <div className="flex items-center gap-2">
-                  <Sparkles size={14} className="text-[#8a5cf6] group-hover:scale-110 transition-transform" />
+                  <Sparkles size={14} className="text-[#f97316] group-hover:scale-110 transition-transform" />
                   Ask AI about my weak subjects
                 </div>
                 <ChevronRight size={14} />
               </button>
               <button 
                 onClick={() => navigate('/ai-assistant')}
-                className="w-full p-3 bg-slate-100 hover:bg-[#06b6d4]/10 border border-slate-200 hover:border-[#06b6d4]/30 rounded-xl flex items-center justify-between transition-all text-xs text-slate-700 hover:text-slate-900 group"
+                className="w-full p-3 bg-slate-100 hover:bg-[#ef4444]/10 border border-slate-200 hover:border-[#ef4444]/30 rounded-xl flex items-center justify-between transition-all text-xs text-slate-700 hover:text-slate-900 group"
               >
                 <div className="flex items-center gap-2">
-                  <Lightbulb size={14} className="text-[#06b6d4] group-hover:scale-110 transition-transform" />
+                  <Lightbulb size={14} className="text-[#ef4444] group-hover:scale-110 transition-transform" />
                   Generate a Study Plan
                 </div>
                 <ChevronRight size={14} />
@@ -380,7 +380,7 @@ export default function StudentDashboard() {
           {/* Performance Summary Details */}
           <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card">
             <h3 className="font-title font-bold text-lg mb-4 flex items-center gap-2 text-slate-900">
-              <Award size={20} className="text-[#10b981]" />
+              <Award size={20} className="text-[#eab308]" />
               Performance Breakdown
             </h3>
             
@@ -408,7 +408,7 @@ export default function StudentDashboard() {
           {/* Upcoming Activities */}
           <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card">
             <h3 className="font-title font-bold text-lg mb-4 flex items-center gap-2 text-slate-900">
-              <Calendar size={20} className="text-[#f59e0b]" />
+              <Calendar size={20} className="text-[#ef4444]" />
               Upcoming Activities
             </h3>
             
@@ -422,8 +422,8 @@ export default function StudentDashboard() {
                 <div key={i} className="p-3 bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-xl transition-all flex gap-3 items-start">
                   <div className={`p-2 rounded-lg ${
                     act.type === 'Exam' ? 'bg-red-500/10 text-red-400' :
-                    act.type === 'Assignment' ? 'bg-[#8a5cf6]/10 text-[#8a5cf6]' :
-                    'bg-[#06b6d4]/10 text-[#06b6d4]'
+                    act.type === 'Assignment' ? 'bg-[#f97316]/10 text-[#f97316]' :
+                    'bg-[#ef4444]/10 text-[#ef4444]'
                   }`}>
                     {act.type === 'Exam' ? <AlertTriangle size={14} /> :
                      act.type === 'Assignment' ? <FileText size={14} /> :

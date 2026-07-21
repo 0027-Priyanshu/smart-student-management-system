@@ -251,13 +251,13 @@ export default function Students() {
         <div className="flex bg-white p-1 rounded-xl border border-slate-200">
           <button 
             onClick={() => { setShowDeleted(false); setPage(1); }} 
-            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${!showDeleted ? 'bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] text-slate-900 shadow-card' : 'text-slate-500 hover:text-slate-900'}`}
+            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${!showDeleted ? 'bg-gradient-to-r from-[#f97316] to-[#ef4444] text-slate-900 shadow-card' : 'text-slate-500 hover:text-slate-900'}`}
           >
             Active Students
           </button>
           <button 
             onClick={() => { setShowDeleted(true); setPage(1); }} 
-            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${showDeleted ? 'bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] text-slate-900 shadow-card' : 'text-slate-500 hover:text-slate-900'}`}
+            className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${showDeleted ? 'bg-gradient-to-r from-[#f97316] to-[#ef4444] text-slate-900 shadow-card' : 'text-slate-500 hover:text-slate-900'}`}
           >
             Trash / Soft Deleted
           </button>
@@ -274,7 +274,7 @@ export default function Students() {
             Excel
           </button>
           {isAdmin && (
-            <button onClick={openAddModal} className="px-4 py-2.5 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] text-slate-900 font-bold rounded-xl text-xs flex items-center gap-2 hover:shadow-glow transition-all">
+            <button onClick={openAddModal} className="px-4 py-2.5 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-slate-900 font-bold rounded-xl text-xs flex items-center gap-2 hover:shadow-glow transition-all">
               <UserPlus size={16} />
               Add Student
             </button>
@@ -292,14 +292,14 @@ export default function Students() {
               placeholder="Search by name, email, enrollment..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-xs focus:outline-none transition-all"
+              className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-xs focus:outline-none transition-all"
             />
           </div>
 
           <select
             value={selectedDept}
             onChange={(e) => { setSelectedDept(e.target.value); setPage(1); }}
-            className="px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-xs focus:outline-none transition-all cursor-pointer text-slate-700"
+            className="px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-xs focus:outline-none transition-all cursor-pointer text-slate-700"
           >
             <option value="">All Departments</option>
             <option value="CSE">Computer Science (CSE)</option>
@@ -312,7 +312,7 @@ export default function Students() {
           <select
             value={selectedCourse}
             onChange={(e) => { setSelectedCourse(e.target.value); setPage(1); }}
-            className="px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-xl text-xs focus:outline-none transition-all cursor-pointer text-slate-700"
+            className="px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-xs focus:outline-none transition-all cursor-pointer text-slate-700"
           >
             <option value="">All Courses</option>
             {courses.map(c => (
@@ -342,7 +342,7 @@ export default function Students() {
               <button 
                 type="submit" 
                 disabled={!importFile || actionLoading}
-                className="px-3 bg-[#10b981]/20 border border-[#10b981]/30 hover:bg-[#10b981] hover:text-slate-900 text-[#10b981] font-semibold rounded-xl text-[11px] transition-colors"
+                className="px-3 bg-[#eab308]/20 border border-[#eab308]/30 hover:bg-[#eab308] hover:text-slate-900 text-[#eab308] font-semibold rounded-xl text-[11px] transition-colors"
               >
                 Import
               </button>
@@ -352,7 +352,7 @@ export default function Students() {
       </div>
 
       {success && !showAddModal && !showEditModal && (
-        <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 text-[#10b981] rounded-2xl text-xs flex items-center gap-2">
+        <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 text-[#eab308] rounded-2xl text-xs flex items-center gap-2">
           <CheckCircle size={16} />
           <span>{success}</span>
         </div>
@@ -381,7 +381,7 @@ export default function Students() {
               <tbody className="divide-y divide-slate-200">
                 {students.map((student) => (
                   <tr key={student._id || student.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4 font-mono font-semibold text-[#06b6d4]">
+                    <td className="px-6 py-4 font-mono font-semibold text-[#ef4444]">
                       {student.enrollmentNo}
                     </td>
                     <td className="px-6 py-4 font-semibold text-slate-900">
@@ -391,7 +391,7 @@ export default function Students() {
                       {student.email}
                     </td>
                     <td className="px-6 py-4">
-                      <span className="px-2.5 py-1 rounded-full bg-[#10b981]/10 text-[#10b981] font-semibold border border-[#10b981]/25">
+                      <span className="px-2.5 py-1 rounded-full bg-[#eab308]/10 text-[#eab308] font-semibold border border-[#eab308]/25">
                         {student.department}
                       </span>
                     </td>
@@ -409,7 +409,7 @@ export default function Students() {
                             setActiveStudent(student);
                             setShowIdCardModal(true);
                           }} 
-                          className="p-1.5 bg-[#8a5cf6]/10 text-[#8a5cf6] border border-[#8a5cf6]/20 hover:bg-[#8a5cf6] hover:text-slate-900 rounded-lg transition-colors"
+                          className="p-1.5 bg-[#f97316]/10 text-[#f97316] border border-[#f97316]/20 hover:bg-[#f97316] hover:text-slate-900 rounded-lg transition-colors"
                           title="Generate Student ID Card"
                         >
                           <IdCard size={14} />
@@ -419,7 +419,7 @@ export default function Students() {
                           <>
                             <button 
                               onClick={() => openEditModal(student)} 
-                              className="px-2.5 py-1.5 bg-[#10b981]/10 text-[#10b981] hover:bg-[#10b981] hover:text-slate-900 rounded-lg font-semibold transition-colors"
+                              className="px-2.5 py-1.5 bg-[#eab308]/10 text-[#eab308] hover:bg-[#eab308] hover:text-slate-900 rounded-lg font-semibold transition-colors"
                             >
                               Edit
                             </button>
@@ -435,7 +435,7 @@ export default function Students() {
                         {isAdmin && showDeleted && (
                           <button 
                             onClick={() => handleRestore(student._id || student.id || '')} 
-                            className="px-2.5 py-1.5 bg-[#f59e0b]/10 text-[#f59e0b] hover:bg-[#f59e0b] hover:text-slate-900 rounded-lg font-semibold flex items-center gap-1 transition-colors"
+                            className="px-2.5 py-1.5 bg-[#ef4444]/10 text-[#ef4444] hover:bg-[#ef4444] hover:text-slate-900 rounded-lg font-semibold flex items-center gap-1 transition-colors"
                           >
                             <RotateCcw size={14} />
                             Restore
@@ -477,7 +477,7 @@ export default function Students() {
       {/* ADD / EDIT STUDENT MODAL */}
       {(showAddModal || showEditModal) && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-[#8a5cf6]/20 rounded-3xl w-full max-w-lg p-6 relative overflow-hidden shadow-card animate-slideUp">
+          <div className="bg-white border border-[#f97316]/20 rounded-3xl w-full max-w-lg p-6 relative overflow-hidden shadow-card animate-slideUp">
             <button 
               onClick={() => { setShowAddModal(false); setShowEditModal(false); }} 
               className="absolute top-4 right-4 text-slate-500 hover:text-slate-900 transition-colors"
@@ -495,7 +495,7 @@ export default function Students() {
               </div>
             )}
             {success && (
-              <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-[#10b981] rounded-xl text-xs">
+              <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-[#eab308] rounded-xl text-xs">
                 {success}
               </div>
             )}
@@ -509,7 +509,7 @@ export default function Students() {
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
                   />
                 </div>
                 <div className="space-y-1">
@@ -520,7 +520,7 @@ export default function Students() {
                     disabled={showEditModal}
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all disabled:opacity-40"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all disabled:opacity-40"
                   />
                 </div>
               </div>
@@ -532,7 +532,7 @@ export default function Students() {
                     <button 
                       type="button"
                       onClick={() => setFormData({ ...formData, password: Math.random().toString(36).slice(-8) + '!' })}
-                      className="text-[10px] text-[#06b6d4] hover:text-slate-900 font-bold transition-colors"
+                      className="text-[10px] text-[#ef4444] hover:text-slate-900 font-bold transition-colors"
                     >
                       Generate Auto
                     </button>
@@ -542,7 +542,7 @@ export default function Students() {
                     required
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
                   />
                 </div>
               )}
@@ -555,7 +555,7 @@ export default function Students() {
                     required
                     value={formData.age}
                     onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
                   />
                 </div>
                 <div className="space-y-1">
@@ -563,7 +563,7 @@ export default function Students() {
                   <select
                     value={formData.gender}
                     onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-700 focus:outline-none cursor-pointer"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-700 focus:outline-none cursor-pointer"
                   >
                     <option value="Male" className="bg-white">Male</option>
                     <option value="Female" className="bg-white">Female</option>
@@ -575,7 +575,7 @@ export default function Students() {
                   <select
                     value={formData.grade}
                     onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-700 focus:outline-none cursor-pointer"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-700 focus:outline-none cursor-pointer"
                   >
                     <option value="Freshman" className="bg-white">Freshman</option>
                     <option value="Sophomore" className="bg-white">Sophomore</option>
@@ -591,7 +591,7 @@ export default function Students() {
                   <select
                     value={formData.department}
                     onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-700 focus:outline-none cursor-pointer"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-700 focus:outline-none cursor-pointer"
                   >
                     <option value="CSE" className="bg-white">Computer Science (CSE)</option>
                     <option value="ECE" className="bg-white">Electronics (ECE)</option>
@@ -609,7 +609,7 @@ export default function Students() {
                     required
                     value={formData.semester}
                     onChange={(e) => setFormData({ ...formData, semester: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
                   />
                 </div>
               </div>
@@ -622,7 +622,7 @@ export default function Students() {
                     required
                     value={formData.parentName}
                     onChange={(e) => setFormData({ ...formData, parentName: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
                   />
                 </div>
                 <div className="space-y-1">
@@ -632,7 +632,7 @@ export default function Students() {
                     required
                     value={formData.parentPhone}
                     onChange={(e) => setFormData({ ...formData, parentPhone: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
                   />
                 </div>
               </div>
@@ -644,14 +644,14 @@ export default function Students() {
                   required
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#8a5cf6] focus:ring-1 focus:ring-[#8a5cf6]/20 rounded-lg text-xs text-slate-900 focus:outline-none resize-none transition-all"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-900 focus:outline-none resize-none transition-all"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={actionLoading}
-                className="w-full py-3 bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] text-slate-900 font-bold rounded-xl text-xs shadow-card transition-all"
+                className="w-full py-3 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-slate-900 font-bold rounded-xl text-xs shadow-card transition-all"
               >
                 {actionLoading ? 'Saving changes...' : 'Save Student Details'}
               </button>
@@ -663,7 +663,7 @@ export default function Students() {
       {/* ID CARD WITH ATTENDANCE QR CODE MODAL */}
       {showIdCardModal && activeStudent && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-[#06b6d4]/30 rounded-3xl w-full max-w-sm p-6 relative shadow-card animate-slideUp text-center">
+          <div className="bg-white border border-[#ef4444]/30 rounded-3xl w-full max-w-sm p-6 relative shadow-card animate-slideUp text-center">
             <button 
               onClick={() => { setShowIdCardModal(false); setActiveStudent(null); }} 
               className="absolute top-4 right-4 text-slate-500 hover:text-slate-900 transition-colors"
@@ -671,17 +671,17 @@ export default function Students() {
               <X size={20} />
             </button>
 
-            <h3 className="font-title font-extrabold text-lg text-transparent bg-clip-text bg-gradient-to-r from-[#8a5cf6] to-[#06b6d4] mb-6">
+            <h3 className="font-title font-extrabold text-lg text-transparent bg-clip-text bg-gradient-to-r from-[#f97316] to-[#ef4444] mb-6">
               Official Student ID Card
             </h3>
 
             {/* Glass ID card box */}
             <div className="bg-slate-50/80 p-5 rounded-2xl border border-slate-200 shadow-card text-left relative overflow-hidden">
               {/* Glow light */}
-              <div className="absolute top-0 right-0 h-28 w-28 bg-[#06b6d4]/5 rounded-full filter blur-xl" />
+              <div className="absolute top-0 right-0 h-28 w-28 bg-[#ef4444]/5 rounded-full filter blur-xl" />
 
               <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
-                <span className="text-[10px] font-extrabold tracking-widest text-[#06b6d4] uppercase">EduManager University</span>
+                <span className="text-[10px] font-extrabold tracking-widest text-[#ef4444] uppercase">EduManager University</span>
                 <span className="text-[9px] font-semibold text-slate-500">STUDENT</span>
               </div>
 
@@ -697,7 +697,7 @@ export default function Students() {
 
                 <div className="space-y-2 min-w-0">
                   <p className="font-title font-extrabold text-base text-slate-900 leading-tight truncate">{activeStudent.name}</p>
-                  <p className="text-[10px] font-mono text-[#8a5cf6] truncate">{activeStudent.enrollmentNo}</p>
+                  <p className="text-[10px] font-mono text-[#f97316] truncate">{activeStudent.enrollmentNo}</p>
                   
                   <div className="space-y-0.5 text-[9px] text-slate-500">
                     <p><span className="text-slate-400">Dept:</span> <strong className="text-slate-700">{activeStudent.department}</strong></p>
@@ -710,7 +710,7 @@ export default function Students() {
 
               <div className="mt-4 pt-3 border-t border-slate-200 flex items-center justify-between text-[8px] text-slate-400 font-semibold">
                 <span>DO NOT BEND OR ALTER</span>
-                <span className="text-[#06b6d4]">SCAN TO ATTEND</span>
+                <span className="text-[#ef4444]">SCAN TO ATTEND</span>
               </div>
             </div>
 

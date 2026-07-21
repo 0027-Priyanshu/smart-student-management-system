@@ -48,7 +48,7 @@ export default function VerifyEmail() {
       >
         {status === 'loading' && (
           <div className="flex flex-col items-center space-y-4">
-            <Loader className="text-[#8a5cf6] animate-spin" size={48} />
+            <Loader className="text-[#f97316] animate-spin" size={48} />
             <h2 className="text-lg font-bold text-slate-900">Verifying Account</h2>
             <p className="text-xs text-slate-500">{message}</p>
           </div>
@@ -56,7 +56,7 @@ export default function VerifyEmail() {
 
         {status === 'success' && (
           <div className="flex flex-col items-center space-y-4">
-            <CheckCircle className="text-[#10b981] animate-bounce" size={48} />
+            <CheckCircle className="text-[#eab308] animate-bounce" size={48} />
             <h2 className="text-lg font-bold text-slate-900">Email Verified!</h2>
             <p className="text-xs text-slate-500">{message}</p>
             <p className="text-[10px] text-slate-400">Redirecting to login view in a moment...</p>

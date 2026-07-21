@@ -18,17 +18,17 @@ export default function ToastContainer() {
 
 function ToastCard({ toast, onClose }: { toast: ToastMessage; onClose: () => void }) {
   const iconMap = {
-    success: <CheckCircle className="text-[#10b981] shrink-0" size={18} />,
+    success: <CheckCircle className="text-[#eab308] shrink-0" size={18} />,
     error: <ShieldAlert className="text-[#ef4444] shrink-0" size={18} />,
-    warning: <AlertTriangle className="text-[#f59e0b] shrink-0" size={18} />,
-    info: <Info className="text-[#06b6d4] shrink-0" size={18} />,
+    warning: <AlertTriangle className="text-[#ef4444] shrink-0" size={18} />,
+    info: <Info className="text-[#ef4444] shrink-0" size={18} />,
   };
 
   const bgBorderMap = {
-    success: 'bg-white/90 border-[#10b981]/20 text-gray-200',
+    success: 'bg-white/90 border-[#eab308]/20 text-gray-200',
     error: 'bg-white/90 border-[#ef4444]/20 text-gray-200',
-    warning: 'bg-white/90 border-[#f59e0b]/20 text-gray-200',
-    info: 'bg-white/90 border-[#06b6d4]/20 text-gray-200',
+    warning: 'bg-white/90 border-[#ef4444]/20 text-gray-200',
+    info: 'bg-white/90 border-[#ef4444]/20 text-gray-200',
   };
 
   return (

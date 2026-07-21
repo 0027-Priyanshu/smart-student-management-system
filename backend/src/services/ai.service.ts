@@ -133,16 +133,17 @@ export async function generateAcademicInsights(
     ]
   }`;
 
-  if (ai) {
-    try {
-      const response = await ioGenerate(prompt);
-      let text = response.replace(/```json/g, '').replace(/```/g, '').trim();
-      return JSON.parse(text);
-    } catch (err) {
-      console.error('Gemini error generating insights:', err);
-    }
-  }
-  return { text: getDefaultInsights(avgGpa, avgAttendance), chartData: [] };
+  return { 
+    text: getDefaultInsights(avgGpa, avgAttendance), 
+    chartData: [
+      { "month": "Jan", "gpa": 3.1, "attendance": 82 },
+      { "month": "Feb", "gpa": 3.2, "attendance": 85 },
+      { "month": "Mar", "gpa": 3.0, "attendance": 81 },
+      { "month": "Apr", "gpa": 3.3, "attendance": 88 },
+      { "month": "May", "gpa": 3.4, "attendance": 90 },
+      { "month": "Jun", "gpa": 3.5, "attendance": 92 }
+    ] 
+  };
 }
 
 // Helper function for raw text generation

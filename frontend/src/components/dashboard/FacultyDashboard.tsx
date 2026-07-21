@@ -45,10 +45,10 @@ export default function FacultyDashboard() {
             <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Total Students</p>
             <h3 className="font-title font-black text-3xl text-slate-900">{stats?.stats?.totalStudents || 0}</h3>
           </div>
-          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#8a5cf6]/20 to-[#06b6d4]/20 flex items-center justify-center text-[#8a5cf6] relative z-10">
+          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#f97316]/20 to-[#ef4444]/20 flex items-center justify-center text-[#f97316] relative z-10">
             <Users size={24} />
           </div>
-          <div className="absolute -right-6 -bottom-6 h-32 w-32 bg-[#8a5cf6]/5 rounded-full filter blur-xl" />
+          <div className="absolute -right-6 -bottom-6 h-32 w-32 bg-[#f97316]/5 rounded-full filter blur-xl" />
         </div>
 
         <div className="bg-slate-1000 p-6 rounded-3xl border border-slate-200 flex items-center justify-between shadow-card relative overflow-hidden">
@@ -56,10 +56,10 @@ export default function FacultyDashboard() {
             <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Platform Courses</p>
             <h3 className="font-title font-black text-3xl text-slate-900">{stats?.stats?.totalCourses || 0}</h3>
           </div>
-          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#06b6d4]/20 to-[#10b981]/20 flex items-center justify-center text-[#06b6d4] relative z-10">
+          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#ef4444]/20 to-[#eab308]/20 flex items-center justify-center text-[#ef4444] relative z-10">
             <BookOpen size={24} />
           </div>
-          <div className="absolute -right-6 -bottom-6 h-32 w-32 bg-[#06b6d4]/5 rounded-full filter blur-xl" />
+          <div className="absolute -right-6 -bottom-6 h-32 w-32 bg-[#ef4444]/5 rounded-full filter blur-xl" />
         </div>
 
         <div className="bg-slate-1000 p-6 rounded-3xl border border-slate-200 flex items-center justify-between shadow-card relative overflow-hidden">
@@ -67,7 +67,7 @@ export default function FacultyDashboard() {
             <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">At-Risk Students</p>
             <h3 className="font-title font-black text-3xl text-slate-900">{stats?.atRiskStudents?.length || 0}</h3>
           </div>
-          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#ef4444]/20 to-[#f59e0b]/20 flex items-center justify-center text-[#ef4444] relative z-10">
+          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#ef4444]/20 to-[#ef4444]/20 flex items-center justify-center text-[#ef4444] relative z-10">
             <AlertTriangle size={24} />
           </div>
           <div className="absolute -right-6 -bottom-6 h-32 w-32 bg-[#ef4444]/5 rounded-full filter blur-xl" />
@@ -79,7 +79,7 @@ export default function FacultyDashboard() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h3 className="font-title font-extrabold text-slate-900 text-lg flex items-center gap-2">
-              <AlertTriangle className="text-[#f59e0b]" size={20} />
+              <AlertTriangle className="text-[#ef4444]" size={20} />
               Students Requiring Attention
             </h3>
             <p className="text-xs text-slate-500 mt-1">AI-flagged students based on low attendance or poor performance.</p>
@@ -115,7 +115,7 @@ export default function FacultyDashboard() {
                     <td className="px-4 py-3 text-right">
                       <a 
                         href={`/ai-assistant`} 
-                        className="text-[10px] font-bold text-[#06b6d4] hover:text-slate-900 transition-colors"
+                        className="text-[10px] font-bold text-[#ef4444] hover:text-slate-900 transition-colors"
                       >
                         View Profile &rarr;
                       </a>
@@ -127,7 +127,7 @@ export default function FacultyDashboard() {
           </div>
         ) : (
           <div className="py-12 flex flex-col items-center justify-center border-t border-slate-200">
-            <div className="w-16 h-16 bg-[#10b981]/10 text-[#10b981] rounded-full flex items-center justify-center mb-4">
+            <div className="w-16 h-16 bg-[#eab308]/10 text-[#eab308] rounded-full flex items-center justify-center mb-4">
               <CheckCircle size={32} />
             </div>
             <p className="text-slate-700 font-bold">All Good!</p>

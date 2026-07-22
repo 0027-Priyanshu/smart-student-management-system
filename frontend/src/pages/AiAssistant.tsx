@@ -46,9 +46,11 @@ export default function AiAssistant() {
   const [trendData, setTrendData] = useState<any[]>([]);
   const [insightsLoading, setInsightsLoading] = useState(false);
 
-  // Load students for profiler (Admin only)
+  const canSelectStudent = isAdmin || user?.role === 'Faculty';
+
+  // Load students for profiler (Admin and Faculty)
   useEffect(() => {
-    if (isAdmin) {
+    if (canSelectStudent) {
       async function getStudents() {
         try {
           const res = await api.get('/students?limit=200');
@@ -59,7 +61,7 @@ export default function AiAssistant() {
       }
       getStudents();
     }
-  }, [isAdmin]);
+  }, [canSelectStudent]);
 
   // Load student profile recommendations directly on mount (Student only)
   useEffect(() => {
@@ -252,19 +254,19 @@ export default function AiAssistant() {
         >
           {isStudent ? 'Your AI Profile Analyzer' : 'Student Performance Analyzer'}
         </button>
-        {isAdmin && (
+        {canSelectStudent && (
           <button 
             onClick={() => setActiveTab('insights')} 
             className={`px-5 py-3 text-xs font-semibold border-b-2 transition-colors ${activeTab === 'insights' ? 'border-[#f97316] text-[#f97316]' : 'border-transparent text-slate-500 hover:text-slate-900'}`}
           >
-            Strategic Admin Insights
+            Strategic Academic Insights
           </button>
         )}
       </div>
 
       {/* Tab 1: Direct Chat interface */}
       {activeTab === 'chat' && (
-        <div className="flex flex-col h-[600px] bg-slate-1000 border border-slate-200 rounded-3xl overflow-hidden shadow-card">
+        <div className="flex flex-col h-[600px] bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-card">
           {/* Header area */}
           <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -353,9 +355,9 @@ export default function AiAssistant() {
       {/* Tab 2: Student Performance Profiler */}
       {activeTab === 'profiler' && (
         <div className="space-y-6">
-          {/* Student Selector (Admin only) */}
-          {isAdmin && (
-            <div className="p-5 bg-slate-1000 border border-slate-200 rounded-3xl flex flex-col sm:flex-row sm:items-center gap-4">
+          {/* Student Selector (Admin and Faculty) */}
+          {canSelectStudent && (
+            <div className="p-5 bg-white border border-slate-200 rounded-3xl flex flex-col sm:flex-row sm:items-center gap-4">
               <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Select Student</label>
               <select
                 value={selectedStudent}
@@ -386,7 +388,7 @@ export default function AiAssistant() {
               </div>
             </div>
           ) : !summary && !isStudent ? (
-            <div className="p-10 bg-slate-1000 border border-slate-200 rounded-3xl text-center text-slate-400 italic text-xs">
+            <div className="p-10 bg-white border border-slate-200 rounded-3xl text-center text-slate-400 italic text-xs">
               Select a student to generate their AI Performance analysis card.
             </div>
           ) : (
@@ -396,7 +398,7 @@ export default function AiAssistant() {
               <div className="lg:col-span-2 space-y-6">
                 
                 {/* Academic Profile summary */}
-                <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card relative overflow-hidden">
+                <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card relative overflow-hidden">
                   <div className="absolute top-0 right-0 h-16 w-16 bg-[#f97316]/5 rounded-full filter blur-xl" />
                   
                   <div className="flex items-center justify-between mb-4">
@@ -405,7 +407,7 @@ export default function AiAssistant() {
                       AI Academic Summary Profile
                     </h4>
                     <div className="flex gap-2">
-                      {isAdmin && riskData && (riskData.riskLevel === 'Medium' || riskData.riskLevel === 'High') && (
+                      {canSelectStudent && riskData && (riskData.riskLevel === 'Medium' || riskData.riskLevel === 'High') && (
                         <button
                           onClick={handleSendParentEmail}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-slate-900 rounded-xl border border-red-500/20 transition-all text-[10px] font-bold"
@@ -489,7 +491,7 @@ export default function AiAssistant() {
                 </div>
 
                 {/* Recommendations */}
-                <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card">
+                <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card">
                   <h4 className="font-title font-extrabold text-base mb-4 text-slate-900 flex items-center gap-2">
                     <Sparkles size={18} className="text-[#ef4444]" />
                     Personalized Study Recommendations
@@ -511,7 +513,7 @@ export default function AiAssistant() {
 
               {/* Side panel: warnings */}
               <div className="lg:col-span-1 space-y-6">
-                <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card h-full">
+                <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card h-full">
                   <h4 className="font-title font-extrabold text-base mb-4 text-slate-900 flex items-center gap-2">
                     <ShieldAlert size={18} className="text-[#ef4444]" />
                     AI Alert Center
@@ -549,10 +551,10 @@ export default function AiAssistant() {
         </div>
       )}
 
-      {/* Tab 3: Strategic Admin Insights (Admin only) */}
-      {activeTab === 'insights' && isAdmin && (
+      {/* Tab 3: Strategic Admin Insights */}
+      {activeTab === 'insights' && canSelectStudent && (
         <div className="space-y-6">
-          <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card relative overflow-hidden">
+          <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card relative overflow-hidden">
             <div className="absolute top-0 right-0 h-28 w-28 bg-[#f97316]/5 rounded-full filter blur-2xl" />
 
             <div className="flex items-center justify-between mb-6">

@@ -331,7 +331,7 @@ export default function Students() {
       </div>
 
       {/* Advanced Filters */}
-      <div className="p-5 bg-slate-1000 border border-slate-200 rounded-3xl mb-6">
+      <div className="p-5 bg-white border border-slate-200 rounded-3xl mb-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="relative col-span-1 sm:col-span-2 lg:col-span-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
@@ -407,7 +407,7 @@ export default function Students() {
       )}
 
       {/* Student List Grid / Table */}
-      <div className="bg-slate-1000 border border-slate-200 rounded-3xl overflow-hidden shadow-card">
+      <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-card">
         {loading ? (
           <TableSkeleton rows={6} cols={6} />
         ) : students.length === 0 ? (

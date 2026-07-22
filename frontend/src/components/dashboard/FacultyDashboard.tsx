@@ -40,7 +40,7 @@ export default function FacultyDashboard() {
     <div className="space-y-8">
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-slate-1000 p-6 rounded-3xl border border-slate-200 flex items-center justify-between shadow-card relative overflow-hidden">
+        <div className="bg-white p-6 rounded-3xl border border-slate-200 flex items-center justify-between shadow-card relative overflow-hidden">
           <div className="relative z-10">
             <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Total Students</p>
             <h3 className="font-title font-black text-3xl text-slate-900">{stats?.stats?.totalStudents || 0}</h3>
@@ -51,7 +51,7 @@ export default function FacultyDashboard() {
           <div className="absolute -right-6 -bottom-6 h-32 w-32 bg-[#f97316]/5 rounded-full filter blur-xl" />
         </div>
 
-        <div className="bg-slate-1000 p-6 rounded-3xl border border-slate-200 flex items-center justify-between shadow-card relative overflow-hidden">
+        <div className="bg-white p-6 rounded-3xl border border-slate-200 flex items-center justify-between shadow-card relative overflow-hidden">
           <div className="relative z-10">
             <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Platform Courses</p>
             <h3 className="font-title font-black text-3xl text-slate-900">{stats?.stats?.totalCourses || 0}</h3>
@@ -62,7 +62,7 @@ export default function FacultyDashboard() {
           <div className="absolute -right-6 -bottom-6 h-32 w-32 bg-[#ef4444]/5 rounded-full filter blur-xl" />
         </div>
 
-        <div className="bg-slate-1000 p-6 rounded-3xl border border-slate-200 flex items-center justify-between shadow-card relative overflow-hidden">
+        <div className="bg-white p-6 rounded-3xl border border-slate-200 flex items-center justify-between shadow-card relative overflow-hidden">
           <div className="relative z-10">
             <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">At-Risk Students</p>
             <h3 className="font-title font-black text-3xl text-slate-900">{stats?.atRiskStudents?.length || 0}</h3>
@@ -75,7 +75,7 @@ export default function FacultyDashboard() {
       </div>
 
       {/* At-Risk Students List */}
-      <div className="bg-slate-1000 border border-slate-200 rounded-3xl p-6 shadow-card">
+      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-card">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h3 className="font-title font-extrabold text-slate-900 text-lg flex items-center gap-2">

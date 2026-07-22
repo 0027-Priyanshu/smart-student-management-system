@@ -153,7 +153,7 @@ export default function Attendance() {
     <DashboardShell title="Attendance Tracker">
       
       {/* Attendance Heatmap Widget */}
-      <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl mb-8 shadow-card">
+      <div className="p-6 bg-white border border-slate-200 rounded-3xl mb-8 shadow-card">
         <h3 className="font-title font-bold text-lg mb-4 flex items-center gap-2">
           <Calendar size={20} className="text-[#f97316]" />
           {isStudent ? 'Your Attendance Activity Tracker' : 'Overall Institute Attendance Frequency'}
@@ -192,7 +192,7 @@ export default function Attendance() {
         {/* Actions panel */}
         <div className="lg:col-span-1 space-y-6">
           
-          <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card">
+          <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card">
             <h4 className="font-title font-extrabold text-base mb-4 text-slate-900">Tracking Session</h4>
             
             <div className="space-y-4">
@@ -230,7 +230,7 @@ export default function Attendance() {
 
           {/* Student QR scan simulation */}
           {isStudent && (
-            <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card relative overflow-hidden">
+            <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card relative overflow-hidden">
               {/* Glow light */}
               <div className="absolute top-0 right-0 h-16 w-16 bg-[#ef4444]/5 rounded-full filter blur-xl" />
 
@@ -270,7 +270,7 @@ export default function Attendance() {
 
         {/* Directory Student List (Admin/Faculty only) */}
         {isAdminOrFaculty && (
-          <div className="lg:col-span-2 p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card flex flex-col h-full">
+          <div className="lg:col-span-2 p-6 bg-white border border-slate-200 rounded-3xl shadow-card flex flex-col h-full">
             <div className="flex items-center justify-between mb-4">
               <h4 className="font-title font-extrabold text-base text-slate-900">Enrollment List</h4>
               {selectedCourse && (

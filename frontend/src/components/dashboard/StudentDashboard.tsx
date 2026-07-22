@@ -205,7 +205,7 @@ export default function StudentDashboard() {
             </div>
           </div>
           
-          <div className="flex items-center gap-6 bg-slate-1000 p-6 rounded-2xl border border-slate-200 backdrop-blur-md">
+          <div className="flex items-center gap-6 bg-white p-6 rounded-2xl border border-slate-200 backdrop-blur-md">
             <div className="text-center">
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Overall CGPA</p>
               <h2 className="text-4xl font-extrabold text-slate-900 drop-shadow-lg">{cgpa.toFixed(2)}</h2>
@@ -221,7 +221,7 @@ export default function StudentDashboard() {
 
       {/* Academic Overview Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card flex items-center gap-4 hover:-translate-y-1 transition-transform group">
+        <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card flex items-center gap-4 hover:-translate-y-1 transition-transform group">
           <div className="h-12 w-12 rounded-xl bg-[#f97316]/10 flex items-center justify-center text-[#f97316] group-hover:scale-110 transition-transform">
             <BookOpen size={24} />
           </div>
@@ -230,7 +230,7 @@ export default function StudentDashboard() {
             <p className="text-2xl font-extrabold text-slate-900 mt-1"><AnimatedCounter value={totalCourses} /></p>
           </div>
         </div>
-        <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card flex items-center gap-4 hover:-translate-y-1 transition-transform group">
+        <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card flex items-center gap-4 hover:-translate-y-1 transition-transform group">
           <div className="h-12 w-12 rounded-xl bg-[#ef4444]/10 flex items-center justify-center text-[#ef4444] group-hover:scale-110 transition-transform">
             <CheckCircle size={24} />
           </div>
@@ -239,7 +239,7 @@ export default function StudentDashboard() {
             <p className="text-2xl font-extrabold text-slate-900 mt-1"><AnimatedCounter value={earnedCredits} /> / {totalCredits || 120}</p>
           </div>
         </div>
-        <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card flex items-center gap-4 hover:-translate-y-1 transition-transform group">
+        <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card flex items-center gap-4 hover:-translate-y-1 transition-transform group">
           <div className="h-12 w-12 rounded-xl bg-[#eab308]/10 flex items-center justify-center text-[#eab308] group-hover:scale-110 transition-transform">
             <TrendingUp size={24} />
           </div>
@@ -248,7 +248,7 @@ export default function StudentDashboard() {
             <p className="text-2xl font-extrabold text-slate-900 mt-1"><AnimatedCounter value={averageMarks} />%</p>
           </div>
         </div>
-        <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card flex items-center gap-4 hover:-translate-y-1 transition-transform group">
+        <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card flex items-center gap-4 hover:-translate-y-1 transition-transform group">
           <div className="h-12 w-12 rounded-xl bg-[#ef4444]/10 flex items-center justify-center text-[#ef4444] group-hover:scale-110 transition-transform">
             <FileText size={24} />
           </div>
@@ -265,7 +265,7 @@ export default function StudentDashboard() {
         <div className="lg:col-span-2 space-y-8">
           
           {/* GPA Trend */}
-          <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card">
+          <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card">
             <h3 className="font-title font-bold text-lg mb-6 flex items-center gap-2 text-slate-900">
               <TrendingUp size={20} className="text-[#f97316]" />
               Semester GPA Trend
@@ -296,7 +296,7 @@ export default function StudentDashboard() {
           </div>
 
           {/* Subject-wise Marks */}
-          <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card">
+          <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card">
             <h3 className="font-title font-bold text-lg mb-6 flex items-center gap-2 text-slate-900">
               <Award size={20} className="text-[#ef4444]" />
               Subject Performance Comparison
@@ -330,7 +330,7 @@ export default function StudentDashboard() {
         <div className="space-y-8">
           
           {/* AI Insights & Quick Actions */}
-          <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card relative overflow-hidden">
+          <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card relative overflow-hidden">
             <div className="absolute top-0 right-0 h-24 w-24 bg-[#f97316]/10 rounded-full filter blur-2xl" />
             
             <h3 className="font-title font-bold text-lg mb-4 flex items-center gap-2 text-slate-900 relative z-10">
@@ -378,7 +378,7 @@ export default function StudentDashboard() {
           </div>
 
           {/* Performance Summary Details */}
-          <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card">
+          <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card">
             <h3 className="font-title font-bold text-lg mb-4 flex items-center gap-2 text-slate-900">
               <Award size={20} className="text-[#eab308]" />
               Performance Breakdown
@@ -406,7 +406,7 @@ export default function StudentDashboard() {
           </div>
 
           {/* Upcoming Activities */}
-          <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card">
+          <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card">
             <h3 className="font-title font-bold text-lg mb-4 flex items-center gap-2 text-slate-900">
               <Calendar size={20} className="text-[#ef4444]" />
               Upcoming Activities

@@ -141,7 +141,7 @@ export default function Dashboard() {
           return (
             <div 
               key={idx} 
-              className={`p-6 bg-slate-1000 backdrop-blur-md border ${card.border} rounded-3xl shadow-card flex items-center gap-5 hover:-translate-y-1 transition-all duration-300 group`}
+              className={`p-6 bg-white backdrop-blur-md border ${card.border} rounded-3xl shadow-card flex items-center gap-5 hover:-translate-y-1 transition-all duration-300 group`}
             >
               <div className={`h-14 w-14 rounded-2xl ${card.bg} flex items-center justify-center ${card.color} group-hover:scale-110 transition-transform duration-300`}>
                 <Icon size={26} />
@@ -161,7 +161,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
         
         {/* Monthly Registrations (Area Chart) */}
-        <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card">
+        <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card">
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-title font-bold text-lg flex items-center gap-2">
               <TrendingUp size={20} className="text-[#f97316]" />
@@ -192,7 +192,7 @@ export default function Dashboard() {
         </div>
 
         {/* Course-wise Enrollment Stats (Bar Chart) */}
-        <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card">
+        <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card">
           <h3 className="font-title font-bold text-lg mb-6 flex items-center gap-2">
             <BookOpen size={20} className="text-[#ef4444]" />
             Course Enrollment Statistics
@@ -222,7 +222,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Department-wise Student Distribution (Pie Chart) */}
-        <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card lg:col-span-1">
+        <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card lg:col-span-1">
           <h3 className="font-title font-bold text-lg mb-6 flex items-center gap-2">
             <Users size={20} className="text-[#eab308]" />
             Department Distribution
@@ -266,7 +266,7 @@ export default function Dashboard() {
         </div>
 
         {/* Recent Activity Logs Timeline */}
-        <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card lg:col-span-2">
+        <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card lg:col-span-2">
           <h3 className="font-title font-bold text-lg mb-6 flex items-center gap-2">
             <HistoryIcon size={20} className="text-[#ea580c]" />
             Recent Activity Logs
@@ -311,7 +311,7 @@ export default function Dashboard() {
 
       {/* AI At-Risk Students Panel (Admin/Faculty) */}
       {(user?.role === 'Admin' || user?.role === 'Super Admin' || user?.role === 'Faculty') && (
-        <div className="mt-8 p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card overflow-hidden">
+        <div className="mt-8 p-6 bg-white border border-slate-200 rounded-3xl shadow-card overflow-hidden">
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-title font-bold text-lg flex items-center gap-2">
               <AlertTriangle size={20} className="text-red-400" />

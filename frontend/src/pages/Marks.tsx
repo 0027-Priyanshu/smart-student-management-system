@@ -143,7 +143,7 @@ export default function Marks() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           
           {/* CGPA Card */}
-          <div className="p-6 bg-slate-1000 border border-[#ef4444]/20 rounded-3xl shadow-card md:col-span-1 flex items-center gap-5">
+          <div className="p-6 bg-white border border-[#ef4444]/20 rounded-3xl shadow-card md:col-span-1 flex items-center gap-5">
             <div className="h-14 w-14 rounded-2xl bg-[#ef4444]/10 flex items-center justify-center text-[#ef4444]">
               <Award size={26} />
             </div>
@@ -154,7 +154,7 @@ export default function Marks() {
           </div>
 
           {/* GPA Progress Trend Chart */}
-          <div className="p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card md:col-span-2">
+          <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card md:col-span-2">
             <div className="h-28">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={gpaTrendData} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
@@ -174,7 +174,7 @@ export default function Marks() {
         
         {/* Record Marks Interface (Admin/Faculty view only) */}
         {isAdminOrFaculty && (
-          <div className="lg:col-span-1 p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card h-fit">
+          <div className="lg:col-span-1 p-6 bg-white border border-slate-200 rounded-3xl shadow-card h-fit">
             <h4 className="font-title font-extrabold text-base mb-4 text-slate-900 flex items-center gap-1.5">
               <FileSpreadsheet size={18} className="text-[#f97316]" />
               Enter Student Grades
@@ -312,7 +312,7 @@ export default function Marks() {
         )}
 
         {/* Grade Sheet Display */}
-        <div className={`${isAdminOrFaculty ? 'lg:col-span-2' : 'lg:col-span-3'} p-6 bg-slate-1000 border border-slate-200 rounded-3xl shadow-card`}>
+        <div className={`${isAdminOrFaculty ? 'lg:col-span-2' : 'lg:col-span-3'} p-6 bg-white border border-slate-200 rounded-3xl shadow-card`}>
           <h4 className="font-title font-extrabold text-base mb-4 text-slate-900">Student Grade Sheet</h4>
 
           {results.length === 0 ? (

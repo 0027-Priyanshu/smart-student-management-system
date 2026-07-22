@@ -174,7 +174,7 @@ export default function Courses() {
             return (
               <div 
                 key={courseIdStr} 
-                className="bg-slate-1000 border border-slate-200 hover:border-[#ef4444]/20 p-6 rounded-3xl shadow-card flex flex-col justify-between min-h-[240px] hover:-translate-y-1 transition-all duration-300 relative group"
+                className="bg-white border border-slate-200 hover:border-[#ef4444]/20 p-6 rounded-3xl shadow-card flex flex-col justify-between min-h-[240px] hover:-translate-y-1 transition-all duration-300 relative group"
               >
                 {/* Accent glow on hover */}
                 <div className="absolute top-0 right-0 h-16 w-16 bg-[#ef4444]/3 rounded-full filter blur-lg opacity-0 group-hover:opacity-100 transition-opacity" />

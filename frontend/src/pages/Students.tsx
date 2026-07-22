@@ -244,10 +244,30 @@ export default function Students() {
   };
 
   // Export handlers
-  const triggerExport = (type: 'csv' | 'excel' | 'pdf') => {
-    const token = localStorage.getItem('accessToken');
-    const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
-    window.open(`${apiBase}/students/export/${type}?token=${token}`, '_blank');
+  const triggerExport = async (type: 'csv' | 'excel' | 'pdf') => {
+    try {
+      const response = await api.get(`/students/export/${type}`, {
+        responseType: 'blob'
+      });
+      const mimeType = type === 'excel' 
+        ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+        : type === 'pdf' 
+          ? 'application/pdf' 
+          : 'text/csv';
+      const blob = new Blob([response.data], { type: mimeType });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const extension = type === 'excel' ? 'xlsx' : type;
+      link.setAttribute('download', `Students_Export_${Date.now()}.${extension}`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      console.error('Export failed:', err);
+      toast.error('Export failed. Please check your connection and try again.');
+    }
   };
 
   const openAddModal = () => {

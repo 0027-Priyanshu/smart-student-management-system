@@ -216,11 +216,20 @@ export default function AiAssistant() {
     if (!selectedStudent && !isStudent) return;
     const studentId = selectedStudent || user?.studentProfile?._id || user?.studentProfile?.id || user?.userId;
     try {
-      const token = localStorage.getItem('accessToken');
-      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
-      window.open(`${apiBase}/ai/report/${studentId}/pdf?token=${token}`, '_blank');
+      const response = await api.get(`/ai/report/${studentId}/pdf`, {
+        responseType: 'blob'
+      });
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `AI_Academic_Report_${studentId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
     } catch (err) {
-      console.error(err);
+      console.error('PDF Report Download failed:', err);
     }
   };
 

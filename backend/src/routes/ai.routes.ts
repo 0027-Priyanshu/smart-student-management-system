@@ -13,19 +13,19 @@ router.get('/student-recommendations/:studentId', authenticateJWT, AIController.
 // GET: /api/ai/predict-risk/:studentId (Protected)
 router.get('/predict-risk/:studentId', authenticateJWT, AIController.getPredictRisk);
 
-// POST: /api/ai/generate-parent-email/:studentId (Protected - Admin only)
+// POST: /api/ai/generate-parent-email/:studentId (Protected - Admin & Faculty)
 router.post(
   '/generate-parent-email/:studentId',
   authenticateJWT,
-  requireRole(['Super Admin', 'Admin']),
+  requireRole(['Super Admin', 'Admin', 'Faculty']),
   AIController.sendParentEmail
 );
 
-// GET: /api/ai/academic-insights (Protected - Admin only)
+// GET: /api/ai/academic-insights (Protected - Admin & Faculty)
 router.get(
   '/academic-insights', 
   authenticateJWT, 
-  requireRole(['Super Admin', 'Admin']), 
+  requireRole(['Super Admin', 'Admin', 'Faculty']), 
   AIController.getAcademicInsights
 );
 
@@ -35,11 +35,11 @@ router.get('/chat-history', authenticateJWT, AIController.getChatHistory);
 // POST: /api/ai/chat (Protected - Admin chat assistant)
 router.post('/chat', authenticateJWT, AIController.chat);
 
-// POST: /api/ai/nl-search (Protected - Admin only)
+// POST: /api/ai/nl-search (Protected - Admin & Faculty)
 router.post(
   '/nl-search',
   authenticateJWT,
-  requireRole(['Super Admin', 'Admin']),
+  requireRole(['Super Admin', 'Admin', 'Faculty']),
   AIController.nlSearch
 );
 

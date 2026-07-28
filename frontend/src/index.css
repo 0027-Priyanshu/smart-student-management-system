@@ -83,3 +83,13 @@ select option {
   background-color: #ffffff !important;
   color: #0b0c10 !important;
 }
+
+/* Universal High-Contrast Markdown & Text Rules */
+strong, b, li strong, li b {
+  color: #0f172a !important; /* Darkest slate-900 */
+  font-weight: 800 !important;
+}
+
+h1, h2, h3, h4 {
+  color: #0f172a !important;
+}

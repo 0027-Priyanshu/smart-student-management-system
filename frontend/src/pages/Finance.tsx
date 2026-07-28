@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { CreditCard, Search, ShieldAlert, CheckCircle2, Send, RefreshCw, DollarSign, Wallet, FileText } from 'lucide-react';
+import { CreditCard, Search, ShieldAlert, Send, RefreshCw, DollarSign, Wallet, FileText, Settings, Clock } from 'lucide-react';
 import DashboardShell from '../components/layout/DashboardShell';
 import api from '../utils/api';
 import { useAuthStore } from '../stores/authStore';
 import { toast } from '../stores/toastStore';
 import AnimatedCounter from '../components/common/AnimatedCounter';
 import FeePaymentModal from '../components/fees/FeePaymentModal';
+import AdminFeeControlModal from '../components/fees/AdminFeeControlModal';
+import SendReminderModal from '../components/fees/SendReminderModal';
 
 export default function Finance() {
   const { user } = useAuthStore();
@@ -17,8 +19,11 @@ export default function Finance() {
   const [studentFeeStatus, setStudentFeeStatus] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
-  const [reminderLoading, setReminderLoading] = useState<{ [key: string]: boolean }>({});
+  
+  // Modals State
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+  const [selectedStudentForControl, setSelectedStudentForControl] = useState<any>(null);
+  const [selectedStudentForReminder, setSelectedStudentForReminder] = useState<any>(null);
 
   const fetchFinanceData = async () => {
     setLoading(true);
@@ -42,18 +47,6 @@ export default function Finance() {
   useEffect(() => {
     fetchFinanceData();
   }, [isStudent]);
-
-  const handleSendReminder = async (studentId: string, studentName: string) => {
-    setReminderLoading(prev => ({ ...prev, [studentId]: true }));
-    try {
-      const res = await api.post(`/fees/send-reminder/${studentId}`);
-      toast.success(res.data.message || `Dues reminder sent for ${studentName}`);
-    } catch (err: any) {
-      toast.error('Failed to send reminder.');
-    } finally {
-      setReminderLoading(prev => ({ ...prev, [studentId]: false }));
-    }
-  };
 
   const filteredRegistry = feeRegistry.filter(student => {
     const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -164,6 +157,7 @@ export default function Finance() {
                 <thead className="bg-slate-50 text-slate-900 font-bold border-b border-slate-200">
                   <tr>
                     <th className="p-3.5">Transaction Ref</th>
+                    <th className="p-3.5">Receipt No</th>
                     <th className="p-3.5">Payment Date</th>
                     <th className="p-3.5">Payment Mode</th>
                     <th className="p-3.5">Amount Paid</th>
@@ -173,10 +167,11 @@ export default function Finance() {
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   {(studentFeeStatus?.history || [
-                    { id: 'TXN_98712', date: '12 July 2026', amount: 75000, mode: 'UPI / GPay', status: 'Success' }
+                    { id: 'TXN_98712', receiptNo: 'REC_98712', date: '12 July 2026', amount: 75000, mode: 'UPI / GPay', status: 'Success' }
                   ]).map((txn: any, idx: number) => (
                     <tr key={idx} className="hover:bg-slate-50 transition-colors">
                       <td className="p-3.5 font-mono font-bold text-slate-900">{txn.id}</td>
+                      <td className="p-3.5 font-mono text-slate-500">{txn.receiptNo || `REC_${txn.id?.slice(-5)}`}</td>
                       <td className="p-3.5 font-medium text-slate-700">{txn.date}</td>
                       <td className="p-3.5 font-medium text-slate-700">{txn.mode}</td>
                       <td className="p-3.5 font-mono font-extrabold text-emerald-600">₹{txn.amount.toLocaleString('en-IN')}</td>
@@ -187,7 +182,7 @@ export default function Finance() {
                       </td>
                       <td className="p-3.5 text-center">
                         <button
-                          onClick={() => toast.success(`Downloaded Receipt ${txn.id}`)}
+                          onClick={() => toast.success(`Downloaded Receipt ${txn.receiptNo || txn.id}`)}
                           className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
                         >
                           Download PDF
@@ -246,15 +241,15 @@ export default function Finance() {
 
             <div className="p-5 bg-white border border-slate-200 rounded-3xl shadow-card">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Fully Paid Students</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Overdue Balances</span>
                 <div className="p-2 bg-orange-50 text-[#f97316] rounded-xl">
-                  <CheckCircle2 size={18} />
+                  <Clock size={18} />
                 </div>
               </div>
               <div className="text-2xl font-extrabold text-slate-900 font-mono">
-                <AnimatedCounter value={summary?.fullyPaidCount || 40} /> / {summary?.totalStudentsCount || 50}
+                <AnimatedCounter value={summary?.overdueCount || 3} />
               </div>
-              <p className="text-[10px] text-slate-500 font-medium mt-1">100% dues cleared</p>
+              <p className="text-[10px] text-slate-500 font-medium mt-1">Due date passed</p>
             </div>
           </div>
 
@@ -279,9 +274,10 @@ export default function Finance() {
                 className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none cursor-pointer"
               >
                 <option value="All">All Records</option>
-                <option value="Fully Paid">Fully Paid</option>
+                <option value="Paid">Paid</option>
                 <option value="Partially Paid">Partially Paid</option>
-                <option value="Dues Pending">Dues Pending</option>
+                <option value="Pending">Pending</option>
+                <option value="Overdue">Overdue</option>
               </select>
             </div>
           </div>
@@ -298,7 +294,7 @@ export default function Finance() {
                     <th className="p-4">Paid Fee</th>
                     <th className="p-4">Dues Left</th>
                     <th className="p-4">Status</th>
-                    <th className="p-4 text-center">Actions</th>
+                    <th className="p-4 text-center">Admin Controls</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200">
@@ -315,27 +311,32 @@ export default function Finance() {
                         ₹{s.pendingFee.toLocaleString('en-IN')}
                       </td>
                       <td className="p-4">
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold inline-block ${s.status === 'Fully Paid' ? 'bg-emerald-100 text-emerald-700' : s.status === 'Partially Paid' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold inline-block ${s.status === 'Paid' || s.status === 'Fully Paid' ? 'bg-emerald-100 text-emerald-700' : s.status === 'Overdue' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
                           {s.status}
                         </span>
                       </td>
                       <td className="p-4 text-center">
-                        {s.pendingFee > 0 ? (
+                        <div className="flex items-center justify-center gap-1.5">
                           <button
-                            onClick={() => handleSendReminder(s.id, s.name)}
-                            disabled={reminderLoading[s.id]}
-                            className="px-3 py-1.5 bg-orange-50 hover:bg-orange-100 text-[#f97316] border border-orange-200 rounded-xl text-[10px] font-bold transition-all flex items-center gap-1 mx-auto cursor-pointer"
-                            title="Send Dues SMS/Email to Parent"
+                            onClick={() => setSelectedStudentForControl(s)}
+                            className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+                            title="Manage Fee Record & Status"
                           >
-                            <Send size={12} />
-                            {reminderLoading[s.id] ? 'Sending...' : 'Send Reminder'}
+                            <Settings size={12} />
+                            <span>Control Panel</span>
                           </button>
-                        ) : (
-                          <span className="text-[10px] font-bold text-slate-400 flex items-center justify-center gap-1">
-                            <CheckCircle2 size={12} className="text-emerald-500" />
-                            Cleared
-                          </span>
-                        )}
+                          
+                          {s.pendingFee > 0 && (
+                            <button
+                              onClick={() => setSelectedStudentForReminder(s)}
+                              className="px-2.5 py-1.5 bg-orange-50 hover:bg-orange-100 text-[#f97316] border border-orange-200 rounded-xl text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer"
+                              title="Send Email / SMS Dues Reminder"
+                            >
+                              <Send size={12} />
+                              <span>Remind</span>
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -346,7 +347,7 @@ export default function Finance() {
         </div>
       )}
 
-      {/* EduPay Fee Payment Gateway Modal */}
+      {/* Student EduPay Fee Payment Gateway Modal */}
       <FeePaymentModal
         isOpen={isPayModalOpen}
         onClose={() => setIsPayModalOpen(false)}
@@ -354,6 +355,26 @@ export default function Finance() {
         enrollmentNo={user?.studentProfile?.enrollmentNo || studentFeeStatus?.enrollmentNo || 'ENR25844945'}
         pendingDues={studentFeeStatus?.pendingFee !== undefined ? studentFeeStatus.pendingFee : 20000}
         onPaymentSuccess={() => {
+          fetchFinanceData();
+        }}
+      />
+
+      {/* Admin Fee Control Panel Modal */}
+      <AdminFeeControlModal
+        isOpen={!!selectedStudentForControl}
+        onClose={() => setSelectedStudentForControl(null)}
+        student={selectedStudentForControl}
+        onSuccess={() => {
+          fetchFinanceData();
+        }}
+      />
+
+      {/* Multi-Channel Reminder Modal */}
+      <SendReminderModal
+        isOpen={!!selectedStudentForReminder}
+        onClose={() => setSelectedStudentForReminder(null)}
+        student={selectedStudentForReminder}
+        onSuccess={() => {
           fetchFinanceData();
         }}
       />

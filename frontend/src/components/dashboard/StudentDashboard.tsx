@@ -12,7 +12,10 @@ import {
   User, 
   BrainCircuit,
   AlertTriangle,
-  ChevronRight
+  ChevronRight,
+  Camera,
+  Trash2,
+  Upload
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -28,6 +31,7 @@ import {
 } from 'recharts';
 import api from '../../utils/api';
 import { useAuthStore } from '../../stores/authStore';
+import { toast } from '../../stores/toastStore';
 import AnimatedCounter from '../common/AnimatedCounter';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -48,8 +52,82 @@ export default function StudentDashboard() {
   const [aiSummary, setAiSummary] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
 
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
   const student = user?.studentProfile;
   const studentId = student?._id || student?.id;
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size exceeds 5 MB limit. Please select a smaller photo.');
+      return;
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Invalid file format! Only PNG, JPG, JPEG, and WEBP image uploads are allowed.');
+      return;
+    }
+
+    const fData = new FormData();
+    fData.append('avatar', file);
+
+    try {
+      setUploadingAvatar(true);
+      const uploadRes = await api.post('/students/upload-avatar', fData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      const newAvatarUrl = uploadRes.data.url;
+
+      if (studentId) {
+        await api.put(`/students/${studentId}`, { avatarUrl: newAvatarUrl });
+      }
+
+      if (user && user.studentProfile) {
+        useAuthStore.getState().updateUserLocal({
+          ...user,
+          studentProfile: {
+            ...user.studentProfile,
+            avatarUrl: newAvatarUrl
+          } as any
+        });
+      }
+
+      toast.success('Profile photo updated successfully!');
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Failed to upload profile photo');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!confirm('Are you sure you want to remove your profile photo?')) return;
+    try {
+      setUploadingAvatar(true);
+      if (studentId) {
+        await api.put(`/students/${studentId}`, { avatarUrl: '' });
+      }
+      if (user && user.studentProfile) {
+        useAuthStore.getState().updateUserLocal({
+          ...user,
+          studentProfile: {
+            ...user.studentProfile,
+            avatarUrl: ''
+          } as any
+        });
+      }
+      toast.success('Profile photo removed successfully.');
+    } catch (err: any) {
+      toast.error('Failed to remove profile photo');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   const fetchData = useCallback(async () => {
     if (!studentId) return;
@@ -183,24 +261,70 @@ export default function StudentDashboard() {
       <div className="relative p-8 bg-gradient-to-br from-[#f97316]/20 to-[#ef4444]/20 border border-slate-300 rounded-3xl overflow-hidden shadow-glow">
         <div className="absolute top-0 right-0 h-full w-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div>
-            <h1 className="text-3xl font-title font-extrabold text-slate-900 mb-2">
-              Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#f97316] to-[#ef4444]">{user?.name}</span> 👋
-            </h1>
-            <p className="text-slate-700 font-medium">Ready to conquer another day in {student?.department}?</p>
-            
-            <div className="flex flex-wrap items-center gap-4 mt-6">
-              <div className="px-4 py-2 bg-white/60 rounded-xl border border-slate-200 flex items-center gap-2">
-                <User size={16} className="text-[#f97316]" />
-                <span className="text-xs font-semibold text-slate-700">Roll: {student?.enrollmentNo}</span>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+            {/* Student Profile Photo Upload Widget */}
+            <div className="relative group shrink-0">
+              {student?.avatarUrl ? (
+                <img 
+                  src={student.avatarUrl} 
+                  alt={user?.name} 
+                  className="h-20 w-20 rounded-full object-cover border-4 border-white shadow-md transition-transform group-hover:scale-105" 
+                />
+              ) : (
+                <div className="h-20 w-20 rounded-full bg-gradient-to-tr from-[#f97316] to-[#ef4444] text-white flex items-center justify-center font-black text-2xl border-4 border-white shadow-md">
+                  {user?.name ? user.name.charAt(0).toUpperCase() : 'S'}
+                </div>
+              )}
+
+              {/* Hover overlay actions */}
+              <label 
+                className="absolute inset-0 rounded-full bg-slate-900/60 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity text-white text-xs font-bold gap-1"
+                title="Change or Upload Profile Picture"
+              >
+                <Camera size={18} />
+                <input type="file" accept="image/png, image/jpeg, image/jpg, image/webp" onChange={handleAvatarUpload} className="hidden" />
+              </label>
+
+              {student?.avatarUrl && (
+                <button
+                  type="button"
+                  onClick={handleRemoveAvatar}
+                  disabled={uploadingAvatar}
+                  className="absolute -bottom-1 -right-1 p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-md border-2 border-white transition-colors"
+                  title="Remove Profile Photo"
+                >
+                  <Trash2 size={12} />
+                </button>
+              )}
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="text-3xl font-title font-extrabold text-slate-900">
+                  Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#f97316] to-[#ef4444]">{user?.name}</span> 👋
+                </h1>
               </div>
-              <div className="px-4 py-2 bg-white/60 rounded-xl border border-slate-200 flex items-center gap-2">
-                <BookOpen size={16} className="text-[#ef4444]" />
-                <span className="text-xs font-semibold text-slate-700">Sem: {student?.semester}</span>
-              </div>
-              <div className="px-4 py-2 bg-white/60 rounded-xl border border-slate-200 flex items-center gap-2">
-                <Award size={16} className="text-[#eab308]" />
-                <span className="text-xs font-semibold text-slate-700">Status: {overallPerformance}</span>
+              <p className="text-slate-700 font-medium">Ready to conquer another day in {student?.department}?</p>
+              
+              <div className="flex flex-wrap items-center gap-3 mt-4">
+                <div className="px-3.5 py-1.5 bg-white/70 rounded-xl border border-slate-200 flex items-center gap-2">
+                  <User size={15} className="text-[#f97316]" />
+                  <span className="text-xs font-semibold text-slate-700">Roll: {student?.enrollmentNo}</span>
+                </div>
+                <div className="px-3.5 py-1.5 bg-white/70 rounded-xl border border-slate-200 flex items-center gap-2">
+                  <BookOpen size={15} className="text-[#ef4444]" />
+                  <span className="text-xs font-semibold text-slate-700">Sem: {student?.semester}</span>
+                </div>
+                <div className="px-3.5 py-1.5 bg-white/70 rounded-xl border border-slate-200 flex items-center gap-2">
+                  <Award size={15} className="text-[#eab308]" />
+                  <span className="text-xs font-semibold text-slate-700">Status: {overallPerformance}</span>
+                </div>
+
+                <label className="px-3.5 py-1.5 bg-white hover:bg-slate-50 border border-slate-300 rounded-xl flex items-center gap-1.5 text-xs font-bold text-slate-800 cursor-pointer shadow-2xs transition-colors">
+                  <Upload size={14} className="text-[#f97316]" />
+                  {uploadingAvatar ? 'Uploading...' : student?.avatarUrl ? 'Change Photo' : 'Upload Photo'}
+                  <input type="file" accept="image/png, image/jpeg, image/jpg, image/webp" onChange={handleAvatarUpload} className="hidden" />
+                </label>
               </div>
             </div>
           </div>

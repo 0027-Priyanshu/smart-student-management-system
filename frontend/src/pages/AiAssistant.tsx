@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Bot, Send, User, Sparkles, BrainCircuit, ShieldAlert, FileText, TrendingUp, Mic, MicOff, Volume2, VolumeX, Trash2 } from 'lucide-react';
+import { Bot, Send, User, Sparkles, BrainCircuit, ShieldAlert, FileText, TrendingUp, Mic, MicOff, Volume2, VolumeX, Trash2, Lightbulb } from 'lucide-react';
 import DashboardShell from '../components/layout/DashboardShell';
 import api from '../utils/api';
 import { useAuthStore } from '../stores/authStore';
@@ -7,6 +7,53 @@ import { CardSkeleton } from '../components/Skeleton';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+
+const SUGGESTED_PROMPTS = [
+  {
+    category: 'Academic',
+    icon: '📚',
+    prompts: [
+      "Summarise today's attendance.",
+      "Which students are at risk?",
+      "Show low-performing students.",
+      "Analyse class performance.",
+      "Generate a progress report."
+    ]
+  },
+  {
+    category: 'Administrative',
+    icon: '📋',
+    prompts: [
+      "Create a student report.",
+      "Generate a leave application.",
+      "Find a student by ID.",
+      "Show fee status.",
+      "Export attendance."
+    ]
+  },
+  {
+    category: 'AI Analytics',
+    icon: '⚡',
+    prompts: [
+      "Predict students who may fail.",
+      "Explain attendance trends.",
+      "Compare semester performance.",
+      "Suggest interventions.",
+      "Generate strategic insights."
+    ]
+  },
+  {
+    category: 'General',
+    icon: '💡',
+    prompts: [
+      "What can you help me with?",
+      "Show dashboard summary.",
+      "Explain today's statistics.",
+      "Give system recommendations.",
+      "Help me manage students."
+    ]
+  }
+];
 
 interface ChatMessage {
   role: 'user' | 'model';
@@ -27,8 +74,14 @@ export default function AiAssistant() {
   const [inputMessage, setInputMessage] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(true); // Voice output enabled by default
+  const [isSpeaking, setIsSpeaking] = useState(true);
+  const [showSuggestions, setShowSuggestions] = useState(true);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const handleSelectPrompt = (promptText: string) => {
+    setInputMessage(promptText);
+    handleSendMessage(promptText);
+  };
 
   // Student Profiler state
   const [students, setStudents] = useState<any[]>([]);
@@ -94,22 +147,23 @@ export default function AiAssistant() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inputMessage.trim() || chatLoading) return;
+  const handleSendMessage = async (e?: React.FormEvent | string, customText?: string) => {
+    if (e && typeof e !== 'string') e.preventDefault();
+    const query = typeof e === 'string' ? e : customText || inputMessage;
+    if (!query.trim() || chatLoading) return;
 
-    const userMsg = inputMessage;
     setInputMessage('');
-    setMessages(prev => [...prev, { role: 'user', parts: [userMsg] }]);
+    setMessages(prev => [...prev, { role: 'user', parts: [query] }]);
     setChatLoading(true);
 
     try {
       // Send chat history format to backend
-      const res = await api.post('/ai/chat', {
-        message: userMsg,
-        history: messages
-      });
+      const chatPayload = messages.concat({ role: 'user', parts: [query] }).map(m => ({
+        role: m.role,
+        parts: [{ text: m.parts.join('\n') }]
+      }));
 
+      const res = await api.post('/ai/chat', { messages: chatPayload });
       const reply = res.data.reply;
       setMessages(prev => [...prev, { role: 'model', parts: [reply] }]);
 
@@ -301,6 +355,14 @@ export default function AiAssistant() {
             
             <div className="flex items-center gap-2">
               <button 
+                onClick={() => setShowSuggestions(!showSuggestions)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 ${showSuggestions ? 'text-[#f97316] bg-[#f97316]/10 border-[#f97316]/20' : 'text-slate-600 bg-slate-100 border-slate-200 hover:bg-slate-200'}`}
+                title="Toggle Suggested Starter Prompts"
+              >
+                <Lightbulb size={14} />
+                <span>Suggestions</span>
+              </button>
+              <button 
                 onClick={handleClearHistory}
                 className="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-red-50 hover:text-red-600 border border-slate-200 transition-all flex items-center gap-1.5"
                 title="Clear conversation history & start a new chat"
@@ -320,6 +382,45 @@ export default function AiAssistant() {
 
           {/* Messages */}
           <div className="flex-1 p-5 overflow-y-auto space-y-4 scrollbar-thin">
+            {/* Suggested Starter Prompts Panel */}
+            {showSuggestions && (
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl mb-4 animate-fadeIn">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
+                    <Lightbulb size={16} className="text-[#f97316]" />
+                    Suggested Starter Prompts
+                  </span>
+                  <button 
+                    onClick={() => setShowSuggestions(false)}
+                    className="text-[10px] text-slate-400 hover:text-slate-600 font-bold uppercase tracking-wider"
+                  >
+                    Hide
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                  {SUGGESTED_PROMPTS.map((cat, cIdx) => (
+                    <div key={cIdx} className="space-y-1.5">
+                      <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block">
+                        {cat.icon} {cat.category}
+                      </span>
+                      <div className="space-y-1">
+                        {cat.prompts.map((pText, pIdx) => (
+                          <button
+                            key={pIdx}
+                            type="button"
+                            onClick={() => handleSelectPrompt(pText)}
+                            className="w-full text-left p-2 bg-white hover:bg-orange-50 hover:text-[#f97316] border border-slate-200 hover:border-[#f97316]/40 rounded-xl text-[11px] font-medium text-slate-700 transition-all truncate block shadow-2xs cursor-pointer"
+                          >
+                            {pText}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             {messages.map((msg, idx) => {
               const isAI = msg.role === 'model';
               return (

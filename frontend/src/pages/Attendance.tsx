@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Calendar, CheckCircle, AlertCircle, Scan, HelpCircle, QrCode, Clock, Users, ShieldCheck, Check } from 'lucide-react';
+import { Calendar, CheckCircle, AlertCircle, Scan, HelpCircle, QrCode, Clock, Users, ShieldCheck, Check, RefreshCw } from 'lucide-react';
 import DashboardShell from '../components/layout/DashboardShell';
 import api from '../utils/api';
 import { useAuthStore } from '../stores/authStore';
@@ -22,7 +22,8 @@ export default function Attendance() {
   // Smart QR Session States (Faculty / Admin)
   const [qrLectureTitle, setQrLectureTitle] = useState('');
   const [qrCourseId, setQrCourseId] = useState('');
-  const [qrDuration, setQrDuration] = useState('10');
+  const [qrDuration, setQrDuration] = useState('15');
+  const [customDuration, setCustomDuration] = useState('');
   const [activeSession, setActiveSession] = useState<any>(null);
   const [liveScannedCount, setLiveScannedCount] = useState(0);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
@@ -74,6 +75,17 @@ export default function Attendance() {
       console.error(err);
     }
   }, [isStudent, user]);
+
+  // Auto-detect ?session= parameter in URL on mount (e.g. scanned from phone camera / Google Lens)
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const sessionParam = searchParams.get('session');
+    if (sessionParam) {
+      const cleanSessionId = sessionParam.trim().toUpperCase();
+      setStudentSessionInput(cleanSessionId);
+      handleStudentFetchSession(cleanSessionId);
+    }
+  }, []);
 
   useEffect(() => {
     fetchHeatmapData();
@@ -147,8 +159,8 @@ export default function Attendance() {
     }
   };
 
-  const handleGenerateQR = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleGenerateQR = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!qrCourseId || !qrLectureTitle.trim()) {
       setError('Please select a course and enter a lecture title.');
       return;
@@ -156,12 +168,14 @@ export default function Attendance() {
     setError('');
     setQrLoading(true);
 
+    const effectiveDuration = qrDuration === 'custom' ? (customDuration || '15') : qrDuration;
+
     try {
       const res = await api.post('/attendance/qr/generate', {
         courseId: qrCourseId,
         lectureTitle: qrLectureTitle.trim(),
         date: selectedDate,
-        durationMinutes: qrDuration
+        durationMinutes: effectiveDuration
       });
 
       setActiveSession(res.data.session);
@@ -265,8 +279,12 @@ export default function Attendance() {
   };
 
   const formatTimer = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
+    if (hrs > 0) {
+      return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
@@ -319,7 +337,7 @@ export default function Attendance() {
                   <QrCode size={20} className="text-[#f97316]" />
                   Smart QR Session
                 </h4>
-                <span className="text-[10px] font-bold uppercase px-2 py-0.5 bg-orange-100 text-[#f97316] rounded-full">Option A</span>
+                <span className="text-[10px] font-bold uppercase px-2 py-0.5 bg-orange-100 text-[#f97316] rounded-full">Scannable QR</span>
               </div>
 
               {!activeSession ? (
@@ -352,17 +370,32 @@ export default function Attendance() {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Valid Time Window</label>
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Valid Time Duration</label>
                     <select
                       value={qrDuration}
                       onChange={(e) => setQrDuration(e.target.value)}
                       className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] rounded-xl text-xs text-slate-900 focus:outline-none cursor-pointer"
                     >
-                      <option value="5">5 Minutes</option>
-                      <option value="10">10 Minutes</option>
                       <option value="15">15 Minutes</option>
                       <option value="30">30 Minutes</option>
+                      <option value="45">45 Minutes</option>
+                      <option value="60">60 Minutes (1 Hour)</option>
+                      <option value="90">90 Minutes (1.5 Hours)</option>
+                      <option value="120">120 Minutes (2 Hours)</option>
+                      <option value="custom">Custom Duration...</option>
                     </select>
+                    {qrDuration === 'custom' && (
+                      <input
+                        type="number"
+                        min="1"
+                        max="480"
+                        placeholder="Validity duration in minutes (e.g. 75)"
+                        value={customDuration}
+                        onChange={(e) => setCustomDuration(e.target.value)}
+                        required
+                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] rounded-xl text-xs text-slate-900 focus:outline-none mt-2"
+                      />
+                    )}
                   </div>
 
                   <button
@@ -376,17 +409,18 @@ export default function Attendance() {
                 </form>
               ) : (
                 <div className="text-center space-y-4">
-                  {/* Dynamic QR Display */}
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 inline-block mx-auto shadow-inner">
+                  {/* Real Scannable Dynamic QR Display */}
+                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 inline-block mx-auto shadow-inner text-center">
                     <img 
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(activeSession.sessionId)}`} 
-                      alt="Dynamic QR Code" 
-                      className="h-44 w-44 mx-auto rounded-lg"
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(`${window.location.origin}/attendance?session=${activeSession.sessionId}`)}`} 
+                      alt="Dynamic Scannable QR Code" 
+                      className="h-48 w-48 mx-auto rounded-lg shadow-sm border border-white"
                     />
-                    <div className="mt-2 text-center">
-                      <span className="font-mono text-xs font-bold text-slate-700 bg-white px-2 py-1 rounded border border-slate-200 block truncate">
-                        {activeSession.sessionId}
+                    <div className="mt-3 text-center space-y-1">
+                      <span className="font-mono text-[11px] font-bold text-slate-800 bg-white px-2.5 py-1 rounded-md border border-slate-200 inline-block truncate max-w-full">
+                        {`${window.location.origin}/attendance?session=${activeSession.sessionId}`}
                       </span>
+                      <p className="text-[10px] text-slate-500 font-medium">Scan using Google Lens, iPhone, or Android Camera</p>
                     </div>
                   </div>
 
@@ -414,12 +448,22 @@ export default function Attendance() {
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => setActiveSession(null)}
-                    className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors"
-                  >
-                    Close & Create New QR Session
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleGenerateQR()}
+                      disabled={qrLoading}
+                      className="flex-1 py-2.5 bg-orange-50 hover:bg-orange-100 text-[#f97316] border border-orange-200 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <RefreshCw size={14} />
+                      Regenerate QR
+                    </button>
+                    <button
+                      onClick={() => setActiveSession(null)}
+                      className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      New Session
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

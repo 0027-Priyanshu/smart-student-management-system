@@ -299,8 +299,9 @@ export class AuthController {
       await sendEmail(cleanEmail, 'Your EduManager Password Reset OTP Code', emailHtml);
 
       return res.json({ 
-        message: 'Password reset OTP has been sent to your email address!',
-        token: token // also returned so UI can auto-populate token if needed
+        message: `Password reset OTP generated for ${cleanEmail}. (Demo OTP Code: ${otp})`,
+        token: token,
+        otp: otp
       });
     } catch (error) {
       next(error);

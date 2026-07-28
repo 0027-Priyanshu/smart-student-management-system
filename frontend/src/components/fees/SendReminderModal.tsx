@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Send, Mail, Smartphone, History, Loader2 } from 'lucide-react';
+import { X, Send, Mail, Smartphone, History, Loader2, CheckCircle2 } from 'lucide-react';
 import api from '../../utils/api';
 import { toast } from '../../stores/toastStore';
 
@@ -22,11 +22,13 @@ export default function SendReminderModal({
   const [loading, setLoading] = useState(false);
   const [reminderHistory, setReminderHistory] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'send' | 'history'>('send');
+  const [deliveryReport, setDeliveryReport] = useState<any>(null);
 
   useEffect(() => {
     if (student) {
       setCustomEmail(student.email || `${student.enrollmentNo?.toLowerCase() || 'student'}@gmail.com`);
       setCustomPhone(student.parentPhone || student.phone || '9876543210');
+      setDeliveryReport(null);
     }
   }, [student]);
 
@@ -57,7 +59,7 @@ export default function SendReminderModal({
     if (method === 'SMS' || method === 'Both') {
       const cleanPhone = customPhone.replace(/\D/g, '');
       if (cleanPhone.length < 10) {
-        toast.error(`Invalid phone number for SMS delivery: ${customPhone}`);
+        toast.error(`Invalid phone number format: ${customPhone}`);
         return false;
       }
     }
@@ -70,6 +72,8 @@ export default function SendReminderModal({
     if (!validateInputs()) return;
 
     setLoading(true);
+    setDeliveryReport(null);
+
     try {
       const res = await api.post(`/fees/send-reminder/${student.id || student._id}`, {
         method,
@@ -77,12 +81,33 @@ export default function SendReminderModal({
         customPhone
       });
 
-      toast.success(res.data.message || `Reminder successfully dispatched to ${student.name}`);
+      if (res.data.deliveryReport) {
+        setDeliveryReport(res.data.deliveryReport);
+      }
+
+      if (res.data.success) {
+        toast.success(`Reminder processed for ${student.name}`);
+      } else {
+        toast.error(res.data.message || 'Reminder dispatch reported delivery warnings.');
+      }
+
       fetchReminderHistory();
       if (onSuccess) onSuccess();
-      onClose();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Failed to send reminder notification.');
+      const errorMsg = err.response?.data?.error || 'Failed to dispatch reminder notification.';
+      toast.error(errorMsg);
+      setDeliveryReport({
+        referenceId: `ERR-${Date.now().toString().slice(-6)}`,
+        timestamp: new Date().toISOString(),
+        studentName: student.name,
+        enrollmentNo: student.enrollmentNo,
+        emailStatus: 'Failed',
+        smsStatus: 'Failed',
+        emailError: errorMsg,
+        smsError: errorMsg,
+        recipientEmail: customEmail,
+        recipientPhone: customPhone
+      });
     } finally {
       setLoading(false);
     }
@@ -131,96 +156,144 @@ export default function SendReminderModal({
 
         {/* Modal Body */}
         {activeTab === 'send' ? (
-          <form onSubmit={handleSendReminder} className="p-6 space-y-4">
+          <div className="p-6 space-y-4">
             
-            {/* Delivery Channel Selector */}
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Delivery Channel</label>
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setMethod('Email')}
-                  className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${method === 'Email' ? 'border-[#f97316] bg-orange-50 text-[#f97316]' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}
-                >
-                  <Mail size={16} />
-                  <span>Email</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMethod('SMS')}
-                  className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${method === 'SMS' ? 'border-[#f97316] bg-orange-50 text-[#f97316]' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}
-                >
-                  <Smartphone size={16} />
-                  <span>SMS</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMethod('Both')}
-                  className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${method === 'Both' ? 'border-[#f97316] bg-orange-50 text-[#f97316]' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}
-                >
-                  <Send size={16} />
-                  <span>Both</span>
-                </button>
-              </div>
-            </div>
+            {/* Real Delivery Report Summary Banner (If dispatches executed) */}
+            {deliveryReport && (
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 animate-scaleUp">
+                <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                  <span className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
+                    <CheckCircle2 size={16} className="text-emerald-600" />
+                    Delivery Execution Report
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-slate-500">Ref: {deliveryReport.referenceId}</span>
+                </div>
 
-            {/* Email Address */}
-            {(method === 'Email' || method === 'Both') && (
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Recipient Email Address</label>
-                <input
-                  type="email"
-                  value={customEmail}
-                  onChange={(e) => setCustomEmail(e.target.value)}
-                  required
-                  placeholder="student@gmail.com / outlook.com"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:border-[#f97316]"
-                />
-              </div>
-            )}
+                {/* Email Delivery Breakdown */}
+                {(method === 'Email' || method === 'Both') && (
+                  <div className="space-y-1 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-700 flex items-center gap-1">
+                        <Mail size={14} className="text-[#f97316]" /> Email Status:
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${deliveryReport.emailStatus === 'Delivered' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                        {deliveryReport.emailStatus}
+                      </span>
+                    </div>
+                    <p className="text-[10px] font-mono text-slate-500">Recipient: {deliveryReport.recipientEmail}</p>
+                    {deliveryReport.emailError && (
+                      <p className="text-[10px] font-mono text-red-600 bg-red-50 p-2 rounded-lg border border-red-200">
+                        Reason: {deliveryReport.emailError}
+                      </p>
+                    )}
+                  </div>
+                )}
 
-            {/* Mobile Number */}
-            {(method === 'SMS' || method === 'Both') && (
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Recipient Mobile Number</label>
-                <input
-                  type="text"
-                  value={customPhone}
-                  onChange={(e) => setCustomPhone(e.target.value)}
-                  required
-                  placeholder="+91 9876543210"
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-900 focus:outline-none focus:border-[#f97316]"
-                />
+                {/* SMS Delivery Breakdown */}
+                {(method === 'SMS' || method === 'Both') && (
+                  <div className="space-y-1 text-xs border-t border-slate-200 pt-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-700 flex items-center gap-1">
+                        <Smartphone size={14} className="text-[#f97316]" /> SMS Status:
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${deliveryReport.smsStatus === 'Delivered' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                        {deliveryReport.smsStatus}
+                      </span>
+                    </div>
+                    <p className="text-[10px] font-mono text-slate-500">Recipient: {deliveryReport.recipientPhone}</p>
+                    {deliveryReport.smsError && (
+                      <p className="text-[10px] font-mono text-amber-700 bg-amber-50 p-2 rounded-lg border border-amber-200">
+                        Reason: {deliveryReport.smsError}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Reminder Message Live Preview */}
-            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-1.5">
-              <span className="text-[10px] font-bold uppercase text-slate-500 block">Message Preview</span>
-              <div className="text-[11px] font-mono text-slate-700 whitespace-pre-wrap bg-white p-2.5 rounded-xl border border-slate-200">
-                {`Subject: Fee Payment Reminder\n\nHello ${student.name},\nOur records indicate that your tuition fee payment is still pending.\nEnrollment Number: ${student.enrollmentNo}\nOutstanding Amount: ₹${student.pendingFee?.toLocaleString('en-IN') || '20,000'}\nDue Date: ${student.dueDate || '15 August 2026'}\n\nPlease complete the payment at your earliest convenience.`}
+            <form onSubmit={handleSendReminder} className="space-y-4">
+              
+              {/* Delivery Channel Selector */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Delivery Channel</label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setMethod('Email')}
+                    className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${method === 'Email' ? 'border-[#f97316] bg-orange-50 text-[#f97316]' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+                  >
+                    <Mail size={16} />
+                    <span>Email</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMethod('SMS')}
+                    className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${method === 'SMS' ? 'border-[#f97316] bg-orange-50 text-[#f97316]' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+                  >
+                    <Smartphone size={16} />
+                    <span>SMS</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMethod('Both')}
+                    className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${method === 'Both' ? 'border-[#f97316] bg-orange-50 text-[#f97316]' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+                  >
+                    <Send size={16} />
+                    <span>Both</span>
+                  </button>
+                </div>
               </div>
-            </div>
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3.5 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-white font-extrabold rounded-xl text-xs shadow-md hover:opacity-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
-            >
-              {loading ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  <span>Validating & Dispatching Reminder...</span>
-                </>
-              ) : (
-                <>
-                  <Send size={16} />
-                  <span>Dispatch Reminder Notification</span>
-                </>
+              {/* Email Address */}
+              {(method === 'Email' || method === 'Both') && (
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Recipient Email Address</label>
+                  <input
+                    type="email"
+                    value={customEmail}
+                    onChange={(e) => setCustomEmail(e.target.value)}
+                    required
+                    placeholder="student@gmail.com / outlook.com"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:border-[#f97316]"
+                  />
+                </div>
               )}
-            </button>
-          </form>
+
+              {/* Mobile Number */}
+              {(method === 'SMS' || method === 'Both') && (
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Recipient Mobile Number</label>
+                  <input
+                    type="text"
+                    value={customPhone}
+                    onChange={(e) => setCustomPhone(e.target.value)}
+                    required
+                    placeholder="+91 9876543210"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-900 focus:outline-none focus:border-[#f97316]"
+                  />
+                </div>
+              )}
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3.5 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-white font-extrabold rounded-xl text-xs shadow-md hover:opacity-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>Executing End-to-End Transport Handshake...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send size={16} />
+                    <span>Dispatch Real Reminder Notification</span>
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
         ) : (
           /* TAB 2: Reminder History Logs */
           <div className="p-6 space-y-3 max-h-96 overflow-y-auto scrollbar-thin">
@@ -237,7 +310,9 @@ export default function SendReminderModal({
                   <div key={idx} className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
                     <div className="flex items-center justify-between text-xs font-bold text-slate-900">
                       <span>{log.studentName} ({log.enrollmentNo})</span>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-100 text-emerald-700 font-extrabold">{log.status}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${log.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                        {log.status}
+                      </span>
                     </div>
                     <p className="text-[10px] font-mono text-slate-500">Method: {log.method} | Sent At: {log.sentAt} | By: {log.sentBy}</p>
                     <p className="text-[10px] font-mono text-slate-700 truncate">{log.recipient}</p>

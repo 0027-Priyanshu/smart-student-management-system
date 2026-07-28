@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { RepoService } from '../services/repo.service';
+import { NotificationService } from '../services/notification.service';
 
 // In-memory reminder log store for audit tracking
 const globalReminderLogs: Array<{
@@ -311,11 +312,12 @@ export class FeeController {
     }
   }
 
-  // 5. Send Dues Reminder with Email/SMS Format Validation & Cooldown Tracking
+  // 5. Send Dues Reminder with Email/SMS Format Validation, Cooldown, Nodemailer & Twilio
   static async sendDuesReminder(req: Request, res: Response, next: NextFunction) {
     try {
       const { studentId } = req.params;
       const { method = 'Both', customEmail, customPhone } = req.body || {};
+      const requester = (req as any).user;
 
       const student = await RepoService.findStudentById(studentId);
       if (!student) {
@@ -354,28 +356,43 @@ export class FeeController {
       const pending = Math.max(0, totalFee - paid);
       const dueDate = student.dueDate || '15 August 2026';
 
-      const reminderMessage = `Subject: Fee Payment Reminder\n\nHello ${student.name},\n\nOur records indicate that your tuition fee payment is still pending.\n\nEnrollment Number: ${student.enrollmentNo}\nOutstanding Amount: ₹${pending.toLocaleString('en-IN')}\nDue Date: ${dueDate}\n\nPlease complete the payment at your earliest convenience.\n\nThank you,\nEduManager Administration`;
+      // Execute End-to-End Delivery via NotificationService (Nodemailer SMTP & Twilio SMS)
+      const deliveryReport = await NotificationService.dispatchReminder({
+        studentName: student.name,
+        enrollmentNo: student.enrollmentNo,
+        email: recipientEmail,
+        phone: recipientPhone,
+        pendingAmount: pending,
+        dueDate,
+        method,
+        sentBy: requester?.name || 'System Admin'
+      });
 
-      // Log reminder to global database store
+      // Log reminder attempt to DB store
       const newLog = {
-        id: `REM_${Date.now().toString().slice(-6)}`,
+        id: deliveryReport.referenceId,
         studentId,
         studentName: student.name,
         enrollmentNo: student.enrollmentNo,
-        sentAt: new Date().toISOString().replace('T', ' ').slice(0, 19),
+        sentAt: deliveryReport.timestamp.replace('T', ' ').slice(0, 19),
         method,
         recipient: `${recipientEmail} / ${recipientPhone}`,
-        status: 'Delivered' as const,
-        sentBy: 'System Admin',
+        status: (deliveryReport.emailStatus === 'Delivered' || deliveryReport.smsStatus === 'Delivered') ? ('Delivered' as const) : ('Failed' as const),
+        sentBy: deliveryReport.sentBy,
         amountDue: pending,
-        message: reminderMessage
+        message: `Reference: ${deliveryReport.referenceId}`
       };
 
       globalReminderLogs.unshift(newLog);
 
+      const hasPartialSuccess = deliveryReport.emailStatus === 'Delivered' || deliveryReport.smsStatus === 'Delivered';
+
       return res.json({
-        message: `Fee dues reminder successfully dispatched via ${method} to ${student.name} (${recipientEmail} / ${recipientPhone}).`,
-        reminderLog: newLog
+        success: hasPartialSuccess,
+        message: hasPartialSuccess 
+          ? `Reminder dispatch process executed for ${student.name}.`
+          : `Reminder delivery failed. Check email/SMS service credentials in backend .env.`,
+        deliveryReport
       });
     } catch (error) {
       next(error);

@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Calendar, CheckCircle, AlertCircle, Scan, HelpCircle, QrCode, Clock, Users, ShieldCheck, Check, RefreshCw } from 'lucide-react';
+import { Calendar, CheckCircle, AlertCircle, Scan, HelpCircle, QrCode, Clock, Users, ShieldCheck, Check, RefreshCw, Copy } from 'lucide-react';
 import DashboardShell from '../components/layout/DashboardShell';
 import api from '../utils/api';
 import { useAuthStore } from '../stores/authStore';
 import { useSocketStore } from '../stores/socketStore';
+import { toast } from '../stores/toastStore';
 
 export default function Attendance() {
   const { user } = useAuthStore();
@@ -410,16 +411,32 @@ export default function Attendance() {
               ) : (
                 <div className="text-center space-y-4">
                   {/* Real Scannable Dynamic QR Display */}
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 inline-block mx-auto shadow-inner text-center">
-                    <img 
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(`${window.location.origin}/attendance?session=${activeSession.sessionId}`)}`} 
-                      alt="Dynamic Scannable QR Code" 
-                      className="h-48 w-48 mx-auto rounded-lg shadow-sm border border-white"
-                    />
-                    <div className="mt-3 text-center space-y-1">
-                      <span className="font-mono text-[11px] font-bold text-slate-800 bg-white px-2.5 py-1 rounded-md border border-slate-200 inline-block truncate max-w-full">
-                        {`${window.location.origin}/attendance?session=${activeSession.sessionId}`}
-                      </span>
+                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 w-full max-w-[260px] mx-auto shadow-inner text-center flex flex-col items-center justify-center">
+                    <div className="bg-white p-2.5 rounded-xl shadow-md border border-slate-200 w-full flex items-center justify-center">
+                      <img 
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(`${window.location.origin}/attendance?session=${activeSession.sessionId}`)}`} 
+                        alt="Dynamic Scannable QR Code" 
+                        className="w-full max-w-[190px] aspect-square rounded-lg object-contain"
+                      />
+                    </div>
+                    <div className="mt-3 w-full space-y-1.5">
+                      <div className="bg-white p-2 rounded-xl border border-slate-200 flex items-center justify-between gap-1.5 shadow-2xs">
+                        <span className="font-mono text-[10px] font-bold text-slate-800 truncate flex-1 text-left select-all">
+                          {`${window.location.origin}/attendance?session=${activeSession.sessionId}`}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(`${window.location.origin}/attendance?session=${activeSession.sessionId}`);
+                            toast.success('Session URL copied to clipboard!');
+                          }}
+                          className="px-2 py-1 bg-orange-50 hover:bg-orange-100 text-[#f97316] border border-orange-200 rounded-lg text-[10px] font-bold shrink-0 transition-colors flex items-center gap-1 cursor-pointer"
+                          title="Copy Session Link"
+                        >
+                          <Copy size={12} />
+                          Copy
+                        </button>
+                      </div>
                       <p className="text-[10px] text-slate-500 font-medium">Scan using Google Lens, iPhone, or Android Camera</p>
                     </div>
                   </div>
@@ -470,7 +487,7 @@ export default function Attendance() {
           )}
 
           {/* Student View: Scan & Single-Tap Confirmation */}
-          {isStudent && (
+          {(isStudent || studentSessionInput || studentSessionData || window.location.search.includes('session=')) && (
             <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card relative overflow-hidden">
               <h4 className="font-title font-extrabold text-base mb-3 text-slate-900 flex items-center gap-2">
                 <Scan size={20} className="text-[#f97316]" />

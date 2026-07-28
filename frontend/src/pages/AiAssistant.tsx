@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Bot, Send, User, Sparkles, BrainCircuit, ShieldAlert, FileText, TrendingUp } from 'lucide-react';
+import { Bot, Send, User, Sparkles, BrainCircuit, ShieldAlert, FileText, TrendingUp, Mic, MicOff, Volume2, VolumeX, Trash2 } from 'lucide-react';
 import DashboardShell from '../components/layout/DashboardShell';
 import api from '../utils/api';
 import { useAuthStore } from '../stores/authStore';
@@ -7,7 +7,6 @@ import { CardSkeleton } from '../components/Skeleton';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 
 interface ChatMessage {
   role: 'user' | 'model';
@@ -122,6 +121,18 @@ export default function AiAssistant() {
       setMessages(prev => [...prev, { role: 'model', parts: ['Sorry, I encountered an issue connecting to the AI brain. Please try again.'] }]);
     } finally {
       setChatLoading(false);
+    }
+  };
+
+  const handleClearHistory = async () => {
+    if (!window.confirm('Are you sure you want to clear your AI conversation history and start a new chat?')) return;
+    try {
+      await api.delete('/ai/chat-history');
+      setMessages([
+        { role: 'model', parts: ['Hello! I am your EduManager AI Assistant. I can answer system questions, explain grade averages, or search attendance details. How can I help you today?'] }
+      ]);
+    } catch (err) {
+      console.error('Failed to clear history:', err);
     }
   };
 
@@ -288,13 +299,23 @@ export default function AiAssistant() {
               </div>
             </div>
             
-            <button 
-              onClick={() => setIsSpeaking(!isSpeaking)}
-              className={`p-2 rounded-lg transition-all ${isSpeaking ? 'text-[#ef4444] bg-[#ef4444]/10' : 'text-slate-400 bg-slate-100'}`}
-              title="Toggle AI Voice Response"
-            >
-              {isSpeaking ? <Volume2 size={18} /> : <VolumeX size={18} />}
-            </button>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={handleClearHistory}
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-red-50 hover:text-red-600 border border-slate-200 transition-all flex items-center gap-1.5"
+                title="Clear conversation history & start a new chat"
+              >
+                <Trash2 size={14} />
+                <span>New Chat</span>
+              </button>
+              <button 
+                onClick={() => setIsSpeaking(!isSpeaking)}
+                className={`p-2 rounded-xl transition-all ${isSpeaking ? 'text-[#f97316] bg-[#f97316]/10 border border-[#f97316]/20' : 'text-slate-400 bg-slate-100 border border-slate-200'}`}
+                title="Toggle AI Voice Response"
+              >
+                {isSpeaking ? <Volume2 size={18} /> : <VolumeX size={18} />}
+              </button>
+            </div>
           </div>
 
           {/* Messages */}
@@ -424,13 +445,15 @@ export default function AiAssistant() {
                           Notify Parent (AI)
                         </button>
                       )}
-                      <button
-                        onClick={downloadPDFReport}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#f97316]/10 hover:bg-[#f97316] text-[#f97316] hover:text-slate-900 rounded-xl border border-[#f97316]/20 transition-all text-[10px] font-bold"
-                      >
-                        <FileText size={12} />
-                        Export PDF
-                      </button>
+                      {!isStudent && (
+                        <button
+                          onClick={downloadPDFReport}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#f97316]/10 hover:bg-[#f97316] text-[#f97316] hover:text-slate-900 rounded-xl border border-[#f97316]/20 transition-all text-[10px] font-bold cursor-pointer"
+                        >
+                          <FileText size={12} />
+                          Export PDF
+                        </button>
+                      )}
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -606,14 +629,14 @@ export default function AiAssistant() {
                       <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" />
                         <XAxis dataKey="month" stroke="#9ca3af" fontSize={10} tickLine={false} axisLine={false} />
-                        <YAxis yAxisId="left" stroke="#f97316" fontSize={10} tickLine={false} axisLine={false} />
-                        <YAxis yAxisId="right" orientation="right" stroke="#ef4444" fontSize={10} tickLine={false} axisLine={false} />
+                        <YAxis yAxisId="left" stroke="#2563eb" fontSize={10} tickLine={false} axisLine={false} />
+                        <YAxis yAxisId="right" orientation="right" stroke="#06b6d4" fontSize={10} tickLine={false} axisLine={false} />
                         <Tooltip 
-                          contentStyle={{ backgroundColor: '#12141c', borderColor: '#ffffff10', borderRadius: '12px', fontSize: '12px' }}
+                          contentStyle={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0', borderRadius: '12px', fontSize: '12px', color: '#0f172a', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
                         />
-                        <Legend wrapperStyle={{ fontSize: '10px' }} />
-                        <Line yAxisId="left" type="monotone" dataKey="gpa" stroke="#f97316" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Avg GPA" />
-                        <Line yAxisId="right" type="monotone" dataKey="attendance" stroke="#ef4444" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Attendance %" />
+                        <Legend wrapperStyle={{ fontSize: '11px', fontWeight: 'bold' }} />
+                        <Line yAxisId="left" type="monotone" dataKey="gpa" stroke="#2563eb" strokeWidth={3} dot={{ r: 4, fill: '#2563eb' }} activeDot={{ r: 6 }} name="Avg GPA" />
+                        <Line yAxisId="right" type="monotone" dataKey="attendance" stroke="#06b6d4" strokeWidth={3} dot={{ r: 4, fill: '#06b6d4' }} activeDot={{ r: 6 }} name="Attendance %" />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>

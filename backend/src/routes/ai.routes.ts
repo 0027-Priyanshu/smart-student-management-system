@@ -32,6 +32,9 @@ router.get(
 // GET: /api/ai/chat-history (Protected)
 router.get('/chat-history', authenticateJWT, AIController.getChatHistory);
 
+// DELETE: /api/ai/chat-history (Protected - Clear conversation history)
+router.delete('/chat-history', authenticateJWT, AIController.clearChatHistory);
+
 // POST: /api/ai/chat (Protected - Admin chat assistant)
 router.post('/chat', authenticateJWT, AIController.chat);
 

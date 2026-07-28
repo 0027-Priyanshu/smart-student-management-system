@@ -335,6 +335,16 @@ export class AIController {
     }
   }
 
+  static async clearChatHistory(req: Request, res: Response, next: NextFunction) {
+    try {
+      const requester = (req as any).user;
+      await RepoService.clearChatHistory(requester.userId);
+      return res.json({ message: 'Chat history cleared successfully.' });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   static async sendParentEmail(req: Request, res: Response, next: NextFunction) {
     try {
       const student = await RepoService.findStudentById(req.params.studentId);

@@ -265,32 +265,43 @@ export class AuthController {
   static async forgotPassword(req: Request, res: Response, next: NextFunction) {
     try {
       const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ error: 'Email address is required.' });
+      }
       const cleanEmail = email.toLowerCase().trim();
       const user = await RepoService.findUserByEmail(cleanEmail);
 
       if (!user) {
-        // Prevent username enumeration, return generic success
-        return res.json({ message: 'If the email exists, a password reset link has been sent.' });
+        return res.status(404).json({ error: 'No account found with this email address.' });
       }
 
+      // Generate a 6-digit numeric OTP and token
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
       const token = crypto.randomBytes(32).toString('hex');
-      resetTokens.set(token, {
-        email: cleanEmail,
-        expires: Date.now() + 30 * 60 * 1000 // 30 mins
-      });
+      const expires = Date.now() + 15 * 60 * 1000; // 15 mins expiry
 
-      const resetLink = `http://localhost:5173/reset-password?token=${token}`;
+      resetTokens.set(token, { email: cleanEmail, expires });
+      resetTokens.set(otp, { email: cleanEmail, expires });
+
       const emailHtml = `
-        <h3>EduManager Password Reset</h3>
-        <p>Hello ${user.name},</p>
-        <p>You requested a password reset. Please click the link below to set a new password:</p>
-        <p><a href="${resetLink}">${resetLink}</a></p>
-        <p>This link expires in 30 minutes.</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; rounded-radius: 12px; background-color: #ffffff;">
+          <h2 style="color: #f97316; margin-bottom: 8px;">EduManager Password Reset</h2>
+          <p style="color: #334155; font-size: 14px;">Hello <strong>${user.name}</strong>,</p>
+          <p style="color: #475569; font-size: 14px;">We received a request to reset your EduManager password.</p>
+          <div style="background-color: #fff7ed; border: 1px solid #ffedd5; padding: 16px; border-radius: 8px; text-align: center; margin: 20px 0;">
+            <p style="margin: 0; text-transform: uppercase; font-size: 12px; color: #ea580c; font-weight: bold;">Your 6-Digit OTP Code:</p>
+            <span style="font-size: 32px; font-weight: 800; letter-spacing: 6px; color: #ea580c;">${otp}</span>
+          </div>
+          <p style="color: #64748b; font-size: 12px;">This code and reset token will expire in <strong>15 minutes</strong>. If you did not request a password reset, please ignore this email.</p>
+        </div>
       `;
 
-      await sendEmail(cleanEmail, 'EduManager Password Reset Request', emailHtml);
+      await sendEmail(cleanEmail, 'Your EduManager Password Reset OTP Code', emailHtml);
 
-      return res.json({ message: 'If the email exists, a password reset link has been sent.' });
+      return res.json({ 
+        message: 'Password reset OTP has been sent to your email address!',
+        token: token // also returned so UI can auto-populate token if needed
+      });
     } catch (error) {
       next(error);
     }
@@ -299,15 +310,20 @@ export class AuthController {
   static async resetPassword(req: Request, res: Response, next: NextFunction) {
     try {
       const { token, newPassword } = req.body;
-      const requestSession = resetTokens.get(token);
+      if (!token || !newPassword) {
+        return res.status(400).json({ error: 'Token/OTP and new password are required.' });
+      }
+
+      const cleanToken = token.trim();
+      const requestSession = resetTokens.get(cleanToken);
       
       if (!requestSession || requestSession.expires < Date.now()) {
-        return res.status(400).json({ error: 'Invalid or expired reset token' });
+        return res.status(400).json({ error: 'Invalid or expired OTP/reset token. Please request a new one.' });
       }
 
       const user = await RepoService.findUserByEmail(requestSession.email);
       if (!user) {
-        return res.status(404).json({ error: 'User not found' });
+        return res.status(404).json({ error: 'User account not found.' });
       }
 
       const salt = bcrypt.genSaltSync(10);
@@ -316,9 +332,9 @@ export class AuthController {
       const userId = user._id || user.id;
       await RepoService.updateUser(userId, { password: passwordHash });
 
-      resetTokens.delete(token);
+      resetTokens.delete(cleanToken);
 
-      return res.json({ message: 'Password has been successfully updated!' });
+      return res.json({ message: 'Password has been successfully updated! You can now log in.' });
     } catch (error) {
       next(error);
     }

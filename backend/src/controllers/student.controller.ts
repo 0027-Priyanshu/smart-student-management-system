@@ -323,39 +323,76 @@ export class StudentController {
 
   static async importStudents(req: Request, res: Response, next: NextFunction) {
     try {
-      const requester = (req as any).user;
       if (!req.file) {
-        return res.status(400).json({ error: 'Excel file is required' });
+        return res.status(400).json({ error: 'Spreadsheet or CSV file is required' });
       }
 
-      // Secure upload check (validate file type/extension)
-      const allowedMimeTypes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
+      // Secure upload check (validate file type/extension for xlsx, xls, and csv)
+      const allowedImageExtensions = ['xlsx', 'xls', 'csv'];
       const fileExt = req.file.originalname.split('.').pop()?.toLowerCase();
-      if (!allowedMimeTypes.includes(req.file.mimetype) || (fileExt !== 'xlsx' && fileExt !== 'xls')) {
-        return res.status(400).json({ error: 'Invalid file format! Only Excel spreadsheets (.xlsx, .xls) are allowed.' });
+      if (!allowedImageExtensions.includes(fileExt || '')) {
+        return res.status(400).json({ error: 'Invalid file format! Only Excel spreadsheets (.xlsx, .xls) and CSV files (.csv) are allowed.' });
       }
 
+      const requester = (req as any).user;
       const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
       const data: any[] = xlsx.utils.sheet_to_json(sheet);
 
+      if (!data || data.length === 0) {
+        return res.status(400).json({ error: 'The uploaded file contains no data rows.' });
+      }
+
+      // Helper function for case-insensitive and alias key lookups
+      const getVal = (row: any, aliases: string[]) => {
+        const rowKeys = Object.keys(row);
+        for (const alias of aliases) {
+          const foundKey = rowKeys.find(rk => rk.trim().toLowerCase() === alias.toLowerCase());
+          if (foundKey && row[foundKey] !== undefined && row[foundKey] !== null && String(row[foundKey]).trim() !== '') {
+            return String(row[foundKey]).trim();
+          }
+        }
+        return undefined;
+      };
+
       let count = 0;
-      for (const row of data) {
-        const { Name, Email, Age, Gender, Grade, Department, Semester, Parent, Phone, Address } = row;
-        
-        if (!Name || !Email) continue;
+      const errors: string[] = [];
 
-        const cleanEmail = Email.toLowerCase().trim();
+      for (let i = 0; i < data.length; i++) {
+        const row = data[i];
+        const rowNum = i + 2; // header is line 1
+
+        const name = getVal(row, ['name', 'student name', 'full name', 'studentname']);
+        const email = getVal(row, ['email', 'email address', 'student email', 'mail']);
+        const age = getVal(row, ['age']);
+        const gender = getVal(row, ['gender', 'sex']);
+        const grade = getVal(row, ['grade', 'class', 'year']);
+        const department = getVal(row, ['department', 'dept', 'stream', 'branch']);
+        const semester = getVal(row, ['semester', 'sem']);
+        const parentName = getVal(row, ['parent', 'parent name', 'guardian', 'parentname']);
+        const parentPhone = getVal(row, ['phone', 'parent phone', 'mobile', 'contact', 'phone number']);
+        const address = getVal(row, ['address', 'location']);
+        const customEnrollment = getVal(row, ['enrollmentno', 'enrollment no', 'enrollment', 'id', 'student id']);
+
+        if (!name || !email) {
+          errors.push(`Row ${rowNum}: Skipped due to missing required Name or Email.`);
+          continue;
+        }
+
+        const cleanEmail = email.toLowerCase().trim();
         const existingUser = await RepoService.findUserByEmail(cleanEmail);
-        if (existingUser) continue;
+        if (existingUser) {
+          errors.push(`Row ${rowNum}: Skipped - Email '${cleanEmail}' already exists in system.`);
+          continue;
+        }
 
-        const pass = Name.split(' ')[0].toLowerCase() + '123';
+        const pass = name.split(' ')[0].toLowerCase() + '123';
         const salt = bcrypt.genSaltSync(10);
         const passwordHash = bcrypt.hashSync(pass, salt);
 
         const user = await RepoService.createUser({
-          name: Name,
+          name,
           email: cleanEmail,
           password: passwordHash,
           role: 'Student',
@@ -363,44 +400,47 @@ export class StudentController {
         });
 
         const userId = user._id || user.id;
-        const enrollmentNo = 'ENR' + (Date.now() + count).toString().slice(-8);
+        const enrollmentNo = customEnrollment || ('ENR' + (Date.now() + count).toString().slice(-8));
 
         await RepoService.createStudent({
           userId,
-          name: Name,
+          name,
           email: cleanEmail,
           enrollmentNo,
-          age: parseInt(Age, 10) || 18,
-          gender: Gender || 'Male',
-          grade: Grade || 'Freshman',
-          department: Department || 'CSE',
-          semester: parseInt(Semester, 10) || 1,
-          parentName: Parent || 'Not Specified',
-          parentPhone: Phone?.toString() || '0000000000',
-          address: Address || 'Not Specified',
+          age: parseInt(age || '18', 10) || 18,
+          gender: gender || 'Male',
+          grade: grade || 'Freshman',
+          department: department || 'CSE',
+          semester: parseInt(semester || '1', 10) || 1,
+          parentName: parentName || 'Not Specified',
+          parentPhone: parentPhone || '0000000000',
+          address: address || 'Not Specified',
           isDeleted: false
         });
 
-        // Send registration email notification asynchronously to avoid blocking the loop
-        NotificationService.sendStudentRegistrationNotification(cleanEmail, Name, enrollmentNo).catch(err => {
+        NotificationService.sendStudentRegistrationNotification(cleanEmail, name, enrollmentNo).catch(err => {
           console.error(`Failed to send bulk student notification:`, err);
         });
 
         count++;
       }
 
-      // Log Activity
       await RepoService.createLog({
         userId: requester.userId,
         userName: requester.name,
         role: requester.role,
         action: 'Bulk Import',
-        details: `Bulk imported ${count} students from Excel worksheet`
+        details: `Bulk imported ${count} students from spreadsheet`
       });
 
       emitLiveUpdate('dashboard_update', { action: 'student_added' });
 
-      return res.json({ message: `Successfully imported ${count} student records!` });
+      return res.json({ 
+        message: `Successfully imported ${count} out of ${data.length} student records!`,
+        importedCount: count,
+        totalParsed: data.length,
+        errors
+      });
     } catch (error) {
       next(error);
     }

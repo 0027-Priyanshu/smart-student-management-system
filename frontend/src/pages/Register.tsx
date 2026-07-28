@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Lock, User, AlertCircle, UserCheck } from 'lucide-react';
+import { Mail, User, AlertCircle, UserCheck } from 'lucide-react';
+import PasswordInput from '../components/common/PasswordInput';
 import { useAuthStore } from '../stores/authStore';
 
 export default function Register() {
@@ -110,20 +111,13 @@ export default function Register() {
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Password</label>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-              <input
-                type="password"
-                required
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
-              />
-            </div>
-          </div>
+          <PasswordInput
+            label="Password"
+            required
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
 
           <button
             type="submit"

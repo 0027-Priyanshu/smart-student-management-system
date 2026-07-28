@@ -341,18 +341,18 @@ export default function Dashboard() {
                   </tr>
                 ) : (
                   data.atRiskStudents.map((student: any) => (
-                    <tr key={student.id} className="hover:bg-white/[0.02] transition-colors">
+                    <tr key={student.id} className="hover:bg-slate-50 transition-colors">
                       <td className="py-4 pl-4">
-                        <div className="font-bold text-gray-200">{student.name}</div>
-                        <div className="text-xs text-slate-400">{student.enrollmentNo} • {student.department} (Sem {student.semester})</div>
+                        <div className="font-bold text-slate-900">{student.name}</div>
+                        <div className="text-xs text-slate-500 font-medium">{student.enrollmentNo} • {student.department} (Sem {student.semester})</div>
                       </td>
                       <td className="py-4">
                         <div className="flex gap-4 text-xs">
-                          <span className={student.gpa < 2.5 ? 'text-red-400' : 'text-slate-500'}>
-                            GPA: <span className="font-bold text-gray-200">{student.gpa.toFixed(2)}</span>
+                          <span className={student.gpa < 2.5 ? 'text-red-500 font-bold' : 'text-slate-500'}>
+                            GPA: <span className="font-bold text-slate-900">{student.gpa.toFixed(2)}</span>
                           </span>
-                          <span className={student.attendance < 75 ? 'text-red-400' : 'text-slate-500'}>
-                            Att: <span className="font-bold text-gray-200">{student.attendance}%</span>
+                          <span className={student.attendance < 75 ? 'text-red-500 font-bold' : 'text-slate-500'}>
+                            Att: <span className="font-bold text-slate-900">{student.attendance}%</span>
                           </span>
                         </div>
                       </td>

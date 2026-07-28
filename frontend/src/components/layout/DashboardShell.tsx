@@ -209,9 +209,13 @@ export default function DashboardShell({ children, title }: DashboardShellProps)
         {/* Sidebar Footer */}
         <div className="p-4 border-t border-slate-200 bg-slate-50">
           <div className="flex items-center gap-3.5 px-2 py-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer" onClick={() => setShowProfileMenu(!showProfileMenu)}>
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#4f46e5] to-[#f97316] flex items-center justify-center font-semibold text-slate-900">
-              {initials}
-            </div>
+            {user?.studentProfile?.avatarUrl ? (
+              <img src={user.studentProfile.avatarUrl} alt={user?.name} className="h-10 w-10 rounded-full object-cover border border-slate-200" />
+            ) : (
+              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-[#4f46e5] to-[#f97316] flex items-center justify-center font-semibold text-slate-900">
+                {initials}
+              </div>
+            )}
             {isSidebarOpen && (
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold truncate leading-tight">{user?.name}</p>

@@ -1,27 +1,43 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Calendar, CheckCircle, AlertCircle, Scan, HelpCircle } from 'lucide-react';
+import { Calendar, CheckCircle, AlertCircle, Scan, HelpCircle, QrCode, Clock, Users, ShieldCheck, Check } from 'lucide-react';
 import DashboardShell from '../components/layout/DashboardShell';
 import api from '../utils/api';
 import { useAuthStore } from '../stores/authStore';
+import { useSocketStore } from '../stores/socketStore';
 
 export default function Attendance() {
   const { user } = useAuthStore();
+  const { socket } = useSocketStore();
   const isStudent = user?.role === 'Student';
   const isAdminOrFaculty = user?.role === 'Super Admin' || user?.role === 'Admin' || user?.role === 'Faculty';
 
   const [courses, setCourses] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   
-  // Selection states
+  // Selection states for manual attendance
   const [selectedCourse, setSelectedCourse] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [studentStatuses, setStudentStatuses] = useState<{ [key: string]: string }>({});
+  
+  // Smart QR Session States (Faculty / Admin)
+  const [qrLectureTitle, setQrLectureTitle] = useState('');
+  const [qrCourseId, setQrCourseId] = useState('');
+  const [qrDuration, setQrDuration] = useState('10');
+  const [activeSession, setActiveSession] = useState<any>(null);
+  const [liveScannedCount, setLiveScannedCount] = useState(0);
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+
+  // Student QR Confirmation States
+  const [studentSessionInput, setStudentSessionInput] = useState('');
+  const [studentSessionData, setStudentSessionData] = useState<any>(null);
+  const [studentConfirmed, setStudentConfirmed] = useState(false);
   
   // Heatmap state
   const [heatmap, setHeatmap] = useState<any[]>([]);
   
   const [, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [qrLoading, setQrLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -63,6 +79,39 @@ export default function Attendance() {
     fetchHeatmapData();
   }, [fetchHeatmapData]);
 
+  // Real-time socket updates for attendance counter & QR session
+  useEffect(() => {
+    if (!socket) return;
+    
+    const handleUpdate = () => {
+      fetchHeatmapData();
+      if (activeSession) {
+        fetchActiveSessionStatus(activeSession.sessionId);
+      }
+    };
+
+    socket.on('attendance_update', handleUpdate);
+    return () => {
+      socket.off('attendance_update', handleUpdate);
+    };
+  }, [socket, fetchHeatmapData, activeSession]);
+
+  // Live Timer for active QR session
+  useEffect(() => {
+    if (!activeSession || !activeSession.expiresAt) return;
+
+    const interval = setInterval(() => {
+      const remaining = Math.max(0, Math.floor((new Date(activeSession.expiresAt).getTime() - Date.now()) / 1000));
+      setTimeLeft(remaining);
+
+      if (remaining === 0) {
+        clearInterval(interval);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [activeSession]);
+
   // Load current statuses when course and date are selected (Admin/Faculty view)
   useEffect(() => {
     if (!selectedCourse || !selectedDate || !isAdminOrFaculty) return;
@@ -89,7 +138,92 @@ export default function Attendance() {
     loadCurrentStatuses();
   }, [selectedCourse, selectedDate, isAdminOrFaculty]);
 
-  // Handle single status updates locally
+  const fetchActiveSessionStatus = async (sessionId: string) => {
+    try {
+      const res = await api.get(`/attendance/qr/session/${sessionId}`);
+      setLiveScannedCount(res.data.scannedCount || 0);
+    } catch (err) {
+      console.error('Failed to update live QR session count:', err);
+    }
+  };
+
+  const handleGenerateQR = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!qrCourseId || !qrLectureTitle.trim()) {
+      setError('Please select a course and enter a lecture title.');
+      return;
+    }
+    setError('');
+    setQrLoading(true);
+
+    try {
+      const res = await api.post('/attendance/qr/generate', {
+        courseId: qrCourseId,
+        lectureTitle: qrLectureTitle.trim(),
+        date: selectedDate,
+        durationMinutes: qrDuration
+      });
+
+      setActiveSession(res.data.session);
+      setLiveScannedCount(0);
+      toastSuccess('Dynamic QR Attendance session generated!');
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to generate QR Code session.');
+    } finally {
+      setQrLoading(false);
+    }
+  };
+
+  const toastSuccess = (msg: string) => {
+    setSuccess(msg);
+    setTimeout(() => setSuccess(''), 4000);
+  };
+
+  // Student fetches QR session info
+  const handleStudentFetchSession = async (sId?: string) => {
+    const targetSessionId = sId || studentSessionInput.trim();
+    if (!targetSessionId) return;
+
+    setError('');
+    setSuccess('');
+    setActionLoading(true);
+
+    try {
+      const res = await api.get(`/attendance/qr/session/${targetSessionId}`);
+      if (res.data.isExpired) {
+        setError('This QR Code session has expired. Please ask your instructor for a new QR code.');
+        setStudentSessionData(null);
+      } else {
+        setStudentSessionData(res.data.session);
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Invalid or expired QR session token.');
+      setStudentSessionData(null);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Student confirms attendance
+  const handleStudentConfirmAttendance = async () => {
+    if (!studentSessionData) return;
+    setError('');
+    setActionLoading(true);
+
+    try {
+      const res = await api.post('/attendance/qr/confirm', {
+        sessionId: studentSessionData.sessionId
+      });
+      setStudentConfirmed(true);
+      toastSuccess(res.data.message || 'Attendance confirmed successfully!');
+      fetchHeatmapData();
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to confirm attendance');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleMarkStatus = (studentId: string, status: string) => {
     setStudentStatuses(prev => ({
       ...prev,
@@ -98,88 +232,72 @@ export default function Attendance() {
   };
 
   const handleSaveAttendance = async () => {
-    if (!selectedCourse) {
-      setError('Please select a course first');
-      return;
-    }
+    if (!selectedCourse) return;
     setError('');
     setSuccess('');
     setActionLoading(true);
 
     try {
-      const studentIds = Object.keys(studentStatuses);
-      await Promise.all(studentIds.map(studentId => 
-        api.post('/attendance/mark', {
+      const courseStudents = students.filter(s => {
+        const studentCourses = s.enrolledCourses?.map((c: any) => typeof c === 'object' ? c._id || c.id : c) || [];
+        return studentCourses.includes(selectedCourse);
+      });
+
+      for (const student of courseStudents) {
+        const studentId = student._id || student.id;
+        const status = studentStatuses[studentId] || 'Absent';
+
+        await api.post('/attendance/mark', {
           studentId,
           courseId: selectedCourse,
           date: selectedDate,
-          status: studentStatuses[studentId]
-        })
-      ));
-      
-      setSuccess('Attendance saved successfully!');
+          status
+        });
+      }
+
+      toastSuccess('Attendance entries recorded successfully!');
       fetchHeatmapData();
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to save attendance');
+      setError(err.response?.data?.error || 'Failed to record attendance');
     } finally {
       setActionLoading(false);
     }
   };
 
-  // Student QR Code scan simulation
-  const handleSimulateQRScan = async () => {
-    if (!selectedCourse) {
-      setError('Select which course you are currently scanning for');
-      return;
-    }
-    setError('');
-    setSuccess('');
-    setActionLoading(true);
-
-    try {
-      const res = await api.post('/attendance/scan-qr', {
-        courseId: selectedCourse
-      });
-      setSuccess(res.data.message || 'Scanned successfully!');
-      fetchHeatmapData();
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'QR Scan verification failed');
-    } finally {
-      setActionLoading(false);
-    }
+  const formatTimer = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
-    <DashboardShell title="Attendance Tracker">
+    <DashboardShell title="Attendance Management">
       
-      {/* Attendance Heatmap Widget */}
+      {/* Attendance Heatmap / Visual Activity Summary */}
       <div className="p-6 bg-white border border-slate-200 rounded-3xl mb-8 shadow-card">
-        <h3 className="font-title font-bold text-lg mb-4 flex items-center gap-2">
-          <Calendar size={20} className="text-[#f97316]" />
-          {isStudent ? 'Your Attendance Activity Tracker' : 'Overall Institute Attendance Frequency'}
-        </h3>
-        
-        <p className="text-xs text-slate-500 mb-6">
-          Daily logging frequency map. Higher intensities reflect high class presence counts.
-        </p>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="font-title font-extrabold text-base text-slate-900 flex items-center gap-2">
+              <Calendar size={18} className="text-[#f97316]" />
+              Attendance Activity Heatmap
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">Visual representation of logged attendance sessions across dates</p>
+          </div>
+        </div>
 
-        {/* Heatmap Grid */}
-        <div className="flex flex-wrap gap-2.5 max-h-48 overflow-y-auto p-1.5 bg-slate-50 rounded-2xl border border-slate-200">
+        <div className="flex items-center gap-2 flex-wrap py-2">
           {heatmap.length === 0 ? (
-            <p className="text-xs text-slate-400 italic py-4 text-center w-full">No attendances recorded yet.</p>
+            <p className="text-xs text-slate-400 italic">No attendance records logged yet for this period.</p>
           ) : (
             heatmap.map((item, idx) => {
-              const count = item.count;
-              // Coloring thresholds based on counts
-              const colorBg = count > 3 ? 'bg-[#eab308]' : count > 1 ? 'bg-[#eab308]/70' : 'bg-[#eab308]/40';
+              const intensity = item.count > 10 ? 'bg-[#f97316]' : item.count > 5 ? 'bg-orange-400' : 'bg-orange-200';
               return (
                 <div 
                   key={idx} 
-                  className={`h-11 px-3 flex flex-col justify-center items-center rounded-xl text-slate-900 font-mono text-[10px] ${colorBg} shadow-glow`}
-                  title={`${item.count} checkins on ${item.date}`}
+                  title={`${item.date}: ${item.count} student entries`}
+                  className={`h-7 w-7 rounded-lg ${intensity} flex items-center justify-center text-[9px] font-bold text-slate-900 shadow-sm cursor-pointer hover:scale-110 transition-transform`}
                 >
-                  <span className="font-bold">{item.date.split('-').slice(1).join('/')}</span>
-                  <span className="text-[8px] opacity-80">{count} present</span>
+                  {item.count}
                 </div>
               );
             })
@@ -187,22 +305,224 @@ export default function Attendance() {
         </div>
       </div>
 
+      {/* Main Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Actions panel */}
-        <div className="lg:col-span-1 space-y-6">
+        {/* Left Column: Smart QR System */}
+        <div className="space-y-6 lg:col-span-1">
           
+          {/* Smart QR System for Teachers (Admin/Faculty) */}
+          {isAdminOrFaculty && (
+            <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card relative overflow-hidden">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="font-title font-extrabold text-base text-slate-900 flex items-center gap-2">
+                  <QrCode size={20} className="text-[#f97316]" />
+                  Smart QR Session
+                </h4>
+                <span className="text-[10px] font-bold uppercase px-2 py-0.5 bg-orange-100 text-[#f97316] rounded-full">Option A</span>
+              </div>
+
+              {!activeSession ? (
+                <form onSubmit={handleGenerateQR} className="space-y-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Course / Subject</label>
+                    <select
+                      value={qrCourseId}
+                      onChange={(e) => setQrCourseId(e.target.value)}
+                      required
+                      className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] rounded-xl text-xs text-slate-900 focus:outline-none cursor-pointer"
+                    >
+                      <option value="">-- Select Subject --</option>
+                      {courses.map(c => (
+                        <option key={c._id || c.id} value={c._id || c.id}>{c.code} - {c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Lecture Title / Topic</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Lecture 12 - Operating Systems"
+                      value={qrLectureTitle}
+                      onChange={(e) => setQrLectureTitle(e.target.value)}
+                      required
+                      className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] rounded-xl text-xs text-slate-900 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Valid Time Window</label>
+                    <select
+                      value={qrDuration}
+                      onChange={(e) => setQrDuration(e.target.value)}
+                      className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] rounded-xl text-xs text-slate-900 focus:outline-none cursor-pointer"
+                    >
+                      <option value="5">5 Minutes</option>
+                      <option value="10">10 Minutes</option>
+                      <option value="15">15 Minutes</option>
+                      <option value="30">30 Minutes</option>
+                    </select>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={qrLoading}
+                    className="w-full mt-2 py-3 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-white font-bold rounded-xl text-xs shadow-md hover:opacity-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <QrCode size={16} />
+                    {qrLoading ? 'Generating QR...' : 'Generate Dynamic QR Code'}
+                  </button>
+                </form>
+              ) : (
+                <div className="text-center space-y-4">
+                  {/* Dynamic QR Display */}
+                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 inline-block mx-auto shadow-inner">
+                    <img 
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(activeSession.sessionId)}`} 
+                      alt="Dynamic QR Code" 
+                      className="h-44 w-44 mx-auto rounded-lg"
+                    />
+                    <div className="mt-2 text-center">
+                      <span className="font-mono text-xs font-bold text-slate-700 bg-white px-2 py-1 rounded border border-slate-200 block truncate">
+                        {activeSession.sessionId}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <h5 className="font-bold text-sm text-slate-900">{activeSession.lectureTitle}</h5>
+                    <p className="text-xs text-slate-500 font-medium">{activeSession.courseName}</p>
+                  </div>
+
+                  {/* Live Counter & Timer Badges */}
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div className="p-2.5 bg-orange-50 border border-orange-200 rounded-xl text-center">
+                      <Clock size={16} className="mx-auto text-[#f97316] mb-0.5 animate-pulse" />
+                      <span className="text-[10px] text-slate-500 font-bold block uppercase">Time Remaining</span>
+                      <span className="text-sm font-extrabold font-mono text-[#f97316]">
+                        {timeLeft !== null && timeLeft > 0 ? formatTimer(timeLeft) : 'EXPIRED'}
+                      </span>
+                    </div>
+
+                    <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
+                      <Users size={16} className="mx-auto text-emerald-600 mb-0.5" />
+                      <span className="text-[10px] text-slate-500 font-bold block uppercase">Live Scan Count</span>
+                      <span className="text-sm font-extrabold font-mono text-emerald-600">
+                        {liveScannedCount} Students
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setActiveSession(null)}
+                    className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors"
+                  >
+                    Close & Create New QR Session
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Student View: Scan & Single-Tap Confirmation */}
+          {isStudent && (
+            <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card relative overflow-hidden">
+              <h4 className="font-title font-extrabold text-base mb-3 text-slate-900 flex items-center gap-2">
+                <Scan size={20} className="text-[#f97316]" />
+                Student Smart QR Confirmation
+              </h4>
+              
+              <p className="text-xs text-slate-500 leading-normal mb-4">
+                Enter your instructor's active classroom QR Session Code to confirm your attendance.
+              </p>
+
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 text-[#ef4444] rounded-xl text-xs flex items-center gap-2">
+                  <AlertCircle size={14} className="shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              {success && (
+                <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-xl text-xs flex items-center gap-2">
+                  <CheckCircle size={14} className="shrink-0" />
+                  <span>{success}</span>
+                </div>
+              )}
+
+              {!studentSessionData ? (
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    placeholder="Enter QR Session Code (e.g. QR_X7Y2Z)"
+                    value={studentSessionInput}
+                    onChange={(e) => setStudentSessionInput(e.target.value.toUpperCase())}
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] rounded-xl text-xs font-mono text-slate-900 focus:outline-none"
+                  />
+                  <button
+                    onClick={() => handleStudentFetchSession()}
+                    disabled={!studentSessionInput.trim() || actionLoading}
+                    className="w-full py-3 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-white font-bold rounded-xl text-xs shadow-md hover:opacity-95 transition-all cursor-pointer"
+                  >
+                    {actionLoading ? 'Verifying QR Code...' : 'Scan & Load Session Details'}
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                  <div className="space-y-2 text-xs text-slate-700">
+                    <div className="flex justify-between border-b border-slate-200 pb-1.5">
+                      <span className="font-bold text-slate-500">Student Name:</span>
+                      <span className="font-semibold text-slate-900">{user?.name}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-200 pb-1.5">
+                      <span className="font-bold text-slate-500">Enrollment ID:</span>
+                      <span className="font-mono font-semibold text-[#f97316]">{user?.studentProfile?.enrollmentNo || 'ENR_STUDENT'}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-200 pb-1.5">
+                      <span className="font-bold text-slate-500">Subject:</span>
+                      <span className="font-semibold text-slate-900">{studentSessionData.courseName}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-slate-200 pb-1.5">
+                      <span className="font-bold text-slate-500">Lecture:</span>
+                      <span className="font-semibold text-slate-900">{studentSessionData.lectureTitle}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-bold text-slate-500">Date:</span>
+                      <span className="font-semibold text-slate-900">{studentSessionData.date}</span>
+                    </div>
+                  </div>
+
+                  {!studentConfirmed ? (
+                    <button
+                      onClick={handleStudentConfirmAttendance}
+                      disabled={actionLoading}
+                      className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Check size={18} />
+                      {actionLoading ? 'Recording Attendance...' : 'Confirm My Attendance'}
+                    </button>
+                  ) : (
+                    <div className="p-3 bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-xl text-xs text-center font-bold flex items-center justify-center gap-2">
+                      <ShieldCheck size={18} />
+                      Attendance Confirmed & Recorded!
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Regular Manual Selector for Course */}
           <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card">
-            <h4 className="font-title font-extrabold text-base mb-4 text-slate-900">Tracking Session</h4>
-            
-            <div className="space-y-4">
-              {/* Course Selection */}
+            <h4 className="font-title font-extrabold text-base mb-3 text-slate-900">Manual Attendance Registry</h4>
+            <div className="space-y-3">
               <div className="space-y-1">
                 <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Select Academic Course</label>
                 <select
                   value={selectedCourse}
                   onChange={(e) => setSelectedCourse(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-xs text-slate-700 focus:outline-none cursor-pointer"
+                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] rounded-xl text-xs text-slate-700 focus:outline-none cursor-pointer"
                 >
                   <option value="">-- Select Course --</option>
                   {courses.map(c => (
@@ -213,7 +533,6 @@ export default function Attendance() {
                 </select>
               </div>
 
-              {/* Date selection (only visible to admin/faculty) */}
               {isAdminOrFaculty && (
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Marking Date</label>
@@ -221,82 +540,37 @@ export default function Attendance() {
                     type="date"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-xs text-slate-900 focus:outline-none"
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] rounded-xl text-xs text-slate-900 focus:outline-none"
                   />
                 </div>
               )}
             </div>
           </div>
-
-          {/* Student QR scan simulation */}
-          {isStudent && (
-            <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card relative overflow-hidden">
-              {/* Glow light */}
-              <div className="absolute top-0 right-0 h-16 w-16 bg-[#ef4444]/5 rounded-full filter blur-xl" />
-
-              <h4 className="font-title font-extrabold text-base mb-4 text-slate-900 flex items-center gap-1.5">
-                <Scan size={18} className="text-[#ef4444]" />
-                Self QR Scanner Mock
-              </h4>
-              
-              <p className="text-xs text-slate-500 leading-normal mb-5">
-                Simulate scanning the lecturer projected classroom QR code to record your present attendance status for today.
-              </p>
-
-              {error && (
-                <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-[#ef4444] rounded-xl text-xs flex items-center gap-2">
-                  <AlertCircle size={14} />
-                  <span>{error}</span>
-                </div>
-              )}
-
-              {success && (
-                <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-[#eab308] rounded-xl text-xs flex items-center gap-2">
-                  <CheckCircle size={14} />
-                  <span>{success}</span>
-                </div>
-              )}
-
-              <button
-                onClick={handleSimulateQRScan}
-                disabled={!selectedCourse || actionLoading}
-                className="w-full py-3 bg-gradient-to-r from-[#f97316] to-[#ef4444] hover:shadow-glow text-slate-900 font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5"
-              >
-                {actionLoading ? 'Recording entry...' : 'Scan Classroom QR'}
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Directory Student List (Admin/Faculty only) */}
         {isAdminOrFaculty && (
           <div className="lg:col-span-2 p-6 bg-white border border-slate-200 rounded-3xl shadow-card flex flex-col h-full">
             <div className="flex items-center justify-between mb-4">
-              <h4 className="font-title font-extrabold text-base text-slate-900">Enrollment List</h4>
+              <h4 className="font-title font-extrabold text-base text-slate-900">Enrollment Student Registry</h4>
               {selectedCourse && (
                 <button
                   onClick={handleSaveAttendance}
                   disabled={actionLoading}
-                  className="px-4 py-2 bg-gradient-to-r from-[#f97316] to-[#ef4444] hover:shadow-glow text-slate-900 font-bold rounded-xl text-xs transition-all"
+                  className="px-4 py-2 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-white font-bold rounded-xl text-xs shadow-md hover:opacity-95 transition-all cursor-pointer"
                 >
-                  {actionLoading ? 'Saving...' : 'Confirm Attendance'}
+                  {actionLoading ? 'Saving...' : 'Save Attendance Entries'}
                 </button>
               )}
             </div>
 
-            {error && (
-              <div className="mb-4 p-3.5 bg-red-500/10 border border-red-500/20 text-[#ef4444] rounded-xl text-xs">
-                {error}
-              </div>
-            )}
-
             {!selectedCourse ? (
               <div className="flex flex-col justify-center items-center py-20 text-slate-400 text-center gap-2">
-                <HelpCircle size={32} className="opacity-45" />
-                <p className="text-xs italic">Please select an academic course to load the student registry.</p>
+                <HelpCircle size={36} className="opacity-40 text-slate-400" />
+                <p className="text-xs italic">Please select an academic course from the left menu to load the student registry.</p>
               </div>
             ) : (
-              <div className="overflow-y-auto max-h-[360px] pr-1 space-y-3.5 scrollbar-thin">
+              <div className="overflow-y-auto max-h-[460px] pr-1 space-y-3.5 scrollbar-thin">
                 {students.filter(s => {
                   const studentCourses = s.enrolledCourses?.map((c: any) => typeof c === 'object' ? c._id || c.id : c) || [];
                   return studentCourses.includes(selectedCourse);
@@ -315,28 +589,37 @@ export default function Attendance() {
                         key={studentId} 
                         className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-200 hover:border-slate-300 transition-colors"
                       >
-                        <div>
-                          <p className="font-semibold text-xs text-slate-900">{student.name}</p>
-                          <p className="text-[10px] font-mono text-slate-400">{student.enrollmentNo}</p>
+                        <div className="flex items-center gap-3">
+                          {student.avatarUrl ? (
+                            <img src={student.avatarUrl} alt={student.name} className="h-9 w-9 rounded-full object-cover border border-slate-200" />
+                          ) : (
+                            <div className="h-9 w-9 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs">
+                              {student.name?.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-semibold text-xs text-slate-900">{student.name}</p>
+                            <p className="text-[10px] font-mono text-slate-500">{student.enrollmentNo}</p>
+                          </div>
                         </div>
 
                         {/* Status Toggle buttons */}
-                        <div className="flex gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200">
+                        <div className="flex gap-1.5 bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
                           <button 
                             onClick={() => handleMarkStatus(studentId, 'Present')}
-                            className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold uppercase transition-all ${status === 'Present' ? 'bg-[#eab308] text-slate-900' : 'text-slate-400 hover:text-slate-700'}`}
+                            className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold uppercase transition-all ${status === 'Present' ? 'bg-emerald-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
                           >
                             Present
                           </button>
                           <button 
                             onClick={() => handleMarkStatus(studentId, 'On Leave')}
-                            className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold uppercase transition-all ${status === 'On Leave' ? 'bg-[#ef4444] text-slate-900' : 'text-slate-400 hover:text-slate-700'}`}
+                            className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold uppercase transition-all ${status === 'On Leave' ? 'bg-amber-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
                           >
                             On Leave
                           </button>
                           <button 
                             onClick={() => handleMarkStatus(studentId, 'Absent')}
-                            className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold uppercase transition-all ${status === 'Absent' ? 'bg-[#ef4444] text-slate-900' : 'text-slate-400 hover:text-slate-700'}`}
+                            className={`px-3 py-1.5 rounded-lg text-[9px] font-extrabold uppercase transition-all ${status === 'Absent' ? 'bg-red-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
                           >
                             Absent
                           </button>

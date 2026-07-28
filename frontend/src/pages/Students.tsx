@@ -26,6 +26,7 @@ import { useDebounce } from '../hooks/useDebounce';
 export default function Students() {
   const { user } = useAuthStore();
   const isAdmin = user?.role === 'Super Admin' || user?.role === 'Admin';
+  const isAdminOrFaculty = user?.role === 'Super Admin' || user?.role === 'Admin' || user?.role === 'Faculty';
 
   const [students, setStudents] = useState<Student[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -68,7 +69,8 @@ export default function Students() {
     semester: '1',
     parentName: '',
     parentPhone: '',
-    address: ''
+    address: '',
+    avatarUrl: ''
   });
   
   const [importFile, setImportFile] = useState<File | null>(null);
@@ -282,7 +284,8 @@ export default function Students() {
       semester: '1',
       parentName: '',
       parentPhone: '',
-      address: ''
+      address: '',
+      avatarUrl: ''
     });
     setError('');
     setSuccess('');
@@ -302,11 +305,41 @@ export default function Students() {
       semester: student.semester?.toString() || '1',
       parentName: student.parentName || '',
       parentPhone: student.parentPhone || '',
-      address: student.address || ''
+      address: student.address || '',
+      avatarUrl: student.avatarUrl || ''
     });
     setError('');
     setSuccess('');
     setShowEditModal(true);
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Only JPG, JPEG, PNG, and WEBP image formats are supported.');
+      return;
+    }
+
+    const fData = new FormData();
+    fData.append('avatar', file);
+
+    try {
+      setActionLoading(true);
+      const res = await api.post('/students/upload-avatar', fData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      if (res.data.url) {
+        setFormData(prev => ({ ...prev, avatarUrl: res.data.url }));
+        toast.success('Profile image uploaded successfully!');
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Failed to upload profile photo');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   return (
@@ -333,14 +366,18 @@ export default function Students() {
 
         {/* Action triggers */}
         <div className="flex items-center gap-3">
-          <button onClick={() => triggerExport('pdf')} className="p-2.5 bg-slate-50 border border-slate-200 hover:border-white/15 rounded-xl text-slate-700 hover:text-slate-900 flex items-center gap-2 text-xs font-semibold">
-            <FileDown size={16} />
-            PDF
-          </button>
-          <button onClick={() => triggerExport('excel')} className="p-2.5 bg-slate-50 border border-slate-200 hover:border-white/15 rounded-xl text-slate-700 hover:text-slate-900 flex items-center gap-2 text-xs font-semibold">
-            <FileSpreadsheet size={16} />
-            Excel
-          </button>
+          {isAdminOrFaculty && (
+            <>
+              <button onClick={() => triggerExport('pdf')} className="p-2.5 bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-xl text-slate-700 hover:text-slate-900 flex items-center gap-2 text-xs font-semibold cursor-pointer">
+                <FileDown size={16} />
+                PDF
+              </button>
+              <button onClick={() => triggerExport('excel')} className="p-2.5 bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-xl text-slate-700 hover:text-slate-900 flex items-center gap-2 text-xs font-semibold cursor-pointer">
+                <FileSpreadsheet size={16} />
+                Excel
+              </button>
+            </>
+          )}
           {isAdmin && (
             <button onClick={openAddModal} className="px-4 py-2.5 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-slate-900 font-bold rounded-xl text-xs flex items-center gap-2 hover:shadow-glow transition-all">
               <UserPlus size={16} />
@@ -577,6 +614,38 @@ export default function Students() {
             )}
 
             <form onSubmit={showAddModal ? handleAddSubmit : handleEditSubmit} className="space-y-4 max-h-[420px] overflow-y-auto pr-1 scrollbar-thin">
+              {/* Profile Photo Upload & Preview */}
+              <div className="flex items-center gap-4 p-3 bg-slate-50 border border-slate-200 rounded-2xl">
+                <div className="relative shrink-0">
+                  {formData.avatarUrl ? (
+                    <img src={formData.avatarUrl} alt="Avatar Preview" className="h-14 w-14 rounded-full object-cover border-2 border-[#f97316]" />
+                  ) : (
+                    <div className="h-14 w-14 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center font-bold text-lg border-2 border-slate-300">
+                      {formData.name ? formData.name.charAt(0).toUpperCase() : 'S'}
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-bold text-slate-800 block">Student Profile Photo</span>
+                  <span className="text-[10px] text-slate-500 block mb-1.5">PNG, JPG, JPEG or WEBP</span>
+                  <div className="flex gap-2">
+                    <label className="cursor-pointer px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-[11px] font-semibold transition-colors">
+                      {formData.avatarUrl ? 'Replace Photo' : 'Upload Photo'}
+                      <input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+                    </label>
+                    {formData.avatarUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, avatarUrl: '' }))}
+                        className="px-2.5 py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-[11px] font-semibold transition-colors"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Full Name</label>

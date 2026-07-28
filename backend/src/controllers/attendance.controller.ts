@@ -152,4 +152,119 @@ export class AttendanceController {
       next(error);
     }
   }
+
+  static async generateQrSession(req: Request, res: Response, next: NextFunction) {
+    try {
+      const requester = (req as any).user;
+      const { courseId, lectureTitle, date, durationMinutes } = req.body;
+
+      if (!courseId || !lectureTitle) {
+        return res.status(400).json({ error: 'Course and Lecture Title are required.' });
+      }
+
+      const course = await RepoService.findCourseById(courseId);
+      if (!course) {
+        return res.status(404).json({ error: 'Course not found' });
+      }
+
+      const duration = parseInt(durationMinutes || '10', 10);
+      const sessionId = 'QR_' + Math.random().toString(36).substring(2, 9).toUpperCase();
+      const expiresAt = new Date(Date.now() + duration * 60 * 1000);
+      const sessionDate = date || new Date().toISOString().split('T')[0];
+
+      const qrSession = await RepoService.createQrSession({
+        sessionId,
+        courseId: course._id || course.id,
+        courseName: course.name,
+        lectureTitle,
+        date: sessionDate,
+        facultyId: requester.userId,
+        expiresAt,
+        durationMinutes: duration
+      });
+
+      return res.status(201).json({
+        message: 'Dynamic QR Attendance session created successfully',
+        sessionId,
+        expiresAt,
+        session: qrSession
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getQrSession(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { sessionId } = req.params;
+      const session = await RepoService.findQrSessionById(sessionId);
+      if (!session) {
+        return res.status(404).json({ error: 'QR Attendance session not found or invalid' });
+      }
+
+      const isExpired = new Date(session.expiresAt).getTime() < Date.now();
+      const scannedCount = session.scannedStudents ? session.scannedStudents.length : 0;
+
+      return res.json({
+        session,
+        isExpired,
+        scannedCount
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async confirmQrAttendance(req: Request, res: Response, next: NextFunction) {
+    try {
+      const requester = (req as any).user;
+      const { sessionId } = req.body;
+
+      if (!sessionId) {
+        return res.status(400).json({ error: 'Session ID is required.' });
+      }
+
+      const session = await RepoService.findQrSessionById(sessionId);
+      if (!session) {
+        return res.status(404).json({ error: 'Invalid or expired QR session token.' });
+      }
+
+      if (new Date(session.expiresAt).getTime() < Date.now()) {
+        return res.status(400).json({ error: 'This QR Code session has expired. Please ask your instructor for a new QR code.' });
+      }
+
+      const student = await RepoService.findStudentByUserId(requester.userId);
+      if (!student) {
+        return res.status(404).json({ error: 'Student profile not found' });
+      }
+
+      const studentIdStr = (student._id || student.id).toString();
+      const scannedList = (session.scannedStudents || []).map((s: any) => (s._id || s.id || s).toString());
+      if (scannedList.includes(studentIdStr)) {
+        return res.status(400).json({ error: 'Attendance already recorded for this session! Duplicate entries are not allowed.' });
+      }
+
+      // Mark Attendance
+      const log = await RepoService.markAttendance({
+        studentId: student._id || student.id,
+        courseId: session.courseId,
+        date: session.date,
+        status: 'Present',
+        markedBy: requester.userId
+      });
+
+      // Add to QR session
+      await RepoService.addStudentToQrSession(sessionId, student._id || student.id);
+
+      // Notify real-time counters
+      emitLiveUpdate('attendance_update', { studentId: student._id || student.id, courseId: session.courseId, date: session.date, status: 'Present' });
+
+      return res.json({
+        message: `Attendance confirmed successfully for ${session.courseName} - ${session.lectureTitle}!`,
+        attendance: log
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

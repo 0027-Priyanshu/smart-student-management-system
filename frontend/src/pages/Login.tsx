@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, AlertCircle, CheckCircle } from 'lucide-react';
+import { Mail, AlertCircle, CheckCircle, KeyRound, ArrowLeft, Cpu } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
+import PasswordInput from '../components/common/PasswordInput';
 import api from '../utils/api';
 
 type AuthScreen = 'login' | 'forgot' | 'reset';
@@ -37,7 +38,7 @@ export default function Login() {
       await login(email, password);
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Login failed');
+      setError(err.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
@@ -50,11 +51,14 @@ export default function Login() {
     setLoading(true);
 
     try {
-      await api.post('/auth/forgot-password', { email });
-      setSuccess('If the account exists, a reset link/token has been simulated! Check the backend terminal console logs.');
-      setTimeout(() => setScreen('reset'), 2500);
+      const res = await api.post('/auth/forgot-password', { email });
+      setSuccess(res.data.message || 'OTP code sent to your email!');
+      if (res.data.token) {
+        setResetToken(res.data.token);
+      }
+      setTimeout(() => setScreen('reset'), 1500);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to request reset');
+      setError(err.response?.data?.error || 'Failed to send password reset request');
     } finally {
       setLoading(false);
     }
@@ -67,15 +71,17 @@ export default function Login() {
     setLoading(true);
 
     try {
-      await api.post('/auth/reset-password', {
+      const res = await api.post('/auth/reset-password', {
         token: resetToken,
         newPassword
       });
-      setSuccess('Password reset successfully! Redirecting to login...');
+      setSuccess(res.data.message || 'Password reset successfully! Redirecting...');
       setTimeout(() => {
         setScreen('login');
         setSuccess('');
         setPassword('');
+        setResetToken('');
+        setNewPassword('');
       }, 2000);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to reset password');
@@ -85,16 +91,67 @@ export default function Login() {
   };
 
   const cardVariants = {
-    hidden: { opacity: 0, scale: 0.95 },
-    visible: { opacity: 1, scale: 1, transition: { duration: 0.3 } },
-    exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2 } }
+    hidden: { opacity: 0, y: 20, scale: 0.96 },
+    visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.35 } },
+    exit: { opacity: 0, y: -20, scale: 0.96, transition: { duration: 0.25 } }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 relative px-4 overflow-hidden">
-      {/* Background Gradients */}
-      <div className="absolute inset-0 bg-[radial-gradient(at_50%_0%,rgba(249,115,22,0.15),transparent_50%)] pointer-events-none z-0" />
-      <div className="absolute inset-0 bg-[radial-gradient(at_50%_100%,rgba(245,158,11,0.1),transparent_50%)] pointer-events-none z-0" />
+    <div className="min-h-screen flex items-center justify-center bg-slate-900 relative px-4 overflow-hidden select-none">
+      
+      {/* Premium AI Neural Network Background Canvas & Floating Particles */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-40">
+        <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="grad1" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#f97316" stopOpacity="0.25" />
+              <stop offset="100%" stopColor="#0f172a" stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id="grad2" cx="80%" cy="20%" r="40%">
+              <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.2" />
+              <stop offset="100%" stopColor="#0f172a" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grad1)" />
+          <rect width="100%" height="100%" fill="url(#grad2)" />
+          
+          {/* Animated Connecting Synapse Lines */}
+          <g stroke="rgba(249, 115, 22, 0.15)" strokeWidth="1" strokeDasharray="4 4">
+            <line x1="10%" y1="20%" x2="40%" y2="50%">
+              <animate attributeName="stroke-dashoffset" values="0;30" dur="4s" repeatCount="indefinite" />
+            </line>
+            <line x1="40%" y1="50%" x2="80%" y2="30%">
+              <animate attributeName="stroke-dashoffset" values="0;30" dur="5s" repeatCount="indefinite" />
+            </line>
+            <line x1="40%" y1="50%" x2="60%" y2="85%">
+              <animate attributeName="stroke-dashoffset" values="30;0" dur="6s" repeatCount="indefinite" />
+            </line>
+            <line x1="20%" y1="80%" x2="40%" y2="50%">
+              <animate attributeName="stroke-dashoffset" values="0;30" dur="4.5s" repeatCount="indefinite" />
+            </line>
+          </g>
+
+          {/* Floating Neural Nodes */}
+          {[
+            { cx: '10%', cy: '20%', r: 6 },
+            { cx: '40%', cy: '50%', r: 10 },
+            { cx: '80%', cy: '30%', r: 8 },
+            { cx: '60%', cy: '85%', r: 7 },
+            { cx: '20%', cy: '80%', r: 5 }
+          ].map((node, i) => (
+            <g key={i}>
+              <circle cx={node.cx} cy={node.cy} r={node.r} fill="#f97316" opacity="0.8">
+                <animate attributeName="r" values={`${node.r};${node.r + 3};${node.r}`} dur={`${3 + i}s`} repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.6;1;0.6" dur={`${2 + i}s`} repeatCount="indefinite" />
+              </circle>
+              <circle cx={node.cx} cy={node.cy} r={node.r * 2.2} fill="none" stroke="#f97316" strokeWidth="1" opacity="0.3">
+                <animate attributeName="r" values={`${node.r};${node.r * 3}`} dur={`${2.5 + i}s`} repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.5;0" dur={`${2.5 + i}s`} repeatCount="indefinite" />
+              </circle>
+            </g>
+          ))}
+        </svg>
+      </div>
 
       <AnimatePresence mode="wait">
         {screen === 'login' && (
@@ -104,18 +161,22 @@ export default function Login() {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="w-full max-w-md bg-white/80 backdrop-blur-xl border border-[#f97316]/20 p-6 sm:p-8 rounded-3xl shadow-card relative z-10"
+            className="w-full max-w-md bg-white/95 backdrop-blur-2xl border border-slate-200/80 p-6 sm:p-8 rounded-3xl shadow-2xl relative z-10"
           >
+            {/* Header / Logo */}
             <div className="text-center mb-8">
+              <div className="mx-auto h-12 w-12 bg-gradient-to-tr from-[#f97316] to-[#ef4444] rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg mb-3">
+                <Cpu size={26} className="animate-pulse" />
+              </div>
               <h2 className="text-3xl font-title font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#f97316] to-[#ef4444]">
-                EduManager
+                EduManager AI
               </h2>
-              <p className="text-sm text-slate-500 mt-2">Sign in to your administration panel</p>
+              <p className="text-xs text-slate-500 mt-1 font-medium">Smart Student Management System</p>
             </div>
 
             {error && (
-              <div className="mb-5 p-3.5 bg-red-500/10 border border-red-500/20 text-[#ef4444] rounded-xl text-xs flex items-center gap-2.5">
-                <AlertCircle size={16} />
+              <div className="mb-5 p-3.5 bg-red-50 border border-red-200 text-[#ef4444] rounded-xl text-xs flex items-center gap-2.5 shadow-sm">
+                <AlertCircle size={16} className="shrink-0" />
                 <span>{error}</span>
               </div>
             )}
@@ -146,60 +207,55 @@ export default function Login() {
                       setError('');
                       setSuccess('');
                     }} 
-                    className="text-xs text-[#f97316] hover:underline"
+                    className="text-xs text-[#f97316] font-semibold hover:underline"
                   >
-                    Forgot?
+                    Forgot Password?
                   </button>
                 </div>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                  <input
-                    type="password"
-                    required
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
-                  />
-                </div>
+                <PasswordInput
+                  required
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 bg-gradient-to-r from-[#f97316] to-[#ef4444] hover:shadow-glow text-slate-900 font-bold rounded-xl text-sm shadow-card transition-all"
+                className="w-full py-3.5 bg-gradient-to-r from-[#f97316] to-[#ef4444] hover:shadow-lg text-white font-bold rounded-xl text-sm shadow-md hover:opacity-95 transition-all duration-200 cursor-pointer"
               >
                 {loading ? 'Authenticating...' : 'Sign In'}
               </button>
             </form>
 
-            <div className="mt-8 text-center text-xs text-slate-500">
+            <div className="mt-6 text-center text-xs text-slate-500">
               New here?{' '}
-              <Link to="/register" className="text-[#f97316] font-semibold hover:underline">
+              <Link to="/register" className="text-[#f97316] font-bold hover:underline">
                 Create an account
               </Link>
             </div>
 
             {/* Hint Panel */}
-            <div className="mt-6 p-4 bg-white border border-[#f97316]/20 rounded-2xl text-[11px] text-slate-500 space-y-2">
-              <span className="font-bold text-slate-700 block mb-1">Demo Credentials:</span>
+            <div className="mt-6 p-4 bg-slate-50 border border-slate-200 rounded-2xl text-[11px] text-slate-600 space-y-2">
+              <span className="font-bold text-slate-800 block mb-1">Demo Credentials (Click to auto-fill):</span>
               <div 
                 onClick={() => { setEmail('admin@sms.com'); setPassword('admin123'); }}
-                className="cursor-pointer hover:bg-slate-50 p-1.5 -ml-1.5 rounded-lg transition-colors flex items-center gap-1"
+                className="cursor-pointer hover:bg-white p-1.5 -ml-1.5 rounded-lg transition-colors flex items-center gap-1 border border-transparent hover:border-slate-200"
               >
-                • Admin: <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded">admin@sms.com</code> / <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded">admin123</code>
+                • Admin: <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded font-mono">admin@sms.com</code> / <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded font-mono">admin123</code>
               </div>
               <div 
                 onClick={() => { setEmail('faculty@sms.com'); setPassword('faculty123'); }}
-                className="cursor-pointer hover:bg-slate-50 p-1.5 -ml-1.5 rounded-lg transition-colors flex items-center gap-1"
+                className="cursor-pointer hover:bg-white p-1.5 -ml-1.5 rounded-lg transition-colors flex items-center gap-1 border border-transparent hover:border-slate-200"
               >
-                • Faculty: <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded">faculty@sms.com</code> / <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded">faculty123</code>
+                • Faculty: <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded font-mono">faculty@sms.com</code> / <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded font-mono">faculty123</code>
               </div>
               <div 
                 onClick={() => { setEmail('student@sms.com'); setPassword('student123'); }}
-                className="cursor-pointer hover:bg-slate-50 p-1.5 -ml-1.5 rounded-lg transition-colors flex items-center gap-1"
+                className="cursor-pointer hover:bg-white p-1.5 -ml-1.5 rounded-lg transition-colors flex items-center gap-1 border border-transparent hover:border-slate-200"
               >
-                • Student: <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded">student@sms.com</code> / <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded">student123</code>
+                • Student: <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded font-mono">student@sms.com</code> / <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded font-mono">student123</code>
               </div>
             </div>
           </motion.div>
@@ -212,30 +268,33 @@ export default function Login() {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="w-full max-w-md bg-white/80 backdrop-blur-xl border border-[#f97316]/20 p-8 rounded-3xl shadow-card relative z-10"
+            className="w-full max-w-md bg-white/95 backdrop-blur-2xl border border-slate-200/80 p-6 sm:p-8 rounded-3xl shadow-2xl relative z-10"
           >
-            <div className="text-center mb-8">
+            <div className="text-center mb-6">
+              <div className="mx-auto h-12 w-12 bg-orange-100 rounded-2xl flex items-center justify-center text-[#f97316] mb-3">
+                <KeyRound size={24} />
+              </div>
               <h2 className="text-2xl font-title font-extrabold text-slate-900">Reset Password</h2>
-              <p className="text-xs text-slate-500 mt-2">Enter email to recover access</p>
+              <p className="text-xs text-slate-500 mt-1">Enter your registered email address to receive your 6-digit OTP code.</p>
             </div>
 
             {error && (
-              <div className="mb-5 p-3.5 bg-red-500/10 border border-red-500/20 text-[#ef4444] rounded-xl text-xs flex items-center gap-2.5">
-                <AlertCircle size={16} />
+              <div className="mb-5 p-3.5 bg-red-50 border border-red-200 text-[#ef4444] rounded-xl text-xs flex items-center gap-2.5">
+                <AlertCircle size={16} className="shrink-0" />
                 <span>{error}</span>
               </div>
             )}
 
             {success && (
-              <div className="mb-5 p-3.5 bg-emerald-500/10 border border-emerald-500/20 text-[#eab308] rounded-xl text-xs flex items-center gap-2.5">
-                <CheckCircle size={16} />
+              <div className="mb-5 p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-xl text-xs flex items-center gap-2.5">
+                <CheckCircle size={16} className="shrink-0" />
                 <span>{success}</span>
               </div>
             )}
 
             <form onSubmit={handleForgotSubmit} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Email Address</label>
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Registered Email Address</label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                   <input
@@ -252,9 +311,9 @@ export default function Login() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-slate-900 font-bold rounded-xl text-sm shadow-card transition-all"
+                className="w-full py-3.5 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-white font-bold rounded-xl text-sm shadow-md hover:opacity-95 transition-all cursor-pointer"
               >
-                {loading ? 'Sending...' : 'Send Reset Link'}
+                {loading ? 'Sending OTP Code...' : 'Send Password Reset OTP'}
               </button>
             </form>
 
@@ -266,9 +325,9 @@ export default function Login() {
                   setError('');
                   setSuccess('');
                 }} 
-                className="text-xs text-slate-500 hover:text-slate-900 transition-colors underline"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors"
               >
-                Back to sign in
+                <ArrowLeft size={14} /> Back to Sign In
               </button>
             </div>
           </motion.div>
@@ -281,63 +340,75 @@ export default function Login() {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="w-full max-w-md bg-white/80 backdrop-blur-xl border border-[#f97316]/20 p-8 rounded-3xl shadow-card relative z-10"
+            className="w-full max-w-md bg-white/95 backdrop-blur-2xl border border-slate-200/80 p-6 sm:p-8 rounded-3xl shadow-2xl relative z-10"
           >
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-title font-extrabold text-slate-900">Choose New Password</h2>
-              <p className="text-xs text-slate-500 mt-2">Enter the token shown in your server log console</p>
+            <div className="text-center mb-6">
+              <div className="mx-auto h-12 w-12 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 mb-3">
+                <CheckCircle size={24} />
+              </div>
+              <h2 className="text-2xl font-title font-extrabold text-slate-900">Set New Password</h2>
+              <p className="text-xs text-slate-500 mt-1">Enter your 6-digit OTP code sent to your email and your new password.</p>
             </div>
 
             {error && (
-              <div className="mb-5 p-3.5 bg-red-500/10 border border-red-500/20 text-[#ef4444] rounded-xl text-xs flex items-center gap-2.5">
-                <AlertCircle size={16} />
+              <div className="mb-5 p-3.5 bg-red-50 border border-red-200 text-[#ef4444] rounded-xl text-xs flex items-center gap-2.5">
+                <AlertCircle size={16} className="shrink-0" />
                 <span>{error}</span>
               </div>
             )}
 
             {success && (
-              <div className="mb-5 p-3.5 bg-emerald-500/10 border border-emerald-500/20 text-[#eab308] rounded-xl text-xs flex items-center gap-2.5">
-                <CheckCircle size={16} />
+              <div className="mb-5 p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-xl text-xs flex items-center gap-2.5">
+                <CheckCircle size={16} className="shrink-0" />
                 <span>{success}</span>
               </div>
             )}
 
             <form onSubmit={handleResetSubmit} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Reset Token</label>
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">6-Digit OTP / Token</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. k4l5h..."
+                  placeholder="e.g. 123456"
                   value={resetToken}
                   onChange={(e) => setResetToken(e.target.value)}
-                  className="w-full px-4 py-3.5 bg-white border border-gray-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
+                  className="w-full px-4 py-3.5 bg-white border border-gray-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-sm font-mono text-black placeholder-gray-400 focus:outline-none transition-all tracking-wider"
                 />
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">New Password</label>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                  <input
-                    type="password"
-                    required
-                    placeholder="••••••••"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
-                  />
-                </div>
+                <PasswordInput
+                  required
+                  placeholder="••••••••"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-slate-900 font-bold rounded-xl text-sm shadow-card transition-all"
+                className="w-full py-3.5 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-white font-bold rounded-xl text-sm shadow-md hover:opacity-95 transition-all cursor-pointer"
               >
-                {loading ? 'Updating...' : 'Update Password'}
+                {loading ? 'Updating Password...' : 'Update Password & Login'}
               </button>
             </form>
+
+            <div className="mt-6 text-center">
+              <button 
+                type="button" 
+                onClick={() => {
+                  setScreen('login');
+                  setError('');
+                  setSuccess('');
+                }} 
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors"
+              >
+                <ArrowLeft size={14} /> Back to Sign In
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -6,6 +6,7 @@ import Course from '../models/Course';
 import Attendance from '../models/Attendance';
 import Result from '../models/Result';
 import { ChatHistory } from '../models/ChatHistory';
+import QrSession from '../models/QrSession';
 import { isMongoConnected, readJsonDb, writeJsonDb } from '../config/db';
 
 const generateId = () => new mongoose.Types.ObjectId().toString();
@@ -575,6 +576,71 @@ export class RepoService {
       db.chatHistory.push(newMessage);
       writeJsonDb(db);
       return newMessage;
+    }
+  }
+
+  static async clearChatHistory(userId: string): Promise<boolean> {
+    if (isMongoConnected) {
+      await ChatHistory.deleteMany({ userId });
+      return true;
+    } else {
+      const db = readJsonDb();
+      if (!db.chatHistory) db.chatHistory = [];
+      db.chatHistory = db.chatHistory.filter((c: any) => c.userId !== userId);
+      writeJsonDb(db);
+      return true;
+    }
+  }
+
+  // ==================== QR ATTENDANCE SESSION OPERATIONS ====================
+
+  static async createQrSession(sessionData: any): Promise<any> {
+    if (isMongoConnected) {
+      return await QrSession.create(sessionData);
+    } else {
+      const db = readJsonDb();
+      if (!db.qrSessions) db.qrSessions = [];
+      const newSession = {
+        _id: generateId(),
+        ...sessionData,
+        scannedStudents: [],
+        createdAt: new Date().toISOString()
+      };
+      db.qrSessions.push(newSession);
+      writeJsonDb(db);
+      return newSession;
+    }
+  }
+
+  static async findQrSessionById(sessionId: string): Promise<any> {
+    if (isMongoConnected) {
+      return await QrSession.findOne({ sessionId }).populate('scannedStudents').lean();
+    } else {
+      const db = readJsonDb();
+      if (!db.qrSessions) db.qrSessions = [];
+      return db.qrSessions.find((s: any) => s.sessionId === sessionId) || null;
+    }
+  }
+
+  static async addStudentToQrSession(sessionId: string, studentId: string): Promise<any> {
+    if (isMongoConnected) {
+      return await QrSession.findOneAndUpdate(
+        { sessionId },
+        { $addToSet: { scannedStudents: studentId } },
+        { new: true }
+      );
+    } else {
+      const db = readJsonDb();
+      if (!db.qrSessions) db.qrSessions = [];
+      const session = db.qrSessions.find((s: any) => s.sessionId === sessionId);
+      if (session) {
+        if (!session.scannedStudents) session.scannedStudents = [];
+        if (!session.scannedStudents.includes(studentId)) {
+          session.scannedStudents.push(studentId);
+          writeJsonDb(db);
+        }
+      }
+      return session;
     }
   }
 }

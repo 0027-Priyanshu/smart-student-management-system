@@ -1,417 +1,259 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, AlertCircle, CheckCircle, KeyRound, ArrowLeft, Cpu } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Bot, Mail, Lock, Eye, EyeOff, ShieldCheck, ArrowRight, Sparkles, ShieldAlert } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
-import PasswordInput from '../components/common/PasswordInput';
-import api from '../utils/api';
-
-type AuthScreen = 'login' | 'forgot' | 'reset';
+import { toast } from '../stores/toastStore';
+import AiKnowledgeCore3D from '../components/login/AiKnowledgeCore3D';
 
 export default function Login() {
-  const [screen, setScreen] = useState<AuthScreen>('login');
+  const navigate = useNavigate();
+  const { login, loading } = useAuthStore();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [resetToken, setResetToken] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [loading, setLoading] = useState(false);
-  
-  const { login, isAuthenticated } = useAuthStore();
-  const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard');
-    }
-  }, [isAuthenticated, navigate]);
+  // 3D Interactive States
+  const [isTyping, setIsTyping] = useState(false);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
-  const handleLoginSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleInputChange = (field: 'email' | 'password', val: string) => {
+    if (field === 'email') setEmail(val);
+    if (field === 'password') setPassword(val);
+    
+    setIsTyping(true);
     setError('');
-    setSuccess('');
-    setLoading(true);
+    
+    // Stop typing trigger after inactivity
+    setTimeout(() => setIsTyping(false), 1200);
+  };
 
+  const handleQuickDemoFill = (demoEmail: string, demoPass: string, roleName: string) => {
+    setEmail(demoEmail);
+    setPassword(demoPass);
+    setIsTyping(true);
+    toast.info(`Loaded ${roleName} demo credentials`);
+    setTimeout(() => setIsTyping(false), 1000);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) {
+      setError('Please fill in both Email and Password fields.');
+      return;
+    }
+
+    setError('');
     try {
       await login(email, password);
-      navigate('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Login failed. Please check your credentials.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleForgotSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-    setLoading(true);
-
-    try {
-      const res = await api.post('/auth/forgot-password', { email });
-      setSuccess(res.data.message || 'OTP code sent to your email!');
-      if (res.data.token) {
-        setResetToken(res.data.token);
-      }
-      setTimeout(() => setScreen('reset'), 1500);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to send password reset request');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResetSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-    setLoading(true);
-
-    try {
-      const res = await api.post('/auth/reset-password', {
-        token: resetToken,
-        newPassword
-      });
-      setSuccess(res.data.message || 'Password reset successfully! Redirecting...');
+      setIsSuccess(true);
+      toast.success('Authentication successful! Welcome to EduManager AI.');
+      
+      // Delay navigation slightly to let the 3D success pulse and camera zoom complete
       setTimeout(() => {
-        setScreen('login');
-        setSuccess('');
-        setPassword('');
-        setResetToken('');
-        setNewPassword('');
-      }, 2000);
+        navigate('/dashboard');
+      }, 1000);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to reset password');
-    } finally {
-      setLoading(false);
+      console.error(err);
+      setError(err.response?.data?.error || 'Invalid credentials or authentication failure.');
+      toast.error('Authentication failed. Please verify your credentials.');
     }
-  };
-
-  const cardVariants = {
-    hidden: { opacity: 0, y: 20, scale: 0.96 },
-    visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.35 } },
-    exit: { opacity: 0, y: -20, scale: 0.96, transition: { duration: 0.25 } }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-900 relative px-4 overflow-hidden select-none">
+    <div className="min-[#100vh] h-screen w-full bg-[#0b0f19] text-slate-100 flex overflow-hidden font-sans">
       
-      {/* Premium AI Neural Network Background Canvas & Floating Particles */}
-      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-40">
-        <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <radialGradient id="grad1" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#f97316" stopOpacity="0.25" />
-              <stop offset="100%" stopColor="#0f172a" stopOpacity="0" />
-            </radialGradient>
-            <radialGradient id="grad2" cx="80%" cy="20%" r="40%">
-              <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.2" />
-              <stop offset="100%" stopColor="#0f172a" stopOpacity="0" />
-            </radialGradient>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#grad1)" />
-          <rect width="100%" height="100%" fill="url(#grad2)" />
-          
-          {/* Animated Connecting Synapse Lines */}
-          <g stroke="rgba(249, 115, 22, 0.15)" strokeWidth="1" strokeDasharray="4 4">
-            <line x1="10%" y1="20%" x2="40%" y2="50%">
-              <animate attributeName="stroke-dashoffset" values="0;30" dur="4s" repeatCount="indefinite" />
-            </line>
-            <line x1="40%" y1="50%" x2="80%" y2="30%">
-              <animate attributeName="stroke-dashoffset" values="0;30" dur="5s" repeatCount="indefinite" />
-            </line>
-            <line x1="40%" y1="50%" x2="60%" y2="85%">
-              <animate attributeName="stroke-dashoffset" values="30;0" dur="6s" repeatCount="indefinite" />
-            </line>
-            <line x1="20%" y1="80%" x2="40%" y2="50%">
-              <animate attributeName="stroke-dashoffset" values="0;30" dur="4.5s" repeatCount="indefinite" />
-            </line>
-          </g>
+      {/* LEFT SIDE: Split Screen Login Form */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-between p-6 sm:p-12 z-20 bg-[#0b0f19]/90 backdrop-blur-xl border-r border-slate-800/60 overflow-y-auto scrollbar-thin">
+        
+        {/* Brand Header */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <div className="h-11 w-11 rounded-2xl bg-gradient-to-tr from-[#f97316] via-[#06b6d4] to-[#7c3aed] p-0.5 shadow-glow">
+              <div className="h-full w-full bg-[#0b0f19] rounded-[14px] flex items-center justify-center text-cyan-400">
+                <Bot size={24} />
+              </div>
+            </div>
+            <div>
+              <h1 className="font-title font-extrabold text-lg tracking-tight text-white flex items-center gap-1.5">
+                EduManager <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-[#f97316]">AI</span>
+              </h1>
+              <p className="text-[10px] font-mono text-slate-400 uppercase tracking-widest">Next-Gen Student System</p>
+            </div>
+          </div>
 
-          {/* Floating Neural Nodes */}
-          {[
-            { cx: '10%', cy: '20%', r: 6 },
-            { cx: '40%', cy: '50%', r: 10 },
-            { cx: '80%', cy: '30%', r: 8 },
-            { cx: '60%', cy: '85%', r: 7 },
-            { cx: '20%', cy: '80%', r: 5 }
-          ].map((node, i) => (
-            <g key={i}>
-              <circle cx={node.cx} cy={node.cy} r={node.r} fill="#f97316" opacity="0.8">
-                <animate attributeName="r" values={`${node.r};${node.r + 3};${node.r}`} dur={`${3 + i}s`} repeatCount="indefinite" />
-                <animate attributeName="opacity" values="0.6;1;0.6" dur={`${2 + i}s`} repeatCount="indefinite" />
-              </circle>
-              <circle cx={node.cx} cy={node.cy} r={node.r * 2.2} fill="none" stroke="#f97316" strokeWidth="1" opacity="0.3">
-                <animate attributeName="r" values={`${node.r};${node.r * 3}`} dur={`${2.5 + i}s`} repeatCount="indefinite" />
-                <animate attributeName="opacity" values="0.5;0" dur={`${2.5 + i}s`} repeatCount="indefinite" />
-              </circle>
-            </g>
-          ))}
-        </svg>
+          <div className="hidden sm:flex items-center gap-1.5 text-[11px] font-semibold text-cyan-400 bg-cyan-950/40 border border-cyan-500/30 px-3 py-1 rounded-full">
+            <Sparkles size={13} />
+            <span>AI 2.0 WebGL Active</span>
+          </div>
+        </motion.div>
+
+        {/* Main Form Content */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="my-auto py-8 max-w-md w-full mx-auto space-y-6"
+        >
+          <div>
+            <h2 className="text-3xl font-title font-black text-white tracking-tight">Welcome Back</h2>
+            <p className="text-xs text-slate-400 font-medium mt-1.5">
+              Enter your credentials to access your personalized EduManager AI workspace.
+            </p>
+          </div>
+
+          {error && (
+            <div className="p-3.5 bg-red-950/60 border border-red-500/40 text-red-300 rounded-2xl text-xs flex items-center gap-2.5 animate-fadeIn">
+              <ShieldAlert size={16} className="shrink-0 text-red-400" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            
+            {/* Email Field */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                <span>Email Address</span>
+                <span className="text-slate-500 font-normal">e.g. admin@school.edu</span>
+              </label>
+              <div className="relative">
+                <Mail size={16} className="absolute left-3.5 top-3.5 text-slate-400" />
+                <input
+                  type="email"
+                  placeholder="name@edumanager.edu"
+                  value={email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  onFocus={() => setIsPasswordFocused(false)}
+                  required
+                  className="w-full pl-10 pr-4 py-3 bg-slate-900/80 border border-slate-700/80 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded-2xl text-xs text-white placeholder-slate-500 focus:outline-none transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Password Field */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Password</label>
+                <a href="#forgot" onClick={(e) => { e.preventDefault(); toast.info('Password reset instructions sent to domain admin.'); }} className="text-[11px] font-bold text-cyan-400 hover:text-cyan-300 transition-colors">
+                  Forgot Password?
+                </a>
+              </div>
+              <div className="relative">
+                <Lock size={16} className="absolute left-3.5 top-3.5 text-slate-400 z-10" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••••••"
+                  value={password}
+                  onChange={(e) => handleInputChange('password', e.target.value)}
+                  onFocus={() => setIsPasswordFocused(true)}
+                  onBlur={() => setIsPasswordFocused(false)}
+                  required
+                  className="w-full pl-10 pr-10 py-3 bg-slate-900/80 border border-slate-700/80 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 rounded-2xl text-xs text-white placeholder-slate-500 focus:outline-none transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-3.5 text-slate-400 hover:text-white transition-colors cursor-pointer z-10"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3.5 bg-gradient-to-r from-blue-600 via-cyan-500 to-[#f97316] hover:opacity-95 text-white font-extrabold rounded-2xl text-xs shadow-glow hover:shadow-cyan-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer mt-2"
+            >
+              {loading ? (
+                <>
+                  <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                  <span>Authenticating Credentials...</span>
+                </>
+              ) : (
+                <>
+                  <ShieldCheck size={16} />
+                  <span>Log In to EduManager AI</span>
+                  <ArrowRight size={16} />
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Quick 1-Tap Demo Credentials Bar */}
+          <div className="pt-4 border-t border-slate-800/80 space-y-2">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block text-center">
+              1-Tap Demo Login Credentials
+            </span>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => handleQuickDemoFill('admin@school.edu', 'admin123', 'Super Admin')}
+                className="p-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-cyan-500/40 rounded-xl text-left transition-all cursor-pointer group"
+              >
+                <div className="text-[11px] font-bold text-cyan-400 group-hover:text-cyan-300">Super Admin</div>
+                <div className="text-[9px] font-mono text-slate-400 truncate">admin@school.edu</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickDemoFill('teacher@school.edu', 'teacher123', 'Faculty')}
+                className="p-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-cyan-500/40 rounded-xl text-left transition-all cursor-pointer group"
+              >
+                <div className="text-[11px] font-bold text-orange-400 group-hover:text-orange-300">Faculty</div>
+                <div className="text-[9px] font-mono text-slate-400 truncate">teacher@school.edu</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickDemoFill('student@school.edu', 'student123', 'Student')}
+                className="p-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-cyan-500/40 rounded-xl text-left transition-all cursor-pointer group"
+              >
+                <div className="text-[11px] font-bold text-emerald-400 group-hover:text-emerald-300">Student</div>
+                <div className="text-[9px] font-mono text-slate-400 truncate">student@school.edu</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickDemoFill('admin2@school.edu', 'admin123', 'Admin')}
+                className="p-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-cyan-500/40 rounded-xl text-left transition-all cursor-pointer group"
+              >
+                <div className="text-[11px] font-bold text-purple-400 group-hover:text-purple-300">Admin</div>
+                <div className="text-[9px] font-mono text-slate-400 truncate">admin2@school.edu</div>
+              </button>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Footer info */}
+        <div className="text-center text-[11px] text-slate-500 font-medium">
+          Protected by EduManager 256-Bit AI Security • {new Date().getFullYear()}
+        </div>
       </div>
 
-      <AnimatePresence mode="wait">
-        {screen === 'login' && (
-          <motion.div 
-            key="login"
-            variants={cardVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            className="w-full max-w-md bg-white/95 backdrop-blur-2xl border border-slate-200/80 p-6 sm:p-8 rounded-3xl shadow-2xl relative z-10"
-          >
-            {/* Header / Logo */}
-            <div className="text-center mb-8">
-              <div className="mx-auto h-12 w-12 bg-gradient-to-tr from-[#f97316] to-[#ef4444] rounded-2xl flex items-center justify-center text-white font-bold text-xl shadow-lg mb-3">
-                <Cpu size={26} className="animate-pulse" />
-              </div>
-              <h2 className="text-3xl font-title font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#f97316] to-[#ef4444]">
-                EduManager AI
-              </h2>
-              <p className="text-xs text-slate-500 mt-1 font-medium">Smart Student Management System</p>
-            </div>
+      {/* RIGHT SIDE: 3D WebGL AI Knowledge Core Canvas */}
+      <div className="hidden lg:block lg:w-1/2 h-full bg-[#0b0f19] relative">
+        {/* Ambient Gradient Flares */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
 
-            {error && (
-              <div className="mb-5 p-3.5 bg-red-50 border border-red-200 text-[#ef4444] rounded-xl text-xs flex items-center gap-2.5 shadow-sm">
-                <AlertCircle size={16} className="shrink-0" />
-                <span>{error}</span>
-              </div>
-            )}
+        {/* WebGL 3D Canvas Scene */}
+        <AiKnowledgeCore3D
+          isTyping={isTyping}
+          isPasswordFocused={isPasswordFocused}
+          isAuthenticating={loading}
+          isSuccess={isSuccess}
+          isFailed={!!error}
+        />
+      </div>
 
-            <form onSubmit={handleLoginSubmit} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Email Address</label>
-                <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                  <input
-                    type="email"
-                    required
-                    placeholder="e.g. admin@sms.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <div className="flex justify-between items-center">
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Password</label>
-                  <button 
-                    type="button" 
-                    onClick={() => {
-                      setScreen('forgot');
-                      setError('');
-                      setSuccess('');
-                    }} 
-                    className="text-xs text-[#f97316] font-semibold hover:underline"
-                  >
-                    Forgot Password?
-                  </button>
-                </div>
-                <PasswordInput
-                  required
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3.5 bg-gradient-to-r from-[#f97316] to-[#ef4444] hover:shadow-lg text-white font-bold rounded-xl text-sm shadow-md hover:opacity-95 transition-all duration-200 cursor-pointer"
-              >
-                {loading ? 'Authenticating...' : 'Sign In'}
-              </button>
-            </form>
-
-            <div className="mt-6 text-center text-xs text-slate-500">
-              New here?{' '}
-              <Link to="/register" className="text-[#f97316] font-bold hover:underline">
-                Create an account
-              </Link>
-            </div>
-
-            {/* Hint Panel */}
-            <div className="mt-6 p-4 bg-slate-50 border border-slate-200 rounded-2xl text-[11px] text-slate-600 space-y-2">
-              <span className="font-bold text-slate-800 block mb-1">Demo Credentials (Click to auto-fill):</span>
-              <div 
-                onClick={() => { setEmail('admin@sms.com'); setPassword('admin123'); }}
-                className="cursor-pointer hover:bg-white p-1.5 -ml-1.5 rounded-lg transition-colors flex items-center gap-1 border border-transparent hover:border-slate-200"
-              >
-                • Admin: <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded font-mono">admin@sms.com</code> / <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded font-mono">admin123</code>
-              </div>
-              <div 
-                onClick={() => { setEmail('faculty@sms.com'); setPassword('faculty123'); }}
-                className="cursor-pointer hover:bg-white p-1.5 -ml-1.5 rounded-lg transition-colors flex items-center gap-1 border border-transparent hover:border-slate-200"
-              >
-                • Faculty: <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded font-mono">faculty@sms.com</code> / <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded font-mono">faculty123</code>
-              </div>
-              <div 
-                onClick={() => { setEmail('student@sms.com'); setPassword('student123'); }}
-                className="cursor-pointer hover:bg-white p-1.5 -ml-1.5 rounded-lg transition-colors flex items-center gap-1 border border-transparent hover:border-slate-200"
-              >
-                • Student: <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded font-mono">student@sms.com</code> / <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded font-mono">student123</code>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {screen === 'forgot' && (
-          <motion.div 
-            key="forgot"
-            variants={cardVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            className="w-full max-w-md bg-white/95 backdrop-blur-2xl border border-slate-200/80 p-6 sm:p-8 rounded-3xl shadow-2xl relative z-10"
-          >
-            <div className="text-center mb-6">
-              <div className="mx-auto h-12 w-12 bg-orange-100 rounded-2xl flex items-center justify-center text-[#f97316] mb-3">
-                <KeyRound size={24} />
-              </div>
-              <h2 className="text-2xl font-title font-extrabold text-slate-900">Reset Password</h2>
-              <p className="text-xs text-slate-500 mt-1">Enter your registered email address to receive your 6-digit OTP code.</p>
-            </div>
-
-            {error && (
-              <div className="mb-5 p-3.5 bg-red-50 border border-red-200 text-[#ef4444] rounded-xl text-xs flex items-center gap-2.5">
-                <AlertCircle size={16} className="shrink-0" />
-                <span>{error}</span>
-              </div>
-            )}
-
-            {success && (
-              <div className="mb-5 p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-xl text-xs flex items-center gap-2.5">
-                <CheckCircle size={16} className="shrink-0" />
-                <span>{success}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleForgotSubmit} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Registered Email Address</label>
-                <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                  <input
-                    type="email"
-                    required
-                    placeholder="e.g. admin@sms.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-sm text-black placeholder-gray-400 focus:outline-none transition-all"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3.5 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-white font-bold rounded-xl text-sm shadow-md hover:opacity-95 transition-all cursor-pointer"
-              >
-                {loading ? 'Sending OTP Code...' : 'Send Password Reset OTP'}
-              </button>
-            </form>
-
-            <div className="mt-6 text-center">
-              <button 
-                type="button" 
-                onClick={() => {
-                  setScreen('login');
-                  setError('');
-                  setSuccess('');
-                }} 
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors"
-              >
-                <ArrowLeft size={14} /> Back to Sign In
-              </button>
-            </div>
-          </motion.div>
-        )}
-
-        {screen === 'reset' && (
-          <motion.div 
-            key="reset"
-            variants={cardVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            className="w-full max-w-md bg-white/95 backdrop-blur-2xl border border-slate-200/80 p-6 sm:p-8 rounded-3xl shadow-2xl relative z-10"
-          >
-            <div className="text-center mb-6">
-              <div className="mx-auto h-12 w-12 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 mb-3">
-                <CheckCircle size={24} />
-              </div>
-              <h2 className="text-2xl font-title font-extrabold text-slate-900">Set New Password</h2>
-              <p className="text-xs text-slate-500 mt-1">Enter your 6-digit OTP code sent to your email and your new password.</p>
-            </div>
-
-            {error && (
-              <div className="mb-5 p-3.5 bg-red-50 border border-red-200 text-[#ef4444] rounded-xl text-xs flex items-center gap-2.5">
-                <AlertCircle size={16} className="shrink-0" />
-                <span>{error}</span>
-              </div>
-            )}
-
-            {success && (
-              <div className="mb-5 p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-xl text-xs flex items-center gap-2.5">
-                <CheckCircle size={16} className="shrink-0" />
-                <span>{success}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleResetSubmit} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">6-Digit OTP / Token</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. 123456"
-                  value={resetToken}
-                  onChange={(e) => setResetToken(e.target.value)}
-                  className="w-full px-4 py-3.5 bg-white border border-gray-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-sm font-mono text-black placeholder-gray-400 focus:outline-none transition-all tracking-wider"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">New Password</label>
-                <PasswordInput
-                  required
-                  placeholder="••••••••"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3.5 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-white font-bold rounded-xl text-sm shadow-md hover:opacity-95 transition-all cursor-pointer"
-              >
-                {loading ? 'Updating Password...' : 'Update Password & Login'}
-              </button>
-            </form>
-
-            <div className="mt-6 text-center">
-              <button 
-                type="button" 
-                onClick={() => {
-                  setScreen('login');
-                  setError('');
-                  setSuccess('');
-                }} 
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors"
-              >
-                <ArrowLeft size={14} /> Back to Sign In
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

@@ -36,6 +36,7 @@ import AnimatedCounter from '../common/AnimatedCounter';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useNavigate } from 'react-router-dom';
+import { customMarkdownComponents } from '../../pages/AiAssistant';
 
 const COLORS = ['#f97316', '#ef4444', '#eab308', '#ef4444', '#ea580c', '#d97706'];
 
@@ -462,7 +463,7 @@ export default function StudentDashboard() {
               AI Academic Insights
             </h3>
             
-            <div className="text-xs text-slate-800 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-200 font-medium prose prose-slate prose-p:text-slate-800 prose-headings:text-slate-900 prose-strong:text-slate-900 prose-strong:font-bold prose-li:text-slate-800 max-w-none relative z-10 mb-4 h-48 overflow-y-auto custom-scrollbar">
+            <div className="text-xs text-slate-800 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-200 font-medium max-w-none relative z-10 mb-4 h-48 overflow-y-auto custom-scrollbar">
               {aiLoading ? (
                 <div className="flex flex-col gap-2">
                   <div className="h-3 w-3/4 bg-slate-100 rounded animate-pulse" />
@@ -470,7 +471,7 @@ export default function StudentDashboard() {
                   <div className="h-3 w-5/6 bg-slate-100 rounded animate-pulse" />
                 </div>
               ) : aiSummary ? (
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{aiSummary}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]} components={customMarkdownComponents}>{aiSummary}</ReactMarkdown>
               ) : (
                 <p className="text-slate-400 italic">No AI insights generated yet. Check back later after exams.</p>
               )}

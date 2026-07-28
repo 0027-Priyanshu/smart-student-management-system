@@ -55,6 +55,29 @@ const SUGGESTED_PROMPTS = [
   }
 ];
 
+export const customMarkdownComponents = {
+  h1: ({ children }: any) => <h1 className="text-base font-extrabold text-slate-900 mt-2 mb-1.5 leading-snug">{children}</h1>,
+  h2: ({ children }: any) => <h2 className="text-sm font-bold text-slate-900 mt-2 mb-1 leading-snug">{children}</h2>,
+  h3: ({ children }: any) => <h3 className="text-xs font-bold text-slate-900 mt-1.5 mb-1 leading-snug">{children}</h3>,
+  h4: ({ children }: any) => <h4 className="text-xs font-bold text-slate-900 mt-1 mb-0.5 leading-snug">{children}</h4>,
+  p: ({ children }: any) => <p className="text-xs text-slate-800 leading-relaxed mb-1.5">{children}</p>,
+  strong: ({ children }: any) => <strong className="font-extrabold text-slate-900">{children}</strong>,
+  b: ({ children }: any) => <b className="font-extrabold text-slate-900">{children}</b>,
+  em: ({ children }: any) => <em className="italic text-slate-800">{children}</em>,
+  ul: ({ children }: any) => <ul className="list-disc list-inside text-xs text-slate-800 space-y-1 my-1.5 pl-1">{children}</ul>,
+  ol: ({ children }: any) => <ol className="list-decimal list-inside text-xs text-slate-800 space-y-1 my-1.5 pl-1">{children}</ol>,
+  li: ({ children }: any) => <li className="text-xs text-slate-800 font-medium leading-relaxed">{children}</li>,
+  table: ({ children }: any) => <div className="overflow-x-auto my-2 rounded-xl border border-slate-200"><table className="w-full text-xs text-slate-800 border-collapse">{children}</table></div>,
+  thead: ({ children }: any) => <thead className="bg-slate-100 text-slate-900 font-bold border-b border-slate-200">{children}</thead>,
+  tbody: ({ children }: any) => <tbody className="divide-y divide-slate-200 bg-white">{children}</tbody>,
+  tr: ({ children }: any) => <tr className="hover:bg-slate-50 transition-colors">{children}</tr>,
+  th: ({ children }: any) => <th className="px-3 py-2 text-left text-xs font-extrabold text-slate-900 border-r border-slate-200 last:border-0">{children}</th>,
+  td: ({ children }: any) => <td className="px-3 py-2 text-xs text-slate-800 border-r border-slate-200 last:border-0">{children}</td>,
+  code: ({ children }: any) => <code className="bg-slate-100 text-slate-900 font-mono text-[11px] px-1.5 py-0.5 rounded border border-slate-200">{children}</code>,
+  pre: ({ children }: any) => <pre className="bg-slate-900 text-slate-100 font-mono text-[11px] p-3 rounded-xl overflow-x-auto my-2">{children}</pre>,
+  blockquote: ({ children }: any) => <blockquote className="border-l-4 border-[#f97316] pl-3 py-1.5 text-slate-800 font-medium italic bg-orange-50/70 rounded-r my-2">{children}</blockquote>,
+};
+
 interface ChatMessage {
   role: 'user' | 'model';
   parts: string[];
@@ -428,10 +451,10 @@ export default function AiAssistant() {
                   <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${isAI ? 'bg-[#f97316]/20 text-[#f97316]' : 'bg-[#ef4444]/20 text-[#ef4444]'}`}>
                     {isAI ? <Bot size={16} /> : <User size={16} />}
                   </div>
-                  <div className={`p-4 rounded-2xl text-xs leading-normal border overflow-x-auto prose prose-invert max-w-none ${
-                    isAI ? 'bg-slate-50 border-slate-200 text-slate-700' : 'bg-[#f97316]/10 border-[#f97316]/20 text-slate-900'
+                  <div className={`p-4 rounded-2xl text-xs leading-normal border overflow-x-auto max-w-none ${
+                    isAI ? 'bg-slate-50 border-slate-200 text-slate-800' : 'bg-[#f97316]/10 border-[#f97316]/30 text-slate-900'
                   }`}>
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={customMarkdownComponents}>
                       {msg.parts.join('\n')}
                     </ReactMarkdown>
                   </div>
@@ -559,8 +582,8 @@ export default function AiAssistant() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Summary Text */}
-                    <div className="text-sm text-slate-800 leading-relaxed bg-slate-50 p-6 rounded-2xl border border-slate-200 font-sans shadow-sm prose prose-slate prose-p:text-slate-800 prose-headings:text-slate-900 prose-strong:text-slate-900 prose-strong:font-bold prose-li:text-slate-800 max-w-none">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    <div className="text-sm text-slate-800 leading-relaxed bg-slate-50 p-6 rounded-2xl border border-slate-200 font-sans shadow-sm max-w-none">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={customMarkdownComponents}>
                         {summary}
                       </ReactMarkdown>
                     </div>
@@ -716,8 +739,8 @@ export default function AiAssistant() {
               </div>
             ) : (
               <div className="space-y-6">
-                <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-800 leading-relaxed font-medium prose prose-slate prose-p:text-slate-800 prose-headings:text-slate-900 prose-strong:text-slate-900 prose-strong:font-bold prose-li:text-slate-800 max-w-none">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-800 leading-relaxed font-medium max-w-none">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} components={customMarkdownComponents}>
                     {insights}
                   </ReactMarkdown>
                 </div>

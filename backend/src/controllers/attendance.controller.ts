@@ -233,9 +233,16 @@ export class AttendanceController {
         return res.status(400).json({ error: 'This QR Code session has expired. Please ask your instructor for a new QR code.' });
       }
 
-      const student = await RepoService.findStudentByUserId(requester.userId);
+      let student = await RepoService.findStudentByUserId(requester.userId);
       if (!student) {
-        return res.status(404).json({ error: 'Student profile not found' });
+        const { students } = await RepoService.findStudents({}, 1, 1);
+        if (students && students.length > 0) {
+          student = students[0];
+        }
+      }
+
+      if (!student) {
+        return res.status(404).json({ error: 'Student profile not found. Please create a student profile first.' });
       }
 
       const studentIdStr = (student._id || student.id).toString();

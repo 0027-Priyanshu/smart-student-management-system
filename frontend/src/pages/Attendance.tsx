@@ -195,9 +195,23 @@ export default function Attendance() {
   };
 
   // Student fetches QR session info
-  const handleStudentFetchSession = async (sId?: string) => {
-    const targetSessionId = sId || studentSessionInput.trim();
-    if (!targetSessionId) return;
+  const handleStudentFetchSession = useCallback(async (sId?: string) => {
+    const rawInput = sId || studentSessionInput;
+    if (!rawInput) return;
+
+    let targetSessionId = rawInput.trim();
+    if (targetSessionId.includes('session=')) {
+      targetSessionId = targetSessionId.split('session=')[1].split('&')[0];
+    }
+    if (targetSessionId.includes('/')) {
+      targetSessionId = targetSessionId.split('/').pop() || targetSessionId;
+    }
+    targetSessionId = targetSessionId.trim().toUpperCase();
+
+    if (!targetSessionId) {
+      setError('Please enter a valid session ID or URL.');
+      return;
+    }
 
     setError('');
     setSuccess('');
@@ -210,6 +224,7 @@ export default function Attendance() {
         setStudentSessionData(null);
       } else {
         setStudentSessionData(res.data.session);
+        setStudentSessionInput(targetSessionId);
       }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Invalid or expired QR session token.');
@@ -217,7 +232,7 @@ export default function Attendance() {
     } finally {
       setActionLoading(false);
     }
-  };
+  }, [studentSessionInput]);
 
   // Student confirms attendance
   const handleStudentConfirmAttendance = async () => {

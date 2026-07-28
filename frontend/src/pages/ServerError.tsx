@@ -2,7 +2,7 @@ import { ShieldAlert, RefreshCw } from 'lucide-react';
 
 export default function ServerError({ error, resetErrorBoundary }: { error?: Error; resetErrorBoundary?: () => void }) {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 text-gray-200 relative px-4 overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 text-slate-800 relative px-4 overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(at_50%_0%,rgba(239,68,68,0.1),transparent_50%)] pointer-events-none z-0" />
       
       <div className="text-center space-y-6 max-w-md z-10">
@@ -13,7 +13,7 @@ export default function ServerError({ error, resetErrorBoundary }: { error?: Err
         <h1 className="text-8xl font-black tracking-tight text-slate-900 select-none">500</h1>
         
         <div className="space-y-2">
-          <h2 className="text-xl font-bold text-gray-100">System Error</h2>
+          <h2 className="text-xl font-bold text-slate-900">System Error</h2>
           <p className="text-sm text-slate-500">
             A fatal exception occurred. The backend connection failed or a runtime crash was encountered.
           </p>

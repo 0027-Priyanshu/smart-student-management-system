@@ -559,15 +559,15 @@ export default function AiAssistant() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Summary Text */}
-                    <div className="text-sm text-gray-200 leading-relaxed bg-slate-100 p-6 rounded-2xl border border-slate-300 font-sans shadow-inner prose prose-invert prose-p:text-slate-700 prose-headings:text-slate-900 prose-strong:text-[#ef4444] prose-li:text-slate-700 max-w-none">
+                    <div className="text-sm text-slate-800 leading-relaxed bg-slate-50 p-6 rounded-2xl border border-slate-200 font-sans shadow-sm prose prose-slate prose-p:text-slate-800 prose-headings:text-slate-900 prose-strong:text-slate-900 prose-strong:font-bold prose-li:text-slate-800 max-w-none">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {summary}
                       </ReactMarkdown>
                     </div>
 
                     {/* Historical Trend Chart */}
-                    <div className="bg-slate-100 p-6 rounded-2xl border border-slate-300 shadow-inner flex flex-col">
-                      <h5 className="text-sm font-bold text-gray-200 mb-4 flex items-center gap-2">
+                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+                      <h5 className="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
                         <TrendingUp size={16} className="text-[#eab308]" />
                         Historical GPA Trend
                       </h5>
@@ -716,7 +716,7 @@ export default function AiAssistant() {
               </div>
             ) : (
               <div className="space-y-6">
-                <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-700 leading-relaxed font-medium prose prose-invert max-w-none">
+                <div className="p-5 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-800 leading-relaxed font-medium prose prose-slate prose-p:text-slate-800 prose-headings:text-slate-900 prose-strong:text-slate-900 prose-strong:font-bold prose-li:text-slate-800 max-w-none">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {insights}
                   </ReactMarkdown>

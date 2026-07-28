@@ -144,7 +144,7 @@ export default function Faculty() {
                   </div>
 
                   <div className="space-y-3">
-                    <h5 className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Assigned Courses</h5>
+                    <h5 className="text-[10px] font-extrabold uppercase tracking-wider text-slate-600">Assigned Courses</h5>
                     {fac.assignedCourses && fac.assignedCourses.length > 0 ? (
                       <div className="flex flex-wrap gap-2">
                         {fac.assignedCourses.map((c: any) => (

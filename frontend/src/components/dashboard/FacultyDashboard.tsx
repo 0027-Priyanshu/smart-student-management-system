@@ -42,7 +42,7 @@ export default function FacultyDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-3xl border border-slate-200 flex items-center justify-between shadow-card relative overflow-hidden">
           <div className="relative z-10">
-            <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Total Students</p>
+            <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-600 mb-2">Total Students</p>
             <h3 className="font-title font-black text-3xl text-slate-900">{stats?.stats?.totalStudents || 0}</h3>
           </div>
           <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#f97316]/20 to-[#ef4444]/20 flex items-center justify-center text-[#f97316] relative z-10">
@@ -53,7 +53,7 @@ export default function FacultyDashboard() {
 
         <div className="bg-white p-6 rounded-3xl border border-slate-200 flex items-center justify-between shadow-card relative overflow-hidden">
           <div className="relative z-10">
-            <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">Platform Courses</p>
+            <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-600 mb-2">Platform Courses</p>
             <h3 className="font-title font-black text-3xl text-slate-900">{stats?.stats?.totalCourses || 0}</h3>
           </div>
           <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#ef4444]/20 to-[#eab308]/20 flex items-center justify-center text-[#ef4444] relative z-10">
@@ -64,7 +64,7 @@ export default function FacultyDashboard() {
 
         <div className="bg-white p-6 rounded-3xl border border-slate-200 flex items-center justify-between shadow-card relative overflow-hidden">
           <div className="relative z-10">
-            <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2">At-Risk Students</p>
+            <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-600 mb-2">At-Risk Students</p>
             <h3 className="font-title font-black text-3xl text-slate-900">{stats?.atRiskStudents?.length || 0}</h3>
           </div>
           <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#ef4444]/20 to-[#ef4444]/20 flex items-center justify-center text-[#ef4444] relative z-10">

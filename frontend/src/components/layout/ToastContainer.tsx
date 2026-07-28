@@ -25,10 +25,10 @@ function ToastCard({ toast, onClose }: { toast: ToastMessage; onClose: () => voi
   };
 
   const bgBorderMap = {
-    success: 'bg-white/90 border-[#eab308]/20 text-gray-200',
-    error: 'bg-white/90 border-[#ef4444]/20 text-gray-200',
-    warning: 'bg-white/90 border-[#ef4444]/20 text-gray-200',
-    info: 'bg-white/90 border-[#ef4444]/20 text-gray-200',
+    success: 'bg-white border-emerald-300 text-slate-900 shadow-md',
+    error: 'bg-white border-red-300 text-slate-900 shadow-md',
+    warning: 'bg-white border-amber-300 text-slate-900 shadow-md',
+    info: 'bg-white border-blue-300 text-slate-900 shadow-md',
   };
 
   return (

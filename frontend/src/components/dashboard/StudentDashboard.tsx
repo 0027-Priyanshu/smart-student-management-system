@@ -462,7 +462,7 @@ export default function StudentDashboard() {
               AI Academic Insights
             </h3>
             
-            <div className="text-xs text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-200 font-medium prose prose-invert max-w-none relative z-10 mb-4 h-48 overflow-y-auto custom-scrollbar">
+            <div className="text-xs text-slate-800 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-200 font-medium prose prose-slate prose-p:text-slate-800 prose-headings:text-slate-900 prose-strong:text-slate-900 prose-strong:font-bold prose-li:text-slate-800 max-w-none relative z-10 mb-4 h-48 overflow-y-auto custom-scrollbar">
               {aiLoading ? (
                 <div className="flex flex-col gap-2">
                   <div className="h-3 w-3/4 bg-slate-100 rounded animate-pulse" />

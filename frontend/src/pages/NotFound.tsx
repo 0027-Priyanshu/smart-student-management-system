@@ -5,7 +5,7 @@ export default function NotFound() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 text-gray-200 relative px-4 overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 text-slate-800 relative px-4 overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(at_50%_0%,rgba(138,92,246,0.15),transparent_50%)] pointer-events-none z-0" />
       
       <div className="text-center space-y-6 max-w-md z-10">
@@ -16,7 +16,7 @@ export default function NotFound() {
         <h1 className="text-8xl font-black tracking-tight text-slate-900 font-sans select-none">404</h1>
         
         <div className="space-y-2">
-          <h2 className="text-xl font-bold text-gray-100">Page Not Found</h2>
+          <h2 className="text-xl font-bold text-slate-900">Page Not Found</h2>
           <p className="text-sm text-slate-500">
             The page you are looking for does not exist or has been relocated to another route.
           </p>

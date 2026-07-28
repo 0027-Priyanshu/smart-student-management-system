@@ -844,11 +844,11 @@ export default function Students() {
                   <p className="font-title font-extrabold text-base text-slate-900 leading-tight truncate">{activeStudent.name}</p>
                   <p className="text-[10px] font-mono text-[#f97316] truncate">{activeStudent.enrollmentNo}</p>
                   
-                  <div className="space-y-0.5 text-[9px] text-slate-500">
-                    <p><span className="text-slate-400">Dept:</span> <strong className="text-slate-700">{activeStudent.department}</strong></p>
-                    <p><span className="text-slate-400">Grade:</span> <strong className="text-slate-700">{activeStudent.grade}</strong></p>
-                    <p><span className="text-slate-400">Semester:</span> <strong className="text-slate-700">{activeStudent.semester}</strong></p>
-                    <p><span className="text-slate-400">Sex:</span> <strong className="text-slate-700">{activeStudent.gender}</strong></p>
+                  <div className="space-y-0.5 text-[9px] text-slate-700">
+                    <p><span className="text-slate-700 font-bold">Dept:</span> <strong className="text-slate-900 font-extrabold">{activeStudent.department}</strong></p>
+                    <p><span className="text-slate-700 font-bold">Grade:</span> <strong className="text-slate-900 font-extrabold">{activeStudent.grade}</strong></p>
+                    <p><span className="text-slate-700 font-bold">Semester:</span> <strong className="text-slate-900 font-extrabold">{activeStudent.semester}</strong></p>
+                    <p><span className="text-slate-700 font-bold">Sex:</span> <strong className="text-slate-900 font-extrabold">{activeStudent.gender}</strong></p>
                   </div>
                 </div>
               </div>

@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Calendar, CheckCircle, AlertCircle, Scan, HelpCircle, QrCode, Clock, Users, ShieldCheck, Check, RefreshCw, Copy } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Calendar, CheckCircle, AlertCircle, Scan, HelpCircle, QrCode, Clock, Users, ShieldCheck, Check, RefreshCw, Copy, Camera, X } from 'lucide-react';
+import { Html5Qrcode } from 'html5-qrcode';
 import DashboardShell from '../components/layout/DashboardShell';
 import api from '../utils/api';
 import { useAuthStore } from '../stores/authStore';
@@ -34,6 +35,13 @@ export default function Attendance() {
   const [studentSessionData, setStudentSessionData] = useState<any>(null);
   const [studentConfirmed, setStudentConfirmed] = useState(false);
   
+  // Camera QR Scanner states
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [cameraError, setCameraError] = useState('');
+  const [availableCameras, setAvailableCameras] = useState<any[]>([]);
+  const [selectedCameraId, setSelectedCameraId] = useState('');
+  const html5QrcodeRef = useRef<Html5Qrcode | null>(null);
+
   // Heatmap state
   const [heatmap, setHeatmap] = useState<any[]>([]);
   
@@ -233,6 +241,71 @@ export default function Attendance() {
       setActionLoading(false);
     }
   }, [studentSessionInput]);
+
+  const stopCameraScanner = useCallback(async () => {
+    if (html5QrcodeRef.current) {
+      try {
+        await html5QrcodeRef.current.stop();
+      } catch (e) {
+        console.error(e);
+      }
+      html5QrcodeRef.current = null;
+    }
+    setIsScannerOpen(false);
+    setCameraError('');
+  }, []);
+
+  const startCameraScanner = async (cameraId?: string) => {
+    setIsScannerOpen(true);
+    setCameraError('');
+    
+    setTimeout(async () => {
+      try {
+        const devices = await Html5Qrcode.getCameras();
+        if (!devices || devices.length === 0) {
+          setCameraError('No camera devices detected on this device.');
+          return;
+        }
+
+        setAvailableCameras(devices);
+        const targetCamera = cameraId || (devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('environment'))?.id || devices[0].id);
+        setSelectedCameraId(targetCamera);
+
+        if (html5QrcodeRef.current) {
+          try {
+            await html5QrcodeRef.current.stop();
+          } catch (e) {
+            // ignore
+          }
+        }
+
+        const scanner = new Html5Qrcode("camera-reader");
+        html5QrcodeRef.current = scanner;
+
+        await scanner.start(
+          targetCamera,
+          {
+            fps: 10,
+            qrbox: { width: 200, height: 200 },
+            aspectRatio: 1.0
+          },
+          (decodedText) => {
+            scanner.stop().then(() => {
+              setIsScannerOpen(false);
+              toast.success('QR Code scanned successfully via camera!');
+              handleStudentFetchSession(decodedText);
+            }).catch(console.error);
+          },
+          () => {
+            // Frame scan check
+          }
+        );
+      } catch (err: any) {
+        console.error('Camera Scanner Error:', err);
+        setCameraError(err.message || 'Camera permission denied or camera unavailable.');
+      }
+    }, 300);
+  };
 
   // Student confirms attendance
   const handleStudentConfirmAttendance = async () => {
@@ -527,11 +600,76 @@ export default function Attendance() {
                 </div>
               )}
 
-              {!studentSessionData ? (
+              {/* Camera Scanner Viewport Modal / Card Section */}
+              {isScannerOpen ? (
+                <div className="space-y-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl text-center animate-fadeIn">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                      <Camera size={16} className="text-[#f97316]" />
+                      Live Camera QR Scanner
+                    </span>
+                    <button
+                      onClick={stopCameraScanner}
+                      className="p-1 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                      title="Close Scanner"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+
+                  {cameraError && (
+                    <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs flex items-center gap-2 text-left">
+                      <AlertCircle size={16} className="shrink-0" />
+                      <span>{cameraError}</span>
+                    </div>
+                  )}
+
+                  {availableCameras.length > 1 && (
+                    <select
+                      value={selectedCameraId}
+                      onChange={(e) => startCameraScanner(e.target.value)}
+                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none cursor-pointer"
+                    >
+                      {availableCameras.map(cam => (
+                        <option key={cam.id} value={cam.id}>{cam.label || `Camera ${cam.id}`}</option>
+                      ))}
+                    </select>
+                  )}
+
+                  {/* HTML5 Live Video Viewport Element */}
+                  <div id="camera-reader" className="w-full max-w-xs mx-auto rounded-2xl overflow-hidden border-2 border-[#f97316] shadow-md bg-black min-h-[220px]" />
+
+                  <p className="text-[10px] text-slate-500 font-medium">
+                    Point your device camera at the instructor's QR code screen to scan automatically.
+                  </p>
+
+                  <button
+                    onClick={stopCameraScanner}
+                    className="w-full py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+                  >
+                    Cancel & Enter Code Manually
+                  </button>
+                </div>
+              ) : !studentSessionData ? (
                 <div className="space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => startCameraScanner()}
+                    className="w-full py-3.5 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-white font-extrabold rounded-2xl text-xs shadow-md hover:opacity-95 transition-all flex items-center justify-center gap-2 cursor-pointer mb-2"
+                  >
+                    <Camera size={18} />
+                    Scan QR Code via Camera
+                  </button>
+
+                  <div className="relative flex py-1 items-center">
+                    <div className="flex-grow border-t border-slate-200"></div>
+                    <span className="flex-shrink mx-2 text-[10px] text-slate-400 font-bold uppercase tracking-wider">or enter session code</span>
+                    <div className="flex-grow border-t border-slate-200"></div>
+                  </div>
+
                   <input
                     type="text"
-                    placeholder="Enter QR Session Code (e.g. QR_X7Y2Z)"
+                    placeholder="Enter QR Session Code or URL (e.g. QR_X7Y2Z)"
                     value={studentSessionInput}
                     onChange={(e) => setStudentSessionInput(e.target.value.toUpperCase())}
                     className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] rounded-xl text-xs font-mono text-slate-900 focus:outline-none"
@@ -539,9 +677,9 @@ export default function Attendance() {
                   <button
                     onClick={() => handleStudentFetchSession()}
                     disabled={!studentSessionInput.trim() || actionLoading}
-                    className="w-full py-3 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-white font-bold rounded-xl text-xs shadow-md hover:opacity-95 transition-all cursor-pointer"
+                    className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs border border-slate-200 transition-all cursor-pointer"
                   >
-                    {actionLoading ? 'Verifying QR Code...' : 'Scan & Load Session Details'}
+                    {actionLoading ? 'Verifying QR Code...' : 'Verify Session Code'}
                   </button>
                 </div>
               ) : (

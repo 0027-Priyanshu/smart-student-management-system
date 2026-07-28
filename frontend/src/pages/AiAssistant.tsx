@@ -163,7 +163,7 @@ export default function AiAssistant() {
         parts: [{ text: m.parts.join('\n') }]
       }));
 
-      const res = await api.post('/ai/chat', { messages: chatPayload });
+      const res = await api.post('/ai/chat', { message: query, messages: chatPayload });
       const reply = res.data.reply;
       setMessages(prev => [...prev, { role: 'model', parts: [reply] }]);
 

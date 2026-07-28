@@ -180,6 +180,22 @@ export class RepoService {
     }
   }
 
+  static async findStudentByEnrollmentNo(enrollmentNo: string): Promise<any> {
+    if (isMongoConnected) {
+      return await Student.findOne({ enrollmentNo: { $regex: new RegExp(`^${enrollmentNo}$`, 'i') } }).populate('enrolledCourses').lean();
+    } else {
+      const db = readJsonDb();
+      const student = db.students.find((s: any) => s.enrollmentNo && s.enrollmentNo.toLowerCase() === enrollmentNo.toLowerCase());
+      if (!student) return null;
+
+      const courses = (student.enrolledCourses || []).map((cid: string) => 
+        db.courses.find((c: any) => c._id === cid || c.id === cid)
+      ).filter(Boolean);
+
+      return { ...student, enrolledCourses: courses };
+    }
+  }
+
   static async createStudent(studentData: any): Promise<any> {
     if (isMongoConnected) {
       return await Student.create(studentData);

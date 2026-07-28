@@ -386,16 +386,75 @@ export class AIController {
   static async chat(req: Request, res: Response, next: NextFunction) {
     try {
       const requester = (req as any).user;
-      const { message, history } = req.body;
-      
+      let { message, history, messages } = req.body;
+
+      // Extract message and history if payload uses `{ messages: [...] }`
+      if ((!message || typeof message !== 'string') && messages && Array.isArray(messages) && messages.length > 0) {
+        const last = messages[messages.length - 1];
+        if (typeof last === 'string') {
+          message = last;
+        } else if (typeof last === 'object') {
+          if (Array.isArray(last.parts)) {
+            const p = last.parts[0];
+            message = typeof p === 'string' ? p : p?.text || p?.content || '';
+          } else if (last.content) {
+            message = last.content;
+          }
+        }
+
+        // Build history array from preceding items
+        const prevMsgs = messages.slice(0, -1);
+        history = prevMsgs.map((m: any) => {
+          const r = m.role === 'model' || m.role === 'assistant' ? 'model' : 'user';
+          let text = '';
+          if (Array.isArray(m.parts)) {
+            const p = m.parts[0];
+            text = typeof p === 'string' ? p : p?.text || p?.content || '';
+          } else if (m.content) {
+            text = m.content;
+          }
+          return { role: r, parts: [text] };
+        });
+      }
+
+      if (!message || typeof message !== 'string' || !message.trim()) {
+        return res.status(400).json({ error: 'Message content is required' });
+      }
+
+      const userQuery = message.trim();
+
+      // Check if query searches for a specific student by enrollment number (e.g. ENR25844945)
+      let extraContext = '';
+      const enrollMatch = userQuery.match(/ENR\d+/i);
+      if (enrollMatch) {
+        const student = await RepoService.findStudentByEnrollmentNo(enrollMatch[0]);
+        if (student) {
+          const results = await RepoService.findResults(student._id || student.id);
+          let tp = 0, tc = 0;
+          results.forEach((r: any) => { tp += r.gpa * (r.courseId?.credits || 3); tc += (r.courseId?.credits || 3); });
+          const gpa = tc > 0 ? (tp / tc).toFixed(2) : 'N/A';
+          extraContext = `\n\n[DATABASE CONTEXT FOR STUDENT ${student.enrollmentNo}]:
+- Name: ${student.name}
+- Enrollment No: ${student.enrollmentNo}
+- Department: ${student.department}
+- Grade: ${student.grade}
+- Semester: ${student.semester}
+- CGPA: ${gpa}
+- Email: ${student.email}
+- Phone: ${student.phone || 'N/A'}
+- Parent Name: ${student.parentName || 'N/A'}`;
+        }
+      }
+
       // Save User Message
       await RepoService.createChatMessage({
         userId: requester.userId,
         role: 'user',
-        content: message
+        content: userQuery
       });
 
-      const reply = await adminChatAssistant(message, history || []);
+      const fullPrompt = extraContext ? `${userQuery}${extraContext}` : userQuery;
+      const reply = await adminChatAssistant(fullPrompt, Array.isArray(history) ? history : []);
       
       // Save AI Response
       await RepoService.createChatMessage({

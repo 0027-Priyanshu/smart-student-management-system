@@ -137,7 +137,9 @@ export async function adminChatAssistant(message: string, history: { role: 'user
         { role: 'user', parts: [{ text: sysContext }] },
         ...history.map(h => ({
           role: h.role === 'user' ? 'user' : 'model',
-          parts: h.parts.map(p => ({ text: p }))
+          parts: Array.isArray(h.parts)
+            ? h.parts.map(p => ({ text: typeof p === 'string' ? p : (p as any)?.text || (p as any)?.content || String(p) }))
+            : [{ text: String(h.parts) }]
         })),
         { role: 'user', parts: [{ text: message }] }
       ];
@@ -184,16 +186,23 @@ function getDefaultInsights(gpa: number, attendance: number): string {
 
 function getMockChatResponse(message: string): string {
   const q = message.toLowerCase();
+  if (q.includes('enr') || q.includes('find a student') || q.includes('view profile')) {
+    const match = message.match(/ENR\d+/i);
+    if (match) {
+      return `### Student Profile Lookup (${match[0].toUpperCase()})\n- **Status**: Registered in System\n- **Enrollment Number**: ${match[0].toUpperCase()}\n- **Details**: Full grade sheet, attendance breakdown, and parent contact details are available in the **Student Directory** page.`;
+    }
+    return `To search for a specific student, specify their **Enrollment Number** (e.g. \`ENR25844945\`) or navigate to the **Student Directory** to use the instant search and filter controls.`;
+  }
   if (q.includes('attendance')) {
-    return `To track attendance in EduManager, navigate to the "Attendance" page where faculty can mark status manually or students can scan dynamic QR codes. If attendance falls below 75%, the system automatically flags the student profile and raises alert logs for administrators. Let me know if you need help generating a report!`;
+    return `To track attendance in EduManager, navigate to the **Attendance** page where faculty can generate dynamic scannable QR codes or mark status manually. If attendance falls below 75%, the system automatically flags the student profile and raises alert logs.`;
   }
   if (q.includes('gpa') || q.includes('grade') || q.includes('marks')) {
     return `EduManager calculates individual GPA and cumulative CGPA automatically from internal, external, assignment, and practical grades entered by faculties. You can view student grade histories and GPA trajectory lines in the student profile view.`;
   }
   if (q.includes('student') || q.includes('add')) {
-    return `Admins can add new students using the Student Directory screen by clicking "Add Student", filling out the enrollment forms (including parent and contact info), and setting credentials. Alternatively, you can use the "Bulk Import" button to upload an Excel file directly.`;
+    return `Admins can add new students using the Student Directory screen by clicking **Add Student**, filling out the enrollment forms, or using the **Bulk Import** button to upload an Excel file directly.`;
   }
-  return `Hello! I am your EduManager AI Assistant. I can help you search student directories, analyze academic GPA progress, calculate grade metrics, or check attendance histories. Try asking me about 'how to mark attendance', 'how GPA is computed', or 'bulk importing students'!`;
+  return `Hello! I am your EduManager AI Assistant. I can help you search student directories, analyze academic GPA progress, calculate grade metrics, or check attendance histories. Try asking me about 'Find a student by ID' or 'Summarise today's attendance'!`;
 }
 
 // 5. Predictive AI: At-Risk Student Analysis

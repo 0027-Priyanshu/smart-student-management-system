@@ -14,6 +14,7 @@ const Courses = lazy(() => import('./pages/Courses'));
 const Attendance = lazy(() => import('./pages/Attendance'));
 const Marks = lazy(() => import('./pages/Marks'));
 const AiAssistant = lazy(() => import('./pages/AiAssistant'));
+const Finance = lazy(() => import('./pages/Finance'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
@@ -107,6 +108,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <AiAssistant />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/finance" 
+            element={
+              <ProtectedRoute allowedRoles={['Super Admin', 'Admin']}>
+                <Finance />
               </ProtectedRoute>
             } 
           />

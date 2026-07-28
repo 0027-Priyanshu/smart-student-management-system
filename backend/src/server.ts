@@ -88,8 +88,8 @@ connectDB();
 // Initialize Real-time WebSockets
 initSocket(server);
 
-// Mount API Routes
 import activityRoutes from './routes/activity.routes';
+import feeRoutes from './routes/fee.routes';
 
 // Ensure other routes remain...
 app.use('/api/auth', authRoutes);
@@ -101,6 +101,7 @@ app.use('/api/results', resultRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/activities', activityRoutes);
+app.use('/api/fees', feeRoutes);
 
 // Base Route
 app.get('/', (req, res) => {

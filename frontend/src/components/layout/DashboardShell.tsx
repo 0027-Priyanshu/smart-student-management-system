@@ -13,7 +13,8 @@ import {
   Menu, 
   X, 
   Bell, 
-  UserCheck
+  UserCheck,
+  CreditCard
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { useSocketStore } from '../../stores/socketStore';
@@ -59,7 +60,8 @@ export default function DashboardShell({ children, title }: DashboardShellProps)
     { name: 'Courses', path: '/courses', icon: BookOpen, roles: ['Super Admin', 'Admin', 'Faculty', 'Student'] },
     { name: 'Attendance', path: '/attendance', icon: CalendarCheck, roles: ['Super Admin', 'Admin', 'Faculty', 'Student'] },
     { name: 'Grade Book', path: '/marks', icon: FileSpreadsheet, roles: ['Super Admin', 'Admin', 'Faculty', 'Student'] },
-    { name: 'AI Companion', path: '/ai-assistant', icon: Bot, roles: ['Super Admin', 'Admin', 'Faculty', 'Student'] }
+    { name: 'AI Companion', path: '/ai-assistant', icon: Bot, roles: ['Super Admin', 'Admin', 'Faculty', 'Student'] },
+    { name: 'Finance & Fees', path: '/finance', icon: CreditCard, roles: ['Super Admin', 'Admin'] }
   ];
 
   const allowedNavItems = navItems.filter(item => user && item.roles.includes(user.role));

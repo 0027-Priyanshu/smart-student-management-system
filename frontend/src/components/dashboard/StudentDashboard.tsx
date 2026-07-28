@@ -15,7 +15,8 @@ import {
   ChevronRight,
   Camera,
   Trash2,
-  Upload
+  Upload,
+  CreditCard
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -37,6 +38,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useNavigate } from 'react-router-dom';
 import { customMarkdownComponents } from '../../pages/AiAssistant';
+import FeePaymentModal from '../fees/FeePaymentModal';
 
 const COLORS = ['#f97316', '#ef4444', '#eab308', '#ef4444', '#ea580c', '#d97706'];
 
@@ -52,6 +54,8 @@ export default function StudentDashboard() {
   const [activities, setActivities] = useState<any[]>([]);
   const [aiSummary, setAiSummary] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
+  const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+  const [feeStatus, setFeeStatus] = useState<any>(null);
 
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
@@ -147,8 +151,9 @@ export default function StudentDashboard() {
       const actRes = await api.get(`/activities`);
       setActivities(actRes.data.activities || []);
 
-      // Fetch AI Summary
+      // Fetch AI Summary & Fee Status
       fetchAiSummary();
+      fetchFeeStatus();
       
     } catch (error) {
       console.error('Failed to load student dashboard data:', error);
@@ -156,6 +161,15 @@ export default function StudentDashboard() {
       setLoading(false);
     }
   }, [studentId]);
+
+  const fetchFeeStatus = async () => {
+    try {
+      const res = await api.get('/fees/my-status');
+      setFeeStatus(res.data.feeStatus);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const fetchAiSummary = async () => {
     if (!studentId) return;
@@ -384,6 +398,34 @@ export default function StudentDashboard() {
         </div>
       </div>
 
+      {/* Tuition Fee & EduPay Gateway Banner */}
+      <div className="p-6 bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-3xl shadow-card flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="p-3.5 bg-[#f97316] rounded-2xl text-white shadow-glow">
+            <CreditCard size={24} />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h4 className="font-title font-extrabold text-base">Semester Tuition Fees & Dues</h4>
+              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${feeStatus?.pendingFee === 0 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-orange-500/20 text-orange-300 border border-orange-500/30'}`}>
+                {feeStatus?.status || 'Partially Paid'}
+              </span>
+            </div>
+            <p className="text-xs text-slate-300 font-medium mt-0.5">
+              Total Fee: ₹{(feeStatus?.totalFee || 95000).toLocaleString('en-IN')} | Paid: ₹{(feeStatus?.paidFee || 75000).toLocaleString('en-IN')} | Pending Dues: <span className="font-bold text-[#f97316]">₹{(feeStatus?.pendingFee !== undefined ? feeStatus.pendingFee : 20000).toLocaleString('en-IN')}</span>
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => setIsPayModalOpen(true)}
+          className="px-5 py-3 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-white font-extrabold rounded-xl text-xs shadow-md hover:opacity-95 transition-all flex items-center gap-2 cursor-pointer shrink-0"
+        >
+          <CreditCard size={16} />
+          <span>Pay Fees via EduPay</span>
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Charts Section */}
@@ -566,7 +608,17 @@ export default function StudentDashboard() {
 
         </div>
       </div>
-      
+      {/* Fee Payment Gateway Modal */}
+      <FeePaymentModal
+        isOpen={isPayModalOpen}
+        onClose={() => setIsPayModalOpen(false)}
+        studentName={user?.name || 'Priyanshu Sharma'}
+        enrollmentNo={student?.enrollmentNo || 'ENR25844945'}
+        pendingDues={feeStatus?.pendingFee !== undefined ? feeStatus.pendingFee : 20000}
+        onPaymentSuccess={() => {
+          fetchFeeStatus();
+        }}
+      />
     </div>
   );
 }

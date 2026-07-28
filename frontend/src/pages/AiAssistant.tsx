@@ -10,47 +10,57 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 
 const SUGGESTED_PROMPTS = [
   {
-    category: 'Academic',
-    icon: '📚',
+    category: 'Student Management',
+    icon: '👤',
     prompts: [
-      "Summarise today's attendance.",
-      "Which students are at risk?",
-      "Show low-performing students.",
-      "Analyse class performance.",
-      "Generate a progress report."
+      "Find student by Enrollment ID",
+      "View complete student profile",
+      "Show attendance report",
+      "Show fee status",
+      "View academic performance"
+    ]
+  },
+  {
+    category: 'Academic Analytics',
+    icon: '📊',
+    prompts: [
+      "Predict students at academic risk",
+      "Show top-performing students",
+      "List low-performing students",
+      "Compare semester performance",
+      "Generate class performance summary"
+    ]
+  },
+  {
+    category: 'Attendance',
+    icon: '🗓️',
+    prompts: [
+      "Summarise today's attendance",
+      "Students below 75% attendance",
+      "Students absent today",
+      "Attendance trend analysis"
+    ]
+  },
+  {
+    category: 'AI Insights',
+    icon: '⚡',
+    prompts: [
+      "Generate strategic insight report",
+      "Predict dropout risk",
+      "Recommend interventions",
+      "Explain performance trends",
+      "Analyse academic progress"
     ]
   },
   {
     category: 'Administrative',
-    icon: '📋',
+    icon: '⚙️',
     prompts: [
-      "Create a student report.",
-      "Generate a leave application.",
-      "Find a student by ID.",
-      "Show fee status.",
-      "Export attendance."
-    ]
-  },
-  {
-    category: 'AI Analytics',
-    icon: '⚡',
-    prompts: [
-      "Predict students who may fail.",
-      "Explain attendance trends.",
-      "Compare semester performance.",
-      "Suggest interventions.",
-      "Generate strategic insights."
-    ]
-  },
-  {
-    category: 'General',
-    icon: '💡',
-    prompts: [
-      "What can you help me with?",
-      "Show dashboard summary.",
-      "Explain today's statistics.",
-      "Give system recommendations.",
-      "Help me manage students."
+      "Add new student",
+      "Import students from Excel",
+      "Generate attendance QR",
+      "View faculty information",
+      "Export reports"
     ]
   }
 ];
@@ -252,10 +262,30 @@ export default function AiAssistant() {
   };
 
   const speakText = (text: string) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      window.speechSynthesis.speak(utterance);
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    if (!isSpeaking) return;
+
+    const cleanText = text
+      .replace(/#+\s/g, '')
+      .replace(/[*_~`]/g, '')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+      .replace(/<\/?[^>]+(>|$)/g, '');
+
+    const utterance = new SpeechSynthesisUtterance(cleanText.slice(0, 350));
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const handleToggleVoice = () => {
+    if (isSpeaking) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      setIsSpeaking(false);
+    } else {
+      setIsSpeaking(true);
     }
   };
 
@@ -394,11 +424,12 @@ export default function AiAssistant() {
                 <span>New Chat</span>
               </button>
               <button 
-                onClick={() => setIsSpeaking(!isSpeaking)}
-                className={`p-2 rounded-xl transition-all ${isSpeaking ? 'text-[#f97316] bg-[#f97316]/10 border border-[#f97316]/20' : 'text-slate-400 bg-slate-100 border border-slate-200'}`}
+                onClick={handleToggleVoice}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all flex items-center gap-1.5 cursor-pointer ${isSpeaking ? 'text-[#f97316] bg-[#f97316]/10 border-[#f97316]/20' : 'text-slate-500 bg-slate-100 border-slate-200'}`}
                 title="Toggle AI Voice Response"
               >
-                {isSpeaking ? <Volume2 size={18} /> : <VolumeX size={18} />}
+                {isSpeaking ? <Volume2 size={15} /> : <VolumeX size={15} />}
+                <span>{isSpeaking ? 'Voice Active' : 'Voice Muted'}</span>
               </button>
             </div>
           </div>

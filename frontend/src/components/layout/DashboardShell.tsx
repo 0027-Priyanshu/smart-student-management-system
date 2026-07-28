@@ -61,7 +61,7 @@ export default function DashboardShell({ children, title }: DashboardShellProps)
     { name: 'Attendance', path: '/attendance', icon: CalendarCheck, roles: ['Super Admin', 'Admin', 'Faculty', 'Student'] },
     { name: 'Grade Book', path: '/marks', icon: FileSpreadsheet, roles: ['Super Admin', 'Admin', 'Faculty', 'Student'] },
     { name: 'AI Companion', path: '/ai-assistant', icon: Bot, roles: ['Super Admin', 'Admin', 'Faculty', 'Student'] },
-    { name: 'Finance & Fees', path: '/finance', icon: CreditCard, roles: ['Super Admin', 'Admin'] }
+    { name: 'Fees & Payments', path: '/finance', icon: CreditCard, roles: ['Super Admin', 'Admin', 'Student'] }
   ];
 
   const allowedNavItems = navItems.filter(item => user && item.roles.includes(user.role));

@@ -114,7 +114,7 @@ export default function App() {
           <Route 
             path="/finance" 
             element={
-              <ProtectedRoute allowedRoles={['Super Admin', 'Admin']}>
+              <ProtectedRoute allowedRoles={['Super Admin', 'Admin', 'Student']}>
                 <Finance />
               </ProtectedRoute>
             } 

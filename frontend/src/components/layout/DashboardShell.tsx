@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { useSocketStore } from '../../stores/socketStore';
+import FloatingChatWidget from '../chat/FloatingChatWidget';
 
 interface DashboardShellProps {
   children: React.ReactNode;
@@ -331,6 +332,9 @@ export default function DashboardShell({ children, title }: DashboardShellProps)
           </motion.div>
         </main>
       </div>
+
+      {/* Universal Floating AI Assistant Drawer */}
+      <FloatingChatWidget />
     </div>
   );
 }

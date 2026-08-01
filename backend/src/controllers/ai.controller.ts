@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import PDFDocument from 'pdfkit';
 import { RepoService } from '../services/repo.service';
+import { RetrievalService } from '../services/retrieval.service';
 import { 
   generateStudentSummary, 
   generateRecommendations, 
@@ -383,10 +384,22 @@ export class AIController {
     }
   }
 
+  static async getSuggestedPrompts(req: Request, res: Response, next: NextFunction) {
+    try {
+      const requester = (req as any).user;
+      const currentPage = (req.query.currentPage as string) || '/dashboard';
+      const userRole = requester?.role || 'Student';
+      const prompts = RetrievalService.getSuggestedQuestions(currentPage, userRole);
+      return res.json({ prompts });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   static async chat(req: Request, res: Response, next: NextFunction) {
     try {
       const requester = (req as any).user;
-      let { message, history, messages } = req.body;
+      let { message, history, messages, currentPage, selectedEntity, availableActions } = req.body;
 
       // Extract message and history if payload uses `{ messages: [...] }`
       if ((!message || typeof message !== 'string') && messages && Array.isArray(messages) && messages.length > 0) {
@@ -421,30 +434,7 @@ export class AIController {
         return res.status(400).json({ error: 'Message content is required' });
       }
 
-      const userQuery = message.trim();
-
-      // Check if query searches for a specific student by enrollment number (e.g. ENR25844945)
-      let extraContext = '';
-      const enrollMatch = userQuery.match(/ENR\d+/i);
-      if (enrollMatch) {
-        const student = await RepoService.findStudentByEnrollmentNo(enrollMatch[0]);
-        if (student) {
-          const results = await RepoService.findResults(student._id || student.id);
-          let tp = 0, tc = 0;
-          results.forEach((r: any) => { tp += r.gpa * (r.courseId?.credits || 3); tc += (r.courseId?.credits || 3); });
-          const gpa = tc > 0 ? (tp / tc).toFixed(2) : 'N/A';
-          extraContext = `\n\n[DATABASE CONTEXT FOR STUDENT ${student.enrollmentNo}]:
-- Name: ${student.name}
-- Enrollment No: ${student.enrollmentNo}
-- Department: ${student.department}
-- Grade: ${student.grade}
-- Semester: ${student.semester}
-- CGPA: ${gpa}
-- Email: ${student.email}
-- Phone: ${student.phone || 'N/A'}
-- Parent Name: ${student.parentName || 'N/A'}`;
-        }
-      }
+      const userQuery = message.trim().slice(0, 500);
 
       // Save User Message
       await RepoService.createChatMessage({
@@ -453,8 +443,12 @@ export class AIController {
         content: userQuery
       });
 
-      const fullPrompt = extraContext ? `${userQuery}${extraContext}` : userQuery;
-      const reply = await adminChatAssistant(fullPrompt, Array.isArray(history) ? history : []);
+      const reply = await adminChatAssistant(userQuery, Array.isArray(history) ? history : [], {
+        currentPage,
+        userRole: requester.role,
+        selectedEntity,
+        availableActions
+      });
       
       // Save AI Response
       await RepoService.createChatMessage({

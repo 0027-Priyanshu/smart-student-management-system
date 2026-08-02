@@ -138,20 +138,18 @@ export class NotificationService {
     const refId = `MSG-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(1000 + Math.random() * 9000)}`;
     const timestamp = new Date().toISOString();
 
-    const subject = `Fee Payment Reminder - ${params.enrollmentNo}`;
-    const textContent = `Subject: Fee Payment Reminder\n\nHello ${params.studentName},\n\nOur records indicate that your tuition fee payment is still pending.\n\nEnrollment Number: ${params.enrollmentNo}\nOutstanding Amount: ₹${params.pendingAmount.toLocaleString('en-IN')}\nDue Date: ${params.dueDate}\n\nPlease complete the payment at your earliest convenience.\n\nThank you,\nEduManager Administration`;
+    const subject = `Academic Notification - ${params.enrollmentNo}`;
+    const textContent = `Subject: Academic Notification\n\nHello ${params.studentName},\n\nThis is an official academic notification regarding your student profile.\n\nEnrollment Number: ${params.enrollmentNo}\nDate: ${params.dueDate}\n\nThank you,\nEduManager Administration`;
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f8fafc; color: #1e293b;">
         <div style="max-width: 550px; margin: 0 auto; background: white; border-radius: 12px; padding: 25px; border: 1px solid #e2e8f0;">
-          <h2 style="color: #2563eb; margin-top: 0;">EduManager AI Fee Reminder</h2>
+          <h2 style="color: #2563eb; margin-top: 0;">EduManager Academic Alert</h2>
           <p>Hello <strong>${params.studentName}</strong>,</p>
-          <p>Our records indicate that your tuition fee payment is currently outstanding.</p>
+          <p>This is an official notification regarding your academic status and class updates.</p>
           <div style="background-color: #f1f5f9; padding: 15px; border-radius: 8px; font-size: 14px; margin: 15px 0;">
             <p style="margin: 5px 0;"><strong>Enrollment Number:</strong> <code>${params.enrollmentNo}</code></p>
-            <p style="margin: 5px 0;"><strong>Outstanding Amount:</strong> <span style="color: #ef4444; font-weight: bold;">₹${params.pendingAmount.toLocaleString('en-IN')}</span></p>
-            <p style="margin: 5px 0;"><strong>Due Date:</strong> ${params.dueDate}</p>
+            <p style="margin: 5px 0;"><strong>Date:</strong> ${params.dueDate}</p>
           </div>
-          <p>Please complete your fee payment through the EduPay Student Portal.</p>
           <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
           <p style="font-size: 12px; color: #64748b;">EduManager Administration System</p>
         </div>
@@ -179,7 +177,7 @@ export class NotificationService {
 
     // Dispatch SMS
     if (params.method === 'SMS' || params.method === 'Both') {
-      const smsRes = await this.sendSms(params.phone, `EduManager AI Fee Reminder: Hello ${params.studentName}, your pending tuition fee is ₹${params.pendingAmount.toLocaleString('en-IN')} (Due: ${params.dueDate}). Please pay via EduPay.`);
+      const smsRes = await this.sendSms(params.phone, `EduManager Academic Alert: Hello ${params.studentName}, please check your student portal for academic updates.`);
       if (smsRes.success) {
         smsStatus = 'Delivered';
         smsSid = smsRes.smsSid || `SMS_SID_${Date.now()}`;
@@ -213,10 +211,6 @@ export class NotificationService {
 
   static async sendStudentRegistrationNotification(...args: any[]): Promise<void> {
     console.log(`[NotificationService] Welcome registration notification triggered:`, args[0]);
-  }
-
-  static async triggerFeeReminderAlert(...args: any[]): Promise<void> {
-    console.log(`[NotificationService] Fee reminder alert triggered:`, args[0]);
   }
 
   static async sendCourseAssignmentNotification(...args: any[]): Promise<void> {

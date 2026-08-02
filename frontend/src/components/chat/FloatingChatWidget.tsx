@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Bot, Send, X, Sparkles, User, Volume2, VolumeX, Mic, MicOff, Copy, Check, ThumbsUp, ThumbsDown, Trash2, RefreshCw, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -256,13 +256,115 @@ export default function FloatingChatWidget() {
     }
   };
 
+  // Draggable position & widget state
+  const [position, setPosition] = useState<{ x: number; y: number }>(() => {
+    try {
+      const saved = localStorage.getItem('edumanager_ai_pos');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (typeof parsed.x === 'number' && typeof parsed.y === 'number') {
+          return {
+            x: Math.max(10, Math.min(window.innerWidth - 420, parsed.x)),
+            y: Math.max(10, Math.min(window.innerHeight - 580, parsed.y))
+          };
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return {
+      x: Math.max(20, window.innerWidth - 430),
+      y: Math.max(20, window.innerHeight - 590)
+    };
+  });
+
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  // Save position to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('edumanager_ai_pos', JSON.stringify(position));
+    } catch (e) {
+      console.error(e);
+    }
+  }, [position]);
+
+  // Recalculate & clamp position on window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setPosition(prev => ({
+        x: Math.max(10, Math.min(window.innerWidth - 420, prev.x)),
+        y: Math.max(10, Math.min(window.innerHeight - 580, prev.y))
+      }));
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    // Ignore drag if clicking inputs/buttons
+    if ((e.target as HTMLElement).closest('button, input, textarea, a')) return;
+    setIsDragging(true);
+    setDragOffset({
+      x: e.clientX - position.x,
+      y: e.clientY - position.y
+    });
+  };
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDragging) return;
+    const widgetWidth = isExpanded ? Math.min(700, window.innerWidth - 40) : 400;
+    const widgetHeight = isExpanded ? Math.min(750, window.innerHeight - 40) : 560;
+
+    const newX = Math.max(10, Math.min(window.innerWidth - widgetWidth, e.clientX - dragOffset.x));
+    const newY = Math.max(10, Math.min(window.innerHeight - widgetHeight, e.clientY - dragOffset.y));
+    setPosition({ x: newX, y: newY });
+  }, [isDragging, dragOffset, isExpanded]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  useEffect(() => {
+    if (isDragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    } else {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, handleMouseMove, handleMouseUp]);
+
+  const resetPosition = () => {
+    setPosition({
+      x: Math.max(20, window.innerWidth - 430),
+      y: Math.max(20, window.innerHeight - 590)
+    });
+    toast.success('AI Assistant position reset');
+  };
+
   return (
-    <div className="fixed bottom-6 right-6 z-50 select-none">
-      
-      {/* Floating Trigger Button */}
-      {!isOpen && (
+    <div
+      style={{
+        left: `${position.x}px`,
+        top: `${position.y}px`
+      }}
+      className="fixed z-40 select-none"
+    >
+      {/* Trigger Pill Button when Closed or Minimized */}
+      {(!isOpen || isMinimized) && (
         <button
-          onClick={() => setIsOpen(true)}
+          onClick={() => {
+            setIsOpen(true);
+            setIsMinimized(false);
+          }}
           className="group flex items-center gap-2.5 px-4.5 py-3.5 bg-slate-900 text-white rounded-full shadow-2xl hover:scale-105 transition-all cursor-pointer border border-slate-800"
           aria-label="Open AI Assistant"
         >
@@ -277,12 +379,20 @@ export default function FloatingChatWidget() {
         </button>
       )}
 
-      {/* Floating Drawer Panel */}
-      {isOpen && (
-        <div className="w-[92vw] sm:w-[400px] h-[560px] bg-white/90 backdrop-blur-xl border border-slate-200/90 rounded-3xl shadow-card flex flex-col overflow-hidden animate-scaleUp">
-          
-          {/* Drawer Header */}
-          <div className="p-4 bg-white/90 border-b border-slate-100 flex items-center justify-between">
+      {/* Floating Movable Drawer Panel */}
+      {isOpen && !isMinimized && (
+        <div
+          style={{
+            width: isExpanded ? 'min(700px, 94vw)' : 'min(400px, 92vw)',
+            height: isExpanded ? 'min(750px, 90vh)' : '560px'
+          }}
+          className="bg-white/95 backdrop-blur-xl border border-slate-200/90 rounded-3xl shadow-card flex flex-col overflow-hidden animate-scaleUp transition-all duration-200"
+        >
+          {/* Drawer Drag Handle Header */}
+          <div
+            onMouseDown={handleMouseDown}
+            className={`p-4 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+          >
             <div className="flex items-center gap-2.5">
               <div className="p-2 bg-[#fff4ed] text-[#ff6b00] rounded-2xl border border-orange-200/50">
                 <Sparkles size={18} />
@@ -305,15 +415,39 @@ export default function FloatingChatWidget() {
                 title={isSpeaking ? "Mute Audio" : "Unmute Audio"}
                 className="p-1.5 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
               >
-                {isSpeaking ? <Volume2 size={16} className="text-[#ff6b00]" /> : <VolumeX size={16} />}
+                {isSpeaking ? <Volume2 size={14} className="text-[#ff6b00]" /> : <VolumeX size={14} />}
               </button>
 
               <button
                 onClick={handleClearHistory}
-                title="Clear Chat"
+                title="Clear Chat History"
                 className="p-1.5 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
               >
-                <Trash2 size={16} />
+                <Trash2 size={14} />
+              </button>
+
+              <button
+                onClick={resetPosition}
+                title="Reset Position"
+                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <RefreshCw size={14} />
+              </button>
+
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                title={isExpanded ? "Restore Normal Size" : "Expand Full Window"}
+                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <Sparkles size={14} />
+              </button>
+
+              <button
+                onClick={() => setIsMinimized(true)}
+                title="Minimize AI Assistant"
+                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
+              >
+                <Bot size={14} />
               </button>
 
               <button

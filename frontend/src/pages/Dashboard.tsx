@@ -9,8 +9,7 @@ import {
   FileSpreadsheet, 
   FileText, 
   Bell, 
-  Sparkles,
-  DollarSign
+  Sparkles
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -100,13 +99,12 @@ export default function Dashboard() {
       }
     };
   }, [socket, fetchDashboardData]);
-
   if (loading) {
     return (
       <DashboardShell title="Dashboard Overview">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-pulse">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-36 bg-white border border-slate-200 rounded-3xl shadow-card" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-28 bg-white border border-slate-200/80 rounded-3xl shadow-card animate-pulse" />
           ))}
         </div>
       </DashboardShell>
@@ -115,7 +113,7 @@ export default function Dashboard() {
 
   if (user?.role === 'Student') {
     return (
-      <DashboardShell title="My Dashboard">
+      <DashboardShell title="Student Portal">
         <StudentDashboard />
       </DashboardShell>
     );
@@ -130,23 +128,25 @@ export default function Dashboard() {
   }
 
   const atRiskList = data?.atRiskStudents || [];
-  const totalStudents = data?.metrics?.totalStudents || 0;
-  const avgAttendance = data?.metrics?.avgAttendance || 0;
-  const avgGpa = data?.metrics?.avgCgpa || 0;
+  const metrics = data?.metrics || {};
+  const totalStudents = metrics.totalStudents ?? 0;
+  const attendanceToday = metrics.attendanceToday;
+  const studentsAtRisk = metrics.studentsAtRisk ?? 0;
+  const averageGpa = metrics.averageGpa;
 
   return (
     <DashboardShell title="Dashboard Overview">
       <div className="space-y-6 animate-fadeIn">
 
         {/* ---------------------------------------------------- */}
-        {/* ROW 1: 5 Bento KPI Stat Cards                        */}
+        {/* ROW 1: 4 Real-time Bento KPI Stat Cards (No Fake Data) */}
         {/* ---------------------------------------------------- */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           
-          {/* KPI 1: Students */}
+          {/* KPI 1: Total Students */}
           <div className="p-5 bg-white border border-slate-200/80 rounded-3xl shadow-card flex flex-col justify-between space-y-3 relative overflow-hidden group hover:border-orange-200 transition-all">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Students</span>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Total Students</span>
               <div className="p-2 bg-[#fff4ed] text-[#ff6b00] rounded-2xl">
                 <Users size={16} />
               </div>
@@ -156,53 +156,45 @@ export default function Dashboard() {
               <h3 className="text-3xl font-black text-slate-900 tracking-tight">
                 <AnimatedCounter value={totalStudents} />
               </h3>
-              <p className="text-[11px] font-extrabold text-emerald-600 flex items-center gap-1 mt-1">
-                <span>↑ 4.3%</span> <span className="text-slate-400 font-normal">vs last month</span>
+              <p className="text-[11px] font-medium text-slate-400 mt-1">
+                Real-time active directory
               </p>
-            </div>
-
-            {/* Mini Line Sparkline */}
-            <div className="h-6 -mx-5 -mb-5">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={[{v:2000},{v:2200},{v:2100},{v:2350},{v:2453}]}>
-                  <Area type="monotone" dataKey="v" stroke="#ff6b00" fill="#fff4ed" strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
             </div>
           </div>
 
-          {/* KPI 2: Attendance (Radial Ring) */}
+          {/* KPI 2: Attendance Today */}
           <div className="p-5 bg-white border border-slate-200/80 rounded-3xl shadow-card flex flex-col justify-between space-y-3 relative overflow-hidden group hover:border-indigo-200 transition-all">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Attendance</span>
-              <span className="text-[10px] font-extrabold text-slate-400">This week</span>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Attendance Today</span>
+              <span className="text-[10px] font-extrabold text-slate-400">Live</span>
             </div>
 
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-3xl font-black text-slate-900 tracking-tight">
-                  <AnimatedCounter value={avgAttendance} />%
+                  {attendanceToday !== null ? `${attendanceToday}%` : 'No data'}
                 </h3>
-                <p className="text-[11px] font-extrabold text-slate-400 mt-1">
-                  Overall Compliance
+                <p className="text-[11px] font-medium text-slate-400 mt-1">
+                  Today's compliance
                 </p>
               </div>
 
-              {/* Radial Progress SVG Circle */}
-              <div className="relative w-14 h-14 flex items-center justify-center">
-                <svg className="w-14 h-14 transform -rotate-90">
-                  <circle cx="28" cy="28" r="22" stroke="#f1f5f9" strokeWidth="5" fill="transparent" />
-                  <circle cx="28" cy="28" r="22" stroke="#6366f1" strokeWidth="5" fill="transparent" strokeDasharray={138} strokeDashoffset={138 - (138 * avgAttendance) / 100} strokeLinecap="round" />
-                </svg>
-                <span className="absolute font-extrabold text-[10px] text-slate-900">{avgAttendance}%</span>
-              </div>
+              {attendanceToday !== null && (
+                <div className="relative w-14 h-14 flex items-center justify-center">
+                  <svg className="w-14 h-14 transform -rotate-90">
+                    <circle cx="28" cy="28" r="22" stroke="#f1f5f9" strokeWidth="5" fill="transparent" />
+                    <circle cx="28" cy="28" r="22" stroke="#6366f1" strokeWidth="5" fill="transparent" strokeDasharray={138} strokeDashoffset={138 - (138 * attendanceToday) / 100} strokeLinecap="round" />
+                  </svg>
+                  <span className="absolute font-extrabold text-[10px] text-slate-900">{attendanceToday}%</span>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* KPI 3: At Risk */}
+          {/* KPI 3: Students At Risk */}
           <div className="p-5 bg-white border border-slate-200/80 rounded-3xl shadow-card flex flex-col justify-between space-y-3 relative overflow-hidden group hover:border-red-200 transition-all">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">At Risk</span>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Students At Risk</span>
               <div className="p-2 bg-red-50 text-red-600 rounded-2xl">
                 <AlertTriangle size={16} />
               </div>
@@ -210,27 +202,18 @@ export default function Dashboard() {
 
             <div>
               <h3 className="text-3xl font-black text-slate-900 tracking-tight">
-                <AnimatedCounter value={atRiskList.length || 142} />
+                <AnimatedCounter value={studentsAtRisk} />
               </h3>
-              <p className="text-[11px] font-extrabold text-red-600 flex items-center gap-1 mt-1">
-                <span>↑ 12.5%</span> <span className="text-slate-400 font-normal">vs last month</span>
+              <p className="text-[11px] font-medium text-slate-400 mt-1">
+                GPA &lt; 2.0 or attendance &lt; 75%
               </p>
-            </div>
-
-            {/* Mini Red Sparkline */}
-            <div className="h-6 -mx-5 -mb-5">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={[{v:100},{v:120},{v:115},{v:135},{v:142}]}>
-                  <Area type="monotone" dataKey="v" stroke="#ef4444" fill="#fee2e2" strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
             </div>
           </div>
 
-          {/* KPI 4: Avg. GPA */}
+          {/* KPI 4: Average GPA */}
           <div className="p-5 bg-white border border-slate-200/80 rounded-3xl shadow-card flex flex-col justify-between space-y-3 relative overflow-hidden group hover:border-purple-200 transition-all">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Avg. GPA</span>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Average GPA</span>
               <div className="p-2 bg-purple-50 text-purple-600 rounded-2xl">
                 <TrendingUp size={16} />
               </div>
@@ -238,48 +221,11 @@ export default function Dashboard() {
 
             <div>
               <h3 className="text-3xl font-black text-slate-900 tracking-tight">
-                {avgGpa.toFixed(2)}
+                {averageGpa !== null ? averageGpa.toFixed(2) : 'No data'}
               </h3>
-              <p className="text-[11px] font-extrabold text-emerald-600 flex items-center gap-1 mt-1">
-                <span>↑ 0.18</span> <span className="text-slate-400 font-normal">Semester average</span>
+              <p className="text-[11px] font-medium text-slate-400 mt-1">
+                Overall academic score
               </p>
-            </div>
-
-            {/* Mini Purple Sparkline */}
-            <div className="h-6 -mx-5 -mb-5">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={[{v:2.8},{v:2.9},{v:3.0},{v:3.1},{v:3.24}]}>
-                  <Area type="monotone" dataKey="v" stroke="#8b5cf6" fill="#f3e8ff" strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* KPI 5: Pending Fees / Academic Actions */}
-          <div className="p-5 bg-white border border-slate-200/80 rounded-3xl shadow-card flex flex-col justify-between space-y-3 relative overflow-hidden group hover:border-amber-200 transition-all">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Pending Actions</span>
-              <div className="p-2 bg-amber-50 text-amber-600 rounded-2xl">
-                <DollarSign size={16} />
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-3xl font-black text-slate-900 tracking-tight">
-                ₹2.45L
-              </h3>
-              <p className="text-[11px] font-extrabold text-red-500 flex items-center gap-1 mt-1">
-                <span>↓ 3.2%</span> <span className="text-slate-400 font-normal">due payments</span>
-              </p>
-            </div>
-
-            {/* Mini Amber Sparkline */}
-            <div className="h-6 -mx-5 -mb-5">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={[{v:3.0},{v:2.8},{v:2.6},{v:2.5},{v:2.45}]}>
-                  <Area type="monotone" dataKey="v" stroke="#f59e0b" fill="#fef3c7" strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
             </div>
           </div>
 

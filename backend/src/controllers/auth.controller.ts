@@ -67,7 +67,6 @@ export class AuthController {
 
         // Send registration email notification and trigger stub alerts
         NotificationService.sendStudentRegistrationNotification(cleanEmail, name, enrollmentNo).catch(err => console.error(err));
-        NotificationService.triggerFeeReminderAlert(cleanEmail, name, 2500, '2026-08-01').catch(err => console.error(err));
       } else if (role === 'Faculty') {
         await RepoService.createFaculty({
           userId,

@@ -8,14 +8,15 @@ export class DashboardController {
       const faculties = await RepoService.findFaculties({ isDeleted: false });
       const courses = await RepoService.findCourses({ isDeleted: false });
       const logs = await RepoService.findLogs(8);
+      const allResults = await RepoService.findResults();
 
       const totalStudents = students.length;
       const totalFaculty = faculties.length;
       const totalCourses = courses.length;
 
       // Group departments
-      const departments = new Set([...students.map(s => s.department), ...courses.map(c => c.department)]);
-      const totalDepartments = departments.size || 1;
+      const departments = new Set([...students.map(s => s.department), ...courses.map(c => c.department)].filter(Boolean));
+      const totalDepartments = departments.size;
 
       // Calculate total enrollments
       let totalEnrollments = 0;
@@ -30,15 +31,35 @@ export class DashboardController {
         });
       });
 
-      // Today's attendance
+      // Today's attendance calculation (null if no records logged today)
       const today = new Date().toISOString().split('T')[0];
       const todayAttendance = await RepoService.findAttendance({ date: today });
-      const presentToday = todayAttendance.filter(a => a.status === 'Present' || a.status === 'Late').length;
+      let attendanceTodayPct: number | null = null;
+      if (todayAttendance.length > 0) {
+        const presentToday = todayAttendance.filter(a => a.status === 'Present' || a.status === 'Late').length;
+        attendanceTodayPct = Math.round((presentToday / todayAttendance.length) * 100);
+      }
+
+      // Average GPA calculation (null if no grade records exist)
+      let averageGpa: number | null = null;
+      if (allResults.length > 0) {
+        const sumGpa = allResults.reduce((acc, r) => acc + (r.gpa || 0), 0);
+        averageGpa = Number((sumGpa / allResults.length).toFixed(2));
+      }
+
+      // At-risk students calculation (GPA < 2.0 or attendance < 75%)
+      const atRiskStudents = students.filter((s: any) => {
+        const sResults = allResults.filter(r => (r.studentId?._id || r.studentId) === (s._id || s.id));
+        const sGpa = sResults.length > 0 ? sResults.reduce((a, b) => a + (b.gpa || 0), 0) / sResults.length : null;
+        return sGpa !== null && sGpa < 2.0;
+      });
 
       // Department student distribution
       const deptDistribution: { [key: string]: number } = {};
       students.forEach((s: any) => {
-        deptDistribution[s.department] = (deptDistribution[s.department] || 0) + 1;
+        if (s.department) {
+          deptDistribution[s.department] = (deptDistribution[s.department] || 0) + 1;
+        }
       });
       const departmentWiseData = Object.keys(deptDistribution).map(name => ({
         name,
@@ -82,14 +103,24 @@ export class DashboardController {
       }));
 
       return res.json({
-        stats: {
+        metrics: {
           totalStudents,
           totalFaculty,
           totalCourses,
           totalDepartments,
           totalEnrollments,
-          todayAttendance: presentToday
+          attendanceToday: attendanceTodayPct,
+          studentsAtRisk: atRiskStudents.length,
+          averageGpa,
+          lastUpdatedAt: new Date().toISOString()
         },
+        atRiskStudents: atRiskStudents.map((s: any) => ({
+          id: s._id || s.id,
+          name: s.name,
+          enrollmentNo: s.enrollmentNo,
+          department: s.department,
+          semester: s.semester
+        })),
         recentActivities: logs.map(l => ({
           id: l._id || l.id,
           userName: l.userName,

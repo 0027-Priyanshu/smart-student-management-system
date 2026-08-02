@@ -258,7 +258,10 @@ function getDefaultRecommendations(name: string, weakSubjects: string[], attenda
 }
 
 function getDefaultInsights(gpa: number, attendance: number): string {
-  return `The current institute analytics demonstrate a healthy average GPA of ${gpa.toFixed(2)} alongside an attendance rate of ${attendance.toFixed(1)}%. While overall academic performance remains solid, departments with average attendance dropping below 80% require close observation. We recommend establishing early alert notifications for students whose individual attendance slips below 75% to prevent grading penalties. Key objectives include implementing peer tutoring circles and launching dynamic QR-code scanning to capture class entries instantly.`;
+  if (gpa === 0 && attendance === 0) {
+    return `No student academic records or attendance logs have been recorded in the database yet. Please add students, courses, attendance marks, and grade book results to generate live academic intelligence reports.`;
+  }
+  return `The current institute analytics demonstrate an average GPA of ${gpa.toFixed(2)} alongside an attendance rate of ${attendance.toFixed(1)}%. Departments with average attendance dropping below 80% require close observation. We recommend establishing early alert notifications for students whose individual attendance slips below 75% to prevent grading penalties. Key objectives include implementing peer tutoring circles and launching dynamic QR-code scanning to capture class entries instantly.`;
 }
 
 // 5. Predictive AI: At-Risk Student Analysis

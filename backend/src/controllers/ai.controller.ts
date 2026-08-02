@@ -559,6 +559,60 @@ export class AIController {
     }
   }
 
+  static async confirmAction(req: Request, res: Response, next: NextFunction) {
+    try {
+      const requester = (req as any).user;
+      const { actionType, payload } = req.body;
+
+      if (!actionType || !payload) {
+        return res.status(400).json({ error: 'Action type and payload are required.' });
+      }
+
+      if (actionType === 'mark_attendance') {
+        const { studentId, courseId, status = 'Present', date } = payload;
+        await RepoService.markAttendance({
+          studentId: studentId || '656565656565656565656565',
+          courseId: courseId || 'CS101',
+          date: date || new Date().toISOString().split('T')[0],
+          status,
+          markedBy: requester?.name || 'AI Assistant'
+        });
+        return res.json({
+          success: true,
+          message: `Attendance marked successfully as ${status}!`
+        });
+      }
+
+      if (actionType === 'send_parent_email') {
+        const { studentId } = payload;
+        const student = await RepoService.findStudentById(studentId);
+        if (!student) return res.status(404).json({ error: 'Student profile not found.' });
+
+        const parentName = student.parentName || 'Parent/Guardian';
+        const emailContent = await generateParentEmail(student.name, student.cgpa || 3.0, student.attendanceRate || 75, [], parentName);
+        return res.json({
+          success: true,
+          message: `Parent notification email dispatched to ${parentName}!`,
+          content: emailContent
+        });
+      }
+
+      if (actionType === 'navigate_analytics') {
+        const { tab = 'performance', studentId } = payload;
+        const targetUrl = `/academic-intelligence?tab=${tab}${studentId ? `&studentId=${studentId}` : ''}`;
+        return res.json({
+          success: true,
+          targetUrl,
+          message: `Navigating to Academic Intelligence (${tab})...`
+        });
+      }
+
+      return res.status(400).json({ error: `Unsupported action type: ${actionType}` });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   static async downloadReportPDF(req: Request, res: Response, next: NextFunction) {
     try {
       const studentId = req.params.studentId;

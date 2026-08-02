@@ -1,12 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
-import { Bot, Send, X, Sparkles, User, Volume2, VolumeX, Mic, MicOff, Copy, Check, ThumbsUp, ThumbsDown, Trash2, RefreshCw } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Bot, Send, X, Sparkles, User, Volume2, VolumeX, Mic, MicOff, Copy, Check, ThumbsUp, ThumbsDown, Trash2, RefreshCw, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import api from '../../utils/api';
 import { useAuthStore } from '../../stores/authStore';
 import { toast } from '../../stores/toastStore';
-import { customMarkdownComponents } from '../../pages/AiAssistant';
+import { customMarkdownComponents } from '../../pages/AcademicIntelligence';
+
+interface ProposedAction {
+  actionType: 'mark_attendance' | 'send_parent_email' | 'navigate_analytics';
+  title: string;
+  description: string;
+  payload: any;
+}
 
 interface ChatMessage {
   id: string;
@@ -14,18 +21,21 @@ interface ChatMessage {
   content: string;
   timestamp: string;
   feedback?: 'helpful' | 'unhelpful';
+  proposedAction?: ProposedAction;
+  actionConfirmed?: boolean;
 }
 
 export default function FloatingChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuthStore();
   
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome-msg',
       role: 'model',
-      content: 'Hello! I am your EduManager AI Assistant. I can answer questions about the application, guide you through features, or look up student data. How can I help you today?',
+      content: 'Hello! I am your EduManager AI Assistant. I provide context-aware assistance, quick actions, and direct navigation to detailed academic intelligence. How can I help you today?',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -40,7 +50,6 @@ export default function FloatingChatWidget() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
 
-  // Auto-scroll to bottom
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -57,10 +66,10 @@ export default function FloatingChatWidget() {
         setSuggestedPrompts(res.data.prompts || []);
       } catch (err) {
         setSuggestedPrompts([
-          "What features are available in this app?",
-          "How do I use the live QR attendance system?",
-          "How do I add a new student?",
-          "What does the ML risk score mean?"
+          "Summarize today's academic activity",
+          "Show urgent issues",
+          "Which students need attention?",
+          "Open detailed academic intelligence"
         ]);
       }
     };
@@ -125,6 +134,13 @@ export default function FloatingChatWidget() {
     const textToSend = customText || inputMessage;
     if (!textToSend.trim() || loading) return;
 
+    // Check if query triggers navigation action directly
+    if (textToSend.toLowerCase().includes('open detailed') || textToSend.toLowerCase().includes('academic intelligence')) {
+      navigate('/academic-intelligence');
+      setIsOpen(false);
+      return;
+    }
+
     const userMsg: ChatMessage = {
       id: `user-${Date.now()}`,
       role: 'user',
@@ -145,12 +161,32 @@ export default function FloatingChatWidget() {
       });
 
       const replyText = res.data.reply || 'I am processing your query.';
+      
+      // Propose action if user explicitly requested an operation
+      let action: ProposedAction | undefined = undefined;
+      const lower = textToSend.toLowerCase();
+      if (lower.includes('mark') && (lower.includes('present') || lower.includes('absent'))) {
+        action = {
+          actionType: 'mark_attendance',
+          title: 'Confirm Attendance Entry',
+          description: 'Mark student attendance status for today.',
+          payload: { status: lower.includes('present') ? 'Present' : 'Absent', date: new Date().toISOString().split('T')[0] }
+        };
+      } else if (lower.includes('parent email') || lower.includes('notify parent')) {
+        action = {
+          actionType: 'send_parent_email',
+          title: 'Confirm Parent Email Notification',
+          description: 'Dispatch academic warning draft to parent/guardian.',
+          payload: { studentId: '656565656565656565656565' }
+        };
+      }
 
       const botMsg: ChatMessage = {
         id: `bot-${Date.now()}`,
         role: 'model',
         content: replyText,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        proposedAction: action
       };
 
       setMessages(prev => [...prev, botMsg]);
@@ -163,6 +199,29 @@ export default function FloatingChatWidget() {
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       setMessages(prev => [...prev, errorMsg]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConfirmAction = async (msgId: string, action: ProposedAction) => {
+    try {
+      setLoading(true);
+      const res = await api.post('/ai/actions/confirm', {
+        actionType: action.actionType,
+        payload: action.payload
+      });
+
+      toast.success(res.data.message || 'Action executed successfully!');
+      
+      setMessages(prev => prev.map(m => m.id === msgId ? { ...m, actionConfirmed: true } : m));
+
+      if (res.data.targetUrl) {
+        navigate(res.data.targetUrl);
+        setIsOpen(false);
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Failed to execute action.');
     } finally {
       setLoading(false);
     }
@@ -218,7 +277,7 @@ export default function FloatingChatWidget() {
         </button>
       )}
 
-      {/* Floating Drawer / Modal Panel */}
+      {/* Floating Drawer Panel */}
       {isOpen && (
         <div className="w-[92vw] sm:w-[420px] h-[580px] bg-white border border-slate-200 rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-scaleUp">
           
@@ -273,7 +332,7 @@ export default function FloatingChatWidget() {
           {suggestedPrompts.length > 0 && (
             <div className="p-2.5 bg-slate-50 border-b border-slate-200 overflow-x-auto whitespace-nowrap scrollbar-none flex gap-1.5">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 self-center mr-1">
-                <Sparkles size={12} className="text-[#f97316]" /> Suggested:
+                <Sparkles size={12} className="text-[#f97316]" /> Prompts:
               </span>
               {suggestedPrompts.slice(0, 3).map((prompt, idx) => (
                 <button
@@ -298,12 +357,45 @@ export default function FloatingChatWidget() {
                   {msg.role === 'user' ? <User size={14} /> : <Bot size={14} />}
                 </div>
 
-                <div className={`max-w-[82%] space-y-1.5 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                <div className={`max-w-[82%] space-y-2 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                   <div className={`p-3.5 rounded-2xl text-xs shadow-2xs ${msg.role === 'user' ? 'bg-slate-900 text-white rounded-tr-none' : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none'}`}>
                     <ReactMarkdown remarkPlugins={[remarkGfm]} components={customMarkdownComponents}>
                       {msg.content}
                     </ReactMarkdown>
                   </div>
+
+                  {/* Contextual Action Confirmation Card */}
+                  {msg.proposedAction && (
+                    <div className="p-3 bg-orange-50/90 border border-orange-200 rounded-2xl space-y-2 text-xs">
+                      <div className="flex items-center gap-1.5 font-bold text-[#f97316]">
+                        <AlertTriangle size={14} />
+                        <span>{msg.proposedAction.title}</span>
+                      </div>
+                      <p className="text-[11px] text-slate-600 font-medium">{msg.proposedAction.description}</p>
+                      
+                      {msg.actionConfirmed ? (
+                        <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 pt-1 border-t border-orange-200">
+                          <CheckCircle2 size={14} />
+                          <span>Action Confirmed & Executed!</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 pt-1 border-t border-orange-200">
+                          <button
+                            onClick={() => handleConfirmAction(msg.id, msg.proposedAction!)}
+                            className="px-3 py-1 bg-[#f97316] hover:bg-orange-600 text-white text-[11px] font-bold rounded-lg transition-all cursor-pointer"
+                          >
+                            Confirm Action
+                          </button>
+                          <button
+                            onClick={() => setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, proposedAction: undefined } : m))}
+                            className="px-3 py-1 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-[11px] font-bold rounded-lg transition-all cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   <div className="flex items-center justify-between px-1 text-[9px] font-mono text-slate-400">
                     <span>{msg.timestamp}</span>
@@ -345,11 +437,26 @@ export default function FloatingChatWidget() {
                 </div>
                 <div className="p-3 bg-white border border-slate-200 rounded-2xl text-xs text-slate-500 font-medium animate-pulse flex items-center gap-2">
                   <RefreshCw size={12} className="animate-spin text-[#f97316]" />
-                  <span>Searching verified knowledge base & live records...</span>
+                  <span>Retrieving context & processing action...</span>
                 </div>
               </div>
             )}
             <div ref={messagesEndRef} />
+          </div>
+
+          {/* Quick Deep Link Button to Academic Intelligence */}
+          <div className="px-3 py-1.5 bg-slate-100 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-600 font-medium">
+            <span>Need full analytics & trend charts?</span>
+            <button
+              onClick={() => {
+                navigate('/academic-intelligence');
+                setIsOpen(false);
+              }}
+              className="text-[#f97316] font-bold hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              <span>Academic Intelligence Workspace</span>
+              <ArrowRight size={12} />
+            </button>
           </div>
 
           {/* Input Footer */}

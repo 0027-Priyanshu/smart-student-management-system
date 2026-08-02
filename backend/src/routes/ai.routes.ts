@@ -57,6 +57,9 @@ router.delete('/chat-history', authenticateJWT, AIController.clearChatHistory);
 // POST: /api/ai/chat (Protected - Grounded Chatbot assistant with rate limit)
 router.post('/chat', authenticateJWT, chatRateLimiter, AIController.chat);
 
+// POST: /api/ai/actions/confirm (Protected - Execute confirmed contextual actions)
+router.post('/actions/confirm', authenticateJWT, AIController.confirmAction);
+
 // POST: /api/ai/nl-search (Protected - Admin & Faculty)
 router.post(
   '/nl-search',

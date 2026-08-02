@@ -99,88 +99,56 @@ export class RetrievalService {
     const path = currentPage || '/dashboard';
 
     if (path === '/students') {
-      if (role === 'Admin' || role === 'Super Admin') {
-        return [
-          "How do I add a new student?",
-          "How do I bulk import students from CSV?",
-          "Which students are at academic risk?",
-          "How do I filter students by department?"
-        ];
-      }
       return [
-        "How do I search for a student?",
-        "What does High Risk status mean?",
-        "Where can I view parent phone numbers?",
-        "How do I check student CGPA?"
+        "Summarize the selected student",
+        "Find students with low attendance",
+        "Show recently added students",
+        "Which students are at academic risk?"
       ];
     }
 
     if (path === '/attendance') {
-      if (role === 'Faculty') {
-        return [
-          "How do I launch a live QR attendance session?",
-          "How do I mark manual class attendance?",
-          "Which students are below 75% attendance?",
-          "How does the QR timer expiration work?"
-        ];
-      }
-      if (role === 'Student') {
-        return [
-          "How do I scan the QR code to mark attendance?",
-          "What happens if my attendance drops below 75%?",
-          "How is my overall attendance rate calculated?",
-          "What if camera scanning fails?"
-        ];
-      }
       return [
-        "How does the dynamic QR attendance system work?",
-        "What is the low attendance threshold?",
-        "How to view attendance reports?",
-        "How to mark attendance manually?"
+        "Who is absent today?",
+        "Show students below 75% attendance",
+        "Explain the attendance trend",
+        "How to launch live QR attendance?"
       ];
     }
 
     if (path === '/marks') {
-      if (role === 'Faculty') {
-        return [
-          "How do I enter grade book scores for my course?",
-          "What are the assessment weights for GPA?",
-          "How is letter grade assigned?",
-          "How do I update internal assessment marks?"
-        ];
-      }
       return [
-        "How is my CGPA calculated?",
-        "What are the assessment weight percentages?",
-        "Where can I download my transcript?",
-        "What is the GPA scale limit?"
+        "Find low-performing students",
+        "Compare semester performance",
+        "Explain this GPA trend",
+        "How is CGPA calculated?"
       ];
     }
 
     if (path === '/courses') {
       return [
-        "How do I create a new course?",
-        "What information is required for a course?",
-        "How to view assigned faculty instructors?",
-        "How do course credits affect CGPA?"
+        "Show courses with weak performance",
+        "Summarize course enrollment",
+        "Identify difficult subjects",
+        "How do course credits work?"
       ];
     }
 
     if (path === '/faculty') {
       return [
-        "How do I add a new faculty member?",
-        "What designations are available for faculty?",
-        "How to view assigned courses per teacher?",
-        "How do I filter faculty by department?"
+        "Summarize faculty workload",
+        "Show assigned courses",
+        "Find scheduling conflicts",
+        "How do I add a new faculty member?"
       ];
     }
 
-    // Default / Dashboard
+    // Default / Dashboard / Academic Intelligence
     return [
-      "What features are available in this application?",
-      "How do I use the live QR attendance system?",
-      "How do I add a student?",
-      "What does the ML risk score mean?"
+      "Summarize today's academic activity",
+      "Show urgent issues",
+      "Which students need attention?",
+      "Open detailed academic intelligence"
     ];
   }
 }

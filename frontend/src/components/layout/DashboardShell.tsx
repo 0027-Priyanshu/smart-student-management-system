@@ -8,7 +8,7 @@ import {
   BookOpen, 
   CalendarCheck, 
   FileSpreadsheet, 
-  Bot, 
+  BrainCircuit,
   LogOut, 
   Menu, 
   X, 
@@ -60,7 +60,7 @@ export default function DashboardShell({ children, title }: DashboardShellProps)
     { name: 'Courses', path: '/courses', icon: BookOpen, roles: ['Super Admin', 'Admin', 'Faculty', 'Student'] },
     { name: 'Attendance', path: '/attendance', icon: CalendarCheck, roles: ['Super Admin', 'Admin', 'Faculty', 'Student'] },
     { name: 'Grade Book', path: '/marks', icon: FileSpreadsheet, roles: ['Super Admin', 'Admin', 'Faculty', 'Student'] },
-    { name: 'AI Companion', path: '/ai-assistant', icon: Bot, roles: ['Super Admin', 'Admin', 'Faculty', 'Student'] }
+    { name: 'Academic Intelligence', path: '/academic-intelligence', icon: BrainCircuit, roles: ['Super Admin', 'Admin', 'Faculty', 'Student'] }
   ];
 
   const allowedNavItems = navItems.filter(item => user && item.roles.includes(user.role));

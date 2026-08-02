@@ -13,7 +13,7 @@ const Faculty = lazy(() => import('./pages/Faculty'));
 const Courses = lazy(() => import('./pages/Courses'));
 const Attendance = lazy(() => import('./pages/Attendance'));
 const Marks = lazy(() => import('./pages/Marks'));
-const AiAssistant = lazy(() => import('./pages/AiAssistant'));
+const AcademicIntelligence = lazy(() => import('./pages/AcademicIntelligence'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
@@ -103,10 +103,18 @@ export default function App() {
             } 
           />
           <Route 
+            path="/academic-intelligence" 
+            element={
+              <ProtectedRoute>
+                <AcademicIntelligence />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
             path="/ai-assistant" 
             element={
               <ProtectedRoute>
-                <AiAssistant />
+                <AcademicIntelligence />
               </ProtectedRoute>
             } 
           />

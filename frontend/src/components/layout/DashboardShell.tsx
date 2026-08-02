@@ -37,6 +37,10 @@ export default function DashboardShell({ children }: DashboardShellProps) {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const [isAiMenuExpanded, setIsAiMenuExpanded] = useState(() => {
+    return location.pathname.startsWith('/academic-intelligence') || location.pathname.startsWith('/ai-assistant');
+  });
+
   useEffect(() => {
     if (user) {
       connectSocket({
@@ -64,12 +68,7 @@ export default function DashboardShell({ children }: DashboardShellProps) {
     { name: 'Grade Book', path: '/marks', icon: FileSpreadsheet, roles: ['Super Admin', 'Admin', 'Faculty', 'Student'] },
   ];
 
-  const aiNavItems = [
-    { name: 'Academic Intelligence', path: '/academic-intelligence', icon: BrainCircuit, roles: ['Super Admin', 'Admin', 'Faculty', 'Student'] }
-  ];
-
   const allowedCoreItems = coreNavItems.filter(item => user && item.roles.includes(user.role));
-  const allowedAiItems = aiNavItems.filter(item => user && item.roles.includes(user.role));
   const unreadCount = notifications.filter(n => !n.read).length;
   const initials = user?.name ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'U';
 
@@ -147,36 +146,68 @@ export default function DashboardShell({ children }: DashboardShellProps) {
             })}
           </div>
 
-          {/* AI & Insights Group */}
+          {/* AI & Insights Group with Expandable Sub-Menu */}
           <div className="space-y-1">
             {isSidebarOpen && (
               <span className="px-3 text-[10px] font-extrabold tracking-wider text-slate-400 uppercase flex items-center gap-1">
                 <Sparkles size={11} className="text-[#ff6b00]" /> AI & Insights
               </span>
             )}
-            {allowedAiItems.map(item => {
-              const Icon = item.icon;
-              const isActive = location.pathname.startsWith(item.path);
-              return (
-                <Link 
-                  key={item.path} 
-                  to={item.path}
-                  className={`flex items-center gap-3.5 px-3.5 py-2.5 rounded-2xl text-xs font-extrabold transition-all duration-200 group relative ${
-                    isActive 
-                      ? 'bg-[#fff4ed] text-[#ff6b00] border border-orange-200/60 shadow-subtle' 
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                  }`}
-                >
-                  <Icon size={18} className={isActive ? 'text-[#ff6b00]' : 'text-slate-400 group-hover:text-slate-700 transition-colors'} />
-                  {isSidebarOpen && <span>{item.name}</span>}
-                  {!isSidebarOpen && (
-                    <div className="absolute left-16 bg-slate-900 text-white text-xs rounded-xl py-1.5 px-3 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-xl border border-slate-800 z-50">
-                      {item.name}
-                    </div>
-                  )}
-                </Link>
-              );
-            })}
+
+            {/* Parent Toggle Button */}
+            <div className="space-y-1">
+              <button
+                onClick={() => setIsAiMenuExpanded(!isAiMenuExpanded)}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-extrabold transition-all duration-200 group cursor-pointer ${
+                  location.pathname.startsWith('/academic-intelligence') || location.pathname.startsWith('/ai-assistant')
+                    ? 'bg-[#fff4ed] text-[#ff6b00] border border-orange-200/60 shadow-subtle'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-center gap-3.5">
+                  <BrainCircuit size={18} className={location.pathname.startsWith('/academic-intelligence') ? 'text-[#ff6b00]' : 'text-slate-400 group-hover:text-slate-700'} />
+                  {isSidebarOpen && <span>Academic Intelligence</span>}
+                </div>
+                {isSidebarOpen && (
+                  <ChevronDown size={14} className={`transition-transform duration-200 ${isAiMenuExpanded ? 'rotate-180 text-[#ff6b00]' : 'text-slate-400'}`} />
+                )}
+              </button>
+
+              {/* Child Sub-Menu Links */}
+              <AnimatePresence>
+                {isAiMenuExpanded && isSidebarOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="pl-8 space-y-1 overflow-hidden"
+                  >
+                    {[
+                      { name: 'Overview', path: '/academic-intelligence/overview', tab: 'overview' },
+                      { name: 'Students at Risk', path: '/academic-intelligence/at-risk', tab: 'at-risk' },
+                      { name: 'Performance Analyzer', path: '/academic-intelligence/performance', tab: 'performance' },
+                      { name: 'Strategic Insights', path: '/academic-intelligence/insights', tab: 'insights' },
+                      { name: 'Reports', path: '/academic-intelligence/reports', tab: 'reports' },
+                    ].map((child) => {
+                      const isChildActive = location.pathname === child.path || (location.pathname === '/academic-intelligence' && location.search.includes(child.tab));
+                      return (
+                        <Link
+                          key={child.path}
+                          to={`${child.path}`}
+                          className={`block py-1.5 px-3 rounded-xl text-[11px] font-extrabold transition-colors ${
+                            isChildActive
+                              ? 'text-[#ff6b00] bg-orange-50/70 font-black'
+                              : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                          }`}
+                        >
+                          • {child.name}
+                        </Link>
+                      );
+                    })}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
         </nav>

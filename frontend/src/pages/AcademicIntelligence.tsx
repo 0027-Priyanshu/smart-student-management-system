@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { 
   BrainCircuit, 
   Sparkles, 
@@ -51,14 +51,23 @@ export const customMarkdownComponents = {
 export default function AcademicIntelligence() {
   const { user } = useAuthStore();
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
 
   const isAdmin = user?.role === 'Super Admin' || user?.role === 'Admin';
   const isStudent = user?.role === 'Student';
 
   // 5 Tabs: overview | at-risk | performance | insights | reports
-  const tabParam = searchParams.get('tab') as 'overview' | 'at-risk' | 'performance' | 'insights' | 'reports' | null;
-  const initialTab = tabParam || (isStudent ? 'performance' : 'overview');
+  const pathSub = location.pathname.split('/academic-intelligence/')[1];
+  const tabParam = searchParams.get('tab') || pathSub;
+  const initialTab = (tabParam as any) || (isStudent ? 'performance' : 'overview');
   const [activeTab, setActiveTab] = useState<'overview' | 'at-risk' | 'performance' | 'insights' | 'reports'>(initialTab);
+
+  useEffect(() => {
+    const currentSub = location.pathname.split('/academic-intelligence/')[1];
+    if (currentSub && ['overview', 'at-risk', 'performance', 'insights', 'reports'].includes(currentSub)) {
+      setActiveTab(currentSub as any);
+    }
+  }, [location.pathname]);
 
   // Sync tab with URL query parameter
   const handleTabChange = (tab: 'overview' | 'at-risk' | 'performance' | 'insights' | 'reports') => {

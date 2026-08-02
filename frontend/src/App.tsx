@@ -110,6 +110,17 @@ export default function App() {
               </ProtectedRoute>
             } 
           />
+          {['overview', 'at-risk', 'performance', 'insights', 'reports'].map(sub => (
+            <Route 
+              key={sub}
+              path={`/academic-intelligence/${sub}`} 
+              element={
+                <ProtectedRoute>
+                  <AcademicIntelligence />
+                </ProtectedRoute>
+              } 
+            />
+          ))}
           <Route 
             path="/ai-assistant" 
             element={

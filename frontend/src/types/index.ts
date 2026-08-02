@@ -46,6 +46,7 @@ export interface Faculty {
   userId: string;
   name: string;
   email: string;
+  phone?: string;
   department: string;
   designation: string;
   assignedCourses?: Course[] | string[];
@@ -63,6 +64,8 @@ export interface Course {
   semester: number;
   department: string;
   capacity: number;
+  facultyId?: any;
+  enrolledStudents?: any[];
   prerequisites?: string[];
   isDeleted?: boolean;
   createdAt?: string;

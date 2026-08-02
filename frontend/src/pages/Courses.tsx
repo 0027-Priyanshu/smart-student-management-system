@@ -1,21 +1,25 @@
 import { useState, useEffect } from 'react';
-import { Plus, UserPlus, X, ShieldAlert } from 'lucide-react';
+import { Plus, UserPlus, X, BookOpen, Search } from 'lucide-react';
 import DashboardShell from '../components/layout/DashboardShell';
 import api from '../utils/api';
 import { useAuthStore } from '../stores/authStore';
 import { CardSkeleton } from '../components/Skeleton';
 import type { Course, Student } from '../types';
+import { toast } from '../stores/toastStore';
 
 export default function Courses() {
   const { user } = useAuthStore();
   const isAdmin = user?.role === 'Super Admin' || user?.role === 'Admin';
-  const isStudent = user?.role === 'Student';
 
   const [courses, setCourses] = useState<Course[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   
+  // Search & Filters
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedDeptFilter, setSelectedDeptFilter] = useState('');
+
   // Modals
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -29,13 +33,10 @@ export default function Courses() {
     description: '',
     credits: 3,
     semester: 1,
-    department: 'CSE',
+    department: 'Computer Science',
     capacity: 40,
     prerequisites: ''
   });
-  
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
   async function loadData() {
     setLoading(true);
@@ -48,6 +49,7 @@ export default function Courses() {
       setStudents(studentsRes.data.students || []);
     } catch (err) {
       console.error(err);
+      toast.error('Failed to load course catalog.');
     } finally {
       setLoading(false);
     }
@@ -57,390 +59,383 @@ export default function Courses() {
     loadData();
   }, []);
 
-  const openAddModal = () => {
-    setFormData({
-      name: '',
-      code: '',
-      description: '',
-      credits: 3,
-      semester: 1,
-      department: 'CSE',
-      capacity: 40,
-      prerequisites: ''
-    });
-    setError('');
-    setSuccess('');
-    setShowAddModal(true);
-  };
-
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
-    setActionLoading(true);
-
-    try {
-      const data = {
-        ...formData,
-        credits: parseInt(formData.credits.toString(), 10),
-        semester: parseInt(formData.semester.toString(), 10),
-        capacity: parseInt(formData.capacity.toString(), 10),
-        prerequisites: formData.prerequisites ? formData.prerequisites.split(',').map(s => s.trim().toUpperCase()) : []
-      };
-
-      await api.post('/courses', data);
-      setSuccess('Course successfully created!');
-      loadData();
-      setTimeout(() => {
-        setShowAddModal(false);
-        setSuccess('');
-      }, 1500);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to create course');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleAssignSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-
-    if (!selectedStudentId) {
-      setError('Please select a student');
+    if (!formData.name || !formData.code) {
+      toast.error('Course name and code are required');
       return;
     }
 
     setActionLoading(true);
     try {
-      await api.post('/courses/assign', {
-        studentId: selectedStudentId,
-        courseId: activeCourse?._id || activeCourse?.id || ''
+      const res = await api.post('/courses', {
+        ...formData,
+        credits: Number(formData.credits),
+        semester: Number(formData.semester),
+        capacity: Number(formData.capacity)
       });
-      setSuccess('Student successfully enrolled!');
+
+      toast.success(res.data.message || 'Course created successfully!');
+      setShowAddModal(false);
+      setFormData({
+        name: '',
+        code: '',
+        description: '',
+        credits: 3,
+        semester: 1,
+        department: 'Computer Science',
+        capacity: 40,
+        prerequisites: ''
+      });
       loadData();
-      setTimeout(() => {
-        setShowAssignModal(false);
-        setSuccess('');
-      }, 1500);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Enrollment assignment failed');
+      toast.error(err.response?.data?.error || 'Failed to create course');
     } finally {
       setActionLoading(false);
     }
   };
 
-  // Helper to check if logged in student user is enrolled
-  const isEnrolledInCourse = (courseId: string) => {
-    if (!isStudent || !user?.studentProfile) return false;
-    const enrolledIds = user.studentProfile.enrolledCourses?.map((c: any) => typeof c === 'object' ? c._id || c.id : c) || [];
-    return enrolledIds.includes(courseId);
+  const handleEnrollSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedStudentId) {
+      toast.error('Please select a student to enroll');
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      const cId = activeCourse?._id || activeCourse?.id;
+      const res = await api.post(`/courses/${cId}/students`, {
+        studentId: selectedStudentId
+      });
+
+      toast.success(res.data.message || 'Enrolled student successfully!');
+      setShowAssignModal(false);
+      loadData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Failed to enroll student');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
+  const filteredCourses = courses.filter((c) => {
+    const nameMatch = c.name?.toLowerCase().includes(searchQuery.toLowerCase()) || c.code?.toLowerCase().includes(searchQuery.toLowerCase());
+    const deptMatch = !selectedDeptFilter || c.department === selectedDeptFilter;
+    return nameMatch && deptMatch;
+  });
+
   return (
-    <DashboardShell title="Course Curriculum">
-      
-      <div className="flex items-center justify-between gap-4 mb-8">
-        <p className="text-sm text-slate-500">
-          Browse academic courses catalog, manage requisites, credits and enrollments.
-        </p>
+    <DashboardShell title="Course Management Catalog">
+      <div className="space-y-6 animate-fadeIn">
+        
+        {/* Header Controls Bar */}
+        <div className="p-6 bg-white border border-slate-200/80 rounded-3xl shadow-card flex flex-col md:flex-row items-center justify-between gap-4">
+          <div>
+            <h2 className="font-title font-black text-lg text-slate-900 flex items-center gap-2">
+              <BookOpen size={22} className="text-[#ff6b00]" />
+              Academic Course Catalog
+            </h2>
+            <p className="text-xs text-slate-400 font-medium mt-0.5">
+              Course offerings, enrollment capacities, assigned faculty, and semester credit distributions.
+            </p>
+          </div>
 
-        {isAdmin && (
-          <button 
-            onClick={openAddModal} 
-            className="px-4 py-2.5 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-slate-900 font-bold rounded-xl text-xs flex items-center gap-2 hover:shadow-glow transition-all"
-          >
-            <Plus size={16} />
-            Create Course
-          </button>
-        )}
-      </div>
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+            {/* Search Input */}
+            <div className="relative w-full sm:w-64">
+              <Search size={16} className="absolute left-3.5 top-3 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search course code or name..."
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#ff6b00]"
+              />
+            </div>
 
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <CardSkeleton key={i} />
-          ))}
-        </div>
-      ) : courses.length === 0 ? (
-        <p className="text-sm text-slate-500 text-center py-20 italic">No courses are available currently in catalog.</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {courses.map(course => {
-            const courseIdStr = course._id || course.id || '';
-            const enrolled = isEnrolledInCourse(courseIdStr);
-            
-            return (
-              <div 
-                key={courseIdStr} 
-                className="bg-white border border-slate-200 hover:border-[#ef4444]/20 p-6 rounded-3xl shadow-card flex flex-col justify-between min-h-[240px] hover:-translate-y-1 transition-all duration-300 relative group"
+            {/* Department Filter */}
+            <select
+              value={selectedDeptFilter}
+              onChange={(e) => setSelectedDeptFilter(e.target.value)}
+              className="w-full sm:w-44 px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#ff6b00]"
+            >
+              <option value="">All Departments</option>
+              <option value="Computer Science">Computer Science</option>
+              <option value="Information Technology">IT</option>
+              <option value="Electronics">Electronics</option>
+              <option value="Mathematics">Mathematics</option>
+            </select>
+
+            {isAdmin && (
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="w-full sm:w-auto px-4 py-2 bg-[#ff6b00] hover:bg-orange-600 text-white text-xs font-extrabold rounded-2xl transition-all shadow-glow flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
               >
-                {/* Accent glow on hover */}
-                <div className="absolute top-0 right-0 h-16 w-16 bg-[#ef4444]/3 rounded-full filter blur-lg opacity-0 group-hover:opacity-100 transition-opacity" />
+                <Plus size={16} />
+                <span>Create Course</span>
+              </button>
+            )}
+          </div>
+        </div>
 
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-mono font-bold text-[#ef4444] tracking-wider uppercase">{course.code}</span>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-50 text-slate-500 uppercase">{course.department}</span>
-                  </div>
-                  
-                  <h4 className="font-title font-extrabold text-base text-slate-900 leading-tight mb-2 truncate group-hover:text-[#ef4444] transition-colors">
-                    {course.name}
-                  </h4>
-                  
-                  <p className="text-xs text-slate-500 leading-normal line-clamp-3 mb-4">
-                    {course.description}
-                  </p>
-                </div>
+        {/* Course Cards Grid */}
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <CardSkeleton key={i} />
+            ))}
+          </div>
+        ) : filteredCourses.length === 0 ? (
+          <div className="p-12 bg-white border border-slate-200/80 rounded-3xl text-center space-y-3 shadow-card">
+            <BookOpen size={36} className="text-slate-300 mx-auto" />
+            <h3 className="font-extrabold text-sm text-slate-900">No Courses Found</h3>
+            <p className="text-xs text-slate-400 max-w-sm mx-auto">No courses match the active search query or department filter.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredCourses.map((c) => {
+              const enrolledCount = c.enrolledStudents?.length || 0;
+              const capacity = c.capacity || 40;
+              const percent = Math.min(100, Math.round((enrolledCount / capacity) * 100));
 
-                <div>
-                  {course.prerequisites && course.prerequisites.length > 0 && (
-                    <div className="flex items-center gap-1 mb-4 text-[10px] text-slate-400 font-semibold">
-                      <ShieldAlert size={12} className="text-amber-500" />
-                      Prerequisites: {course.prerequisites.join(', ')}
+              return (
+                <div key={c._id || c.id} className="p-6 bg-white border border-slate-200/80 rounded-3xl shadow-card hover:border-orange-200 transition-all flex flex-col justify-between space-y-4 group">
+                  
+                  {/* Top Code & Department */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <span className="px-3 py-1 bg-orange-50 text-[#ff6b00] border border-orange-200/60 font-mono font-black text-xs rounded-xl shadow-2xs">
+                        {c.code}
+                      </span>
+                      <span className="px-2.5 py-0.5 bg-slate-100 text-slate-700 text-[10px] font-bold rounded-full">
+                        Sem {c.semester || 1}
+                      </span>
                     </div>
+
+                    <span className="text-xs font-mono font-extrabold text-slate-900 bg-slate-50 px-2.5 py-1 rounded-xl border border-slate-200">
+                      {c.credits || 3} Credits
+                    </span>
+                  </div>
+
+                  {/* Course Title & Description */}
+                  <div>
+                    <h3 className="font-title font-extrabold text-sm text-slate-900 group-hover:text-[#ff6b00] transition-colors">{c.name}</h3>
+                    <p className="text-xs text-slate-500 font-medium mt-1 line-clamp-2">{c.description || 'Comprehensive course curriculum covering fundamental principles and practical lab assessments.'}</p>
+                  </div>
+
+                  {/* Department & Faculty Info */}
+                  <div className="space-y-2 text-xs font-medium text-slate-600 bg-slate-50/70 p-3.5 rounded-2xl border border-slate-100">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase">Department:</span>
+                      <span className="font-bold text-slate-900">{c.department || 'Computer Science'}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase">Instructor:</span>
+                      <span className="font-bold text-[#ff6b00] truncate max-w-[160px]">
+                        {typeof c.facultyId === 'object' ? c.facultyId?.name : 'Assigned Faculty'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Enrollment Progress Meter */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-[10px] font-extrabold">
+                      <span className="text-slate-400 uppercase">Enrollment Progress</span>
+                      <span className="text-slate-900 font-mono">{enrolledCount} / {capacity} Students</span>
+                    </div>
+                    <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full transition-all duration-300 ${percent > 90 ? 'bg-red-500' : 'bg-[#ff6b00]'}`} 
+                        style={{ width: `${percent}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Admin Enroll Button */}
+                  {isAdmin && (
+                    <button
+                      onClick={() => {
+                        setActiveCourse(c);
+                        setShowAssignModal(true);
+                      }}
+                      className="w-full py-2.5 bg-slate-900 hover:bg-[#ff6b00] text-white text-xs font-extrabold rounded-2xl transition-all cursor-pointer shadow-2xs flex items-center justify-center gap-1.5"
+                    >
+                      <UserPlus size={14} />
+                      <span>Enroll Student</span>
+                    </button>
                   )}
 
-                  <div className="pt-4 border-t border-slate-200 flex items-center justify-between text-xs">
-                    <span className="font-medium text-slate-500">
-                      Credits: <strong className="text-slate-900">{course.credits}</strong>
-                    </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
-                    {isAdmin ? (
-                      <button 
-                        onClick={() => {
-                          setActiveCourse(course);
-                          setSelectedStudentId('');
-                          setError('');
-                          setSuccess('');
-                          setShowAssignModal(true);
-                        }} 
-                        className="px-3 py-1.5 bg-slate-100 border border-slate-200 hover:border-white/15 text-slate-900 font-semibold rounded-lg text-[11px] flex items-center gap-1.5 transition-colors"
-                      >
-                        <UserPlus size={12} />
-                        Assign Student
-                      </button>
-                    ) : isStudent && enrolled ? (
-                      <span className="px-2.5 py-1 rounded-full bg-[#eab308]/10 text-[#eab308] font-semibold border border-[#eab308]/25 flex items-center gap-1 text-[10px] uppercase">
-                        ✓ Enrolled
-                      </span>
-                    ) : isStudent ? (
-                      <span className="text-[10px] text-slate-400 italic uppercase">Not Enrolled</span>
-                    ) : null}
+        {/* Create Course Modal */}
+        {showAddModal && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white border border-slate-200 rounded-3xl shadow-card max-w-lg w-full p-6 space-y-4 animate-scaleUp">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 className="font-title font-extrabold text-sm text-slate-900 flex items-center gap-2">
+                  <BookOpen size={18} className="text-[#ff6b00]" />
+                  Create New Academic Course
+                </h3>
+                <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-900 cursor-pointer">
+                  <X size={18} />
+                </button>
+              </div>
+
+              <form onSubmit={handleAddSubmit} className="space-y-3.5">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-700">Course Code</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. CS101"
+                      value={formData.code}
+                      onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-700">Credits</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={6}
+                      value={formData.credits}
+                      onChange={(e) => setFormData({ ...formData, credits: Number(e.target.value) })}
+                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900"
+                    />
                   </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
 
-      {/* CREATE COURSE MODAL */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-[#f97316]/20 rounded-3xl w-full max-w-md p-6 relative overflow-hidden shadow-card animate-slideUp">
-            <button 
-              onClick={() => setShowAddModal(false)} 
-              className="absolute top-4 right-4 text-slate-500 hover:text-slate-900 transition-colors"
-            >
-              <X size={20} />
-            </button>
-
-            <h3 className="font-title font-extrabold text-xl mb-5 text-slate-900">Create New Course</h3>
-
-            {error && (
-              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-[#ef4444] rounded-xl text-xs">
-                {error}
-              </div>
-            )}
-            {success && (
-              <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-[#eab308] rounded-xl text-xs">
-                {success}
-              </div>
-            )}
-
-            <form onSubmit={handleAddSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Course Name</label>
+                  <label className="text-xs font-bold text-slate-700">Course Name</label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Web Development"
+                    placeholder="e.g. Data Structures & Algorithms"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900"
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Course Code</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. CS303"
-                    value={formData.code}
-                    onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
-                  />
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Credits</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="6"
-                    required
-                    value={formData.credits}
-                    onChange={(e) => setFormData({ ...formData, credits: parseInt(e.target.value, 10) || 0 })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Semester</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="8"
-                    required
-                    value={formData.semester}
-                    onChange={(e) => setFormData({ ...formData, semester: parseInt(e.target.value, 10) || 0 })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Capacity</label>
-                  <input
-                    type="number"
-                    min="10"
-                    max="100"
-                    required
-                    value={formData.capacity}
-                    onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value, 10) || 0 })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
-                  />
-                </div>
-              </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-700">Department</label>
+                    <select
+                      value={formData.department}
+                      onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900"
+                    >
+                      <option value="Computer Science">Computer Science</option>
+                      <option value="Information Technology">Information Technology</option>
+                      <option value="Electronics">Electronics</option>
+                      <option value="Mathematics">Mathematics</option>
+                    </select>
+                  </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-slate-700">Semester</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={8}
+                      value={formData.semester}
+                      onChange={(e) => setFormData({ ...formData, semester: Number(e.target.value) })}
+                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900"
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Department</label>
-                  <select
-                    value={formData.department}
-                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-700 focus:outline-none cursor-pointer"
+                  <label className="text-xs font-bold text-slate-700">Description</label>
+                  <textarea
+                    rows={2}
+                    placeholder="Brief course curriculum description..."
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-medium text-slate-900"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddModal(false)}
+                    className="px-4 py-2 bg-slate-100 text-slate-700 text-xs font-bold rounded-2xl hover:bg-slate-200 cursor-pointer"
                   >
-                    <option value="CSE">Computer Science (CSE)</option>
-                    <option value="ECE">Electronics (ECE)</option>
-                    <option value="ME">Mechanical (ME)</option>
-                    <option value="IT">Information Tech (IT)</option>
-                    <option value="General Sciences">General Sciences</option>
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={actionLoading}
+                    className="px-4 py-2 bg-[#ff6b00] hover:bg-orange-600 text-white text-xs font-bold rounded-2xl transition-all cursor-pointer"
+                  >
+                    {actionLoading ? 'Creating...' : 'Create Course'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Enroll Student Modal */}
+        {showAssignModal && activeCourse && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white border border-slate-200 rounded-3xl shadow-card max-w-md w-full p-6 space-y-4 animate-scaleUp">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 className="font-title font-extrabold text-sm text-slate-900">
+                  Enroll Student in {activeCourse.code} ({activeCourse.name})
+                </h3>
+                <button onClick={() => setShowAssignModal(false)} className="text-slate-400 hover:text-slate-900 cursor-pointer">
+                  <X size={18} />
+                </button>
+              </div>
+
+              <form onSubmit={handleEnrollSubmit} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700">Select Student</label>
+                  <select
+                    value={selectedStudentId}
+                    onChange={(e) => setSelectedStudentId(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#ff6b00]"
+                  >
+                    <option value="">Select student to enroll...</option>
+                    {students.map((s) => (
+                      <option key={s._id || s.id} value={s._id || s.id}>
+                        {s.name} ({s.enrollmentNo})
+                      </option>
+                    ))}
                   </select>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Prerequisites (Codes)</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. CS101, CS202"
-                    value={formData.prerequisites}
-                    onChange={(e) => setFormData({ ...formData, prerequisites: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
-                  />
+
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowAssignModal(false)}
+                    className="px-4 py-2.5 bg-slate-100 text-slate-700 text-xs font-bold rounded-2xl hover:bg-slate-200 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={actionLoading}
+                    className="px-4 py-2.5 bg-[#ff6b00] hover:bg-orange-600 text-white text-xs font-bold rounded-2xl transition-all cursor-pointer"
+                  >
+                    {actionLoading ? 'Enrolling...' : 'Confirm Enrollment'}
+                  </button>
                 </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Description</label>
-                <textarea
-                  rows={3}
-                  required
-                  placeholder="Course content overview..."
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-900 focus:outline-none resize-none transition-all"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={actionLoading}
-                className="w-full py-3 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-slate-900 font-bold rounded-xl text-xs shadow-card transition-all"
-              >
-                {actionLoading ? 'Creating course...' : 'Create Course'}
-              </button>
-            </form>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* ASSIGN ENROLLMENT MODAL */}
-      {showAssignModal && activeCourse && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-[#f97316]/20 rounded-3xl w-full max-w-sm p-6 relative overflow-hidden shadow-card animate-slideUp">
-            <button 
-              onClick={() => setShowAssignModal(false)} 
-              className="absolute top-4 right-4 text-slate-500 hover:text-slate-900 transition-colors"
-            >
-              <X size={20} />
-            </button>
-
-            <h3 className="font-title font-extrabold text-lg mb-2 text-slate-900">Enroll Student</h3>
-            <p className="text-xs text-slate-500 mb-5">
-              Course: <strong className="text-slate-900">{activeCourse.code} - {activeCourse.name}</strong>
-            </p>
-
-            {error && (
-              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-[#ef4444] rounded-xl text-xs">
-                {error}
-              </div>
-            )}
-            {success && (
-              <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-[#eab308] rounded-xl text-xs">
-                {success}
-              </div>
-            )}
-
-            <form onSubmit={handleAssignSubmit} className="space-y-4">
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Choose Student</label>
-                <select
-                  value={selectedStudentId}
-                  onChange={(e) => setSelectedStudentId(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-xs text-slate-700 focus:outline-none cursor-pointer"
-                >
-                  <option value="">-- Choose student --</option>
-                  {students.map(s => {
-                    // Check if already enrolled
-                    const studentCourses = s.enrolledCourses?.map((c: any) => typeof c === 'object' ? c._id || c.id : c) || [];
-                    const enrolled = studentCourses.includes(activeCourse._id || activeCourse.id);
-                    return (
-                      <option 
-                        key={s._id || s.id} 
-                        value={s._id || s.id}
-                        disabled={enrolled}
-                      >
-                        {s.name} ({s.enrollmentNo}) {enrolled ? '- Enrolled' : ''}
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
-
-              <button
-                type="submit"
-                disabled={actionLoading}
-                className="w-full py-3 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-slate-900 font-bold rounded-xl text-xs shadow-card transition-all"
-              >
-                {actionLoading ? 'Enrolling...' : 'Confirm Enrollment'}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
+      </div>
     </DashboardShell>
   );
 }

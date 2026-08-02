@@ -263,14 +263,14 @@ export default function FloatingChatWidget() {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="group flex items-center gap-2.5 px-4 py-3.5 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white rounded-full shadow-2xl hover:scale-105 transition-all cursor-pointer border border-slate-700/60"
+          className="group flex items-center gap-2.5 px-4.5 py-3.5 bg-slate-900 text-white rounded-full shadow-2xl hover:scale-105 transition-all cursor-pointer border border-slate-800"
           aria-label="Open AI Assistant"
         >
-          <div className="relative p-1.5 bg-[#f97316] rounded-full text-white shadow-glow">
-            <Bot size={18} className="group-hover:rotate-12 transition-transform" />
+          <div className="relative p-1.5 bg-[#ff6b00] rounded-full text-white shadow-glow">
+            <Sparkles size={16} className="group-hover:rotate-12 transition-transform" />
             <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#f97316]"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#ff6b00]"></span>
             </span>
           </div>
           <span className="font-title font-extrabold text-xs tracking-wide">AI Assistant</span>
@@ -279,20 +279,20 @@ export default function FloatingChatWidget() {
 
       {/* Floating Drawer Panel */}
       {isOpen && (
-        <div className="w-[92vw] sm:w-[420px] h-[580px] bg-white border border-slate-200 rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-scaleUp">
+        <div className="w-[92vw] sm:w-[400px] h-[560px] bg-white/90 backdrop-blur-xl border border-slate-200/90 rounded-3xl shadow-card flex flex-col overflow-hidden animate-scaleUp">
           
           {/* Drawer Header */}
-          <div className="p-4 bg-gradient-to-r from-slate-900 to-slate-800 text-white flex items-center justify-between border-b border-slate-700">
+          <div className="p-4 bg-white/90 border-b border-slate-100 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-[#f97316] rounded-xl text-white shadow-glow">
-                <Bot size={18} />
+              <div className="p-2 bg-[#fff4ed] text-[#ff6b00] rounded-2xl border border-orange-200/50">
+                <Sparkles size={18} />
               </div>
               <div>
-                <h3 className="font-title font-extrabold text-xs flex items-center gap-1.5">
-                  EduManager Assistant
-                  <span className="px-1.5 py-0.2 rounded-full text-[9px] bg-emerald-500/20 text-emerald-300 font-mono">Live Context</span>
+                <h3 className="font-title font-extrabold text-xs text-slate-900 flex items-center gap-1.5">
+                  AI Assistant
+                  <span className="px-1.5 py-0.5 rounded-full text-[9px] bg-emerald-50 text-emerald-600 font-extrabold border border-emerald-200">Online</span>
                 </h3>
-                <p className="text-[10px] text-slate-300 font-medium">Page: <span className="font-mono text-[#f97316]">{location.pathname}</span> | Role: {user?.role}</p>
+                <p className="text-[10px] text-slate-400 font-bold">Context: <span className="font-mono text-[#ff6b00]">{location.pathname}</span></p>
               </div>
             </div>
 
@@ -302,16 +302,16 @@ export default function FloatingChatWidget() {
                   window.speechSynthesis?.cancel();
                   setIsSpeaking(!isSpeaking);
                 }}
-                title={isSpeaking ? "Mute Speech Audio" : "Unmute Speech Audio"}
-                className="p-1.5 text-slate-300 hover:text-white rounded-lg hover:bg-slate-700/60 transition-colors cursor-pointer"
+                title={isSpeaking ? "Mute Audio" : "Unmute Audio"}
+                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
               >
-                {isSpeaking ? <Volume2 size={16} className="text-[#f97316]" /> : <VolumeX size={16} />}
+                {isSpeaking ? <Volume2 size={16} className="text-[#ff6b00]" /> : <VolumeX size={16} />}
               </button>
 
               <button
                 onClick={handleClearHistory}
-                title="Clear Chat History"
-                className="p-1.5 text-slate-300 hover:text-white rounded-lg hover:bg-slate-700/60 transition-colors cursor-pointer"
+                title="Clear Chat"
+                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <Trash2 size={16} />
               </button>
@@ -321,7 +321,7 @@ export default function FloatingChatWidget() {
                   window.speechSynthesis?.cancel();
                   setIsOpen(false);
                 }}
-                className="p-1.5 text-slate-300 hover:text-white rounded-lg hover:bg-slate-700/60 transition-colors cursor-pointer"
+                className="p-1.5 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X size={18} />
               </button>

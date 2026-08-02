@@ -20,6 +20,16 @@ interface SocketState {
   clearNotifications: () => void;
 }
 
+const getSocketBaseUrl = () => {
+  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_SOCKET_URL) {
+    return import.meta.env.VITE_SOCKET_URL;
+  }
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    return 'http://localhost:5001';
+  }
+  return 'https://smart-student-management-system-34eo.onrender.com';
+};
+
 export const useSocketStore = create<SocketState>((set, get) => ({
   socket: null,
   notifications: [],
@@ -28,7 +38,7 @@ export const useSocketStore = create<SocketState>((set, get) => ({
   connectSocket: (user) => {
     if (get().socket) return; // Already connected
 
-    const socketInstance = io(import.meta.env.VITE_SOCKET_URL || 'https://smart-student-management-system-34eo.onrender.com');
+    const socketInstance = io(getSocketBaseUrl());
 
     socketInstance.on('connect', () => {
       console.log('🔌 Real-time Socket connected');

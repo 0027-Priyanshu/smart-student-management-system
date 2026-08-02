@@ -1,7 +1,17 @@
 import axios from 'axios';
 
+const getApiBaseUrl = () => {
+  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    return 'http://localhost:5001/api';
+  }
+  return 'https://smart-student-management-system-34eo.onrender.com/api';
+};
+
 const api = axios.create({
-  baseURL: (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL) || 'https://smart-student-management-system-34eo.onrender.com/api',
+  baseURL: getApiBaseUrl(),
   headers: {
     'Content-Type': 'application/json'
   }
@@ -71,7 +81,7 @@ api.interceptors.response.use(
       }
 
       try {
-        const apiBaseUrl = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL) || 'https://smart-student-management-system-34eo.onrender.com/api';
+        const apiBaseUrl = getApiBaseUrl();
         const res = await axios.post(`${apiBaseUrl}/auth/refresh`, {
           refreshToken
         });

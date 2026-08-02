@@ -180,7 +180,7 @@ export default function Marks() {
           </div>
         </div>
 
-        {/* Top 4 KPI Metric Cards Banner (Reference Image 5) */}
+        {/* Top 4 KPI Metric Cards Banner */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="p-4 bg-white border border-slate-200/80 rounded-3xl shadow-card flex items-center gap-3">
             <div className="p-3 bg-purple-50 text-purple-600 rounded-2xl border border-purple-100">
@@ -188,7 +188,7 @@ export default function Marks() {
             </div>
             <div>
               <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Class Average GPA</p>
-              <h4 className="text-xl font-black text-slate-900 tracking-tight">{cgpa > 0 ? cgpa.toFixed(2) : '3.24'}</h4>
+              <h4 className="text-xl font-black text-slate-900 tracking-tight">{cgpa > 0 ? cgpa.toFixed(2) : 'No data'}</h4>
             </div>
           </div>
 
@@ -198,7 +198,9 @@ export default function Marks() {
             </div>
             <div>
               <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Highest GPA</p>
-              <h4 className="text-xl font-black text-slate-900 tracking-tight">3.98 <span className="text-[10px] text-slate-400 font-normal">Karan Singh</span></h4>
+              <h4 className="text-xl font-black text-slate-900 tracking-tight">
+                {results.length > 0 ? Math.max(...results.map(r => r.gpa || 0)).toFixed(2) : 'No data'}
+              </h4>
             </div>
           </div>
 
@@ -208,7 +210,9 @@ export default function Marks() {
             </div>
             <div>
               <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Lowest GPA</p>
-              <h4 className="text-xl font-black text-slate-900 tracking-tight">1.52 <span className="text-[10px] text-slate-400 font-normal">Myra Kapoor</span></h4>
+              <h4 className="text-xl font-black text-slate-900 tracking-tight">
+                {results.length > 0 ? Math.min(...results.map(r => r.gpa || 0)).toFixed(2) : 'No data'}
+              </h4>
             </div>
           </div>
 
@@ -218,7 +222,12 @@ export default function Marks() {
             </div>
             <div>
               <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Pass Percentage</p>
-              <h4 className="text-xl font-black text-slate-900 tracking-tight">88%</h4>
+              <h4 className="text-xl font-black text-slate-900 tracking-tight">
+                {results.length > 0 
+                  ? `${Math.round((results.filter(r => (r.grade || '') !== 'F').length / results.length) * 100)}%`
+                  : 'No data'
+                }
+              </h4>
             </div>
           </div>
         </div>
@@ -425,17 +434,13 @@ export default function Marks() {
         </div>
       </div>
 
-      {/* Reference Image 5 Pagination Footer Bar */}
+      {/* Pagination Footer Bar */}
       <div className="p-4 bg-white border border-slate-200/80 rounded-3xl shadow-card flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400 font-bold">
-        <span>Showing 1 to 5 of 2453</span>
+        <span>Showing {results.length > 0 ? 1 : 0} to {results.length} of {results.length}</span>
         <div className="flex items-center gap-1.5">
-          <button className="px-2.5 py-1 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50">&lt;</button>
+          <button disabled className="px-2.5 py-1 rounded-full border border-slate-200 text-slate-600 opacity-40">&lt;</button>
           <button className="h-7 w-7 rounded-full bg-[#ff6b00] text-white font-extrabold flex items-center justify-center shadow-glow">1</button>
-          <button className="h-7 w-7 rounded-full text-slate-600 hover:bg-slate-100 font-bold flex items-center justify-center">2</button>
-          <button className="h-7 w-7 rounded-full text-slate-600 hover:bg-slate-100 font-bold flex items-center justify-center">3</button>
-          <span className="px-1 text-slate-300">...</span>
-          <button className="h-7 w-7 rounded-full text-slate-600 hover:bg-slate-100 font-bold flex items-center justify-center">614</button>
-          <button className="px-2.5 py-1 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50">&gt;</button>
+          <button disabled className="px-2.5 py-1 rounded-full border border-slate-200 text-slate-600 opacity-40">&gt;</button>
         </div>
       </div>
     </div>

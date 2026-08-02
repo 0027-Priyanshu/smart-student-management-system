@@ -156,7 +156,7 @@ export default function Faculty() {
           </div>
         </div>
 
-        {/* Top 4 KPI Metric Cards Banner (Reference Image 3) */}
+        {/* Top 4 KPI Metric Cards Banner */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="p-4 bg-white border border-slate-200/80 rounded-3xl shadow-card flex items-center gap-3">
             <div className="p-3 bg-purple-50 text-purple-600 rounded-2xl border border-purple-100">
@@ -164,7 +164,7 @@ export default function Faculty() {
             </div>
             <div>
               <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Total Faculty</p>
-              <h4 className="text-xl font-black text-slate-900 tracking-tight">{faculties.length || 86}</h4>
+              <h4 className="text-xl font-black text-slate-900 tracking-tight">{faculties.length}</h4>
             </div>
           </div>
 
@@ -174,7 +174,9 @@ export default function Faculty() {
             </div>
             <div>
               <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Active Faculty</p>
-              <h4 className="text-xl font-black text-slate-900 tracking-tight">78</h4>
+              <h4 className="text-xl font-black text-slate-900 tracking-tight">
+                {faculties.filter(f => !f.isDeleted).length}
+              </h4>
             </div>
           </div>
 
@@ -184,7 +186,9 @@ export default function Faculty() {
             </div>
             <div>
               <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Departments</p>
-              <h4 className="text-xl font-black text-slate-900 tracking-tight">12</h4>
+              <h4 className="text-xl font-black text-slate-900 tracking-tight">
+                {new Set(faculties.map(f => f.department).filter(Boolean)).size}
+              </h4>
             </div>
           </div>
 
@@ -194,7 +198,12 @@ export default function Faculty() {
             </div>
             <div>
               <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Avg. Workload</p>
-              <h4 className="text-xl font-black text-slate-900 tracking-tight">4.6 <span className="text-xs text-slate-400 font-normal">Courses</span></h4>
+              <h4 className="text-xl font-black text-slate-900 tracking-tight">
+                {faculties.length > 0 
+                  ? (faculties.reduce((acc, f) => acc + (f.assignedCourses?.length || 0), 0) / faculties.length).toFixed(1)
+                  : '0'
+                } <span className="text-xs text-slate-400 font-normal">Courses</span>
+              </h4>
             </div>
           </div>
         </div>
@@ -279,18 +288,14 @@ export default function Faculty() {
           </div>
         )}
 
-        {/* Reference Image 3 Pagination Footer Bar */}
+        {/* Pagination Footer Bar */}
         {!loading && (
           <div className="p-4 bg-white border border-slate-200/80 rounded-3xl shadow-card flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400 font-bold">
-            <span>Showing 1 to 6 of {faculties.length || 86}</span>
+            <span>Showing {filteredFaculties.length > 0 ? 1 : 0} to {filteredFaculties.length} of {faculties.length}</span>
             <div className="flex items-center gap-1.5">
-              <button className="px-2.5 py-1 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50">&lt;</button>
+              <button disabled className="px-2.5 py-1 rounded-full border border-slate-200 text-slate-600 opacity-40">&lt;</button>
               <button className="h-7 w-7 rounded-full bg-[#ff6b00] text-white font-extrabold flex items-center justify-center shadow-glow">1</button>
-              <button className="h-7 w-7 rounded-full text-slate-600 hover:bg-slate-100 font-bold flex items-center justify-center">2</button>
-              <button className="h-7 w-7 rounded-full text-slate-600 hover:bg-slate-100 font-bold flex items-center justify-center">3</button>
-              <span className="px-1 text-slate-300">...</span>
-              <button className="h-7 w-7 rounded-full text-slate-600 hover:bg-slate-100 font-bold flex items-center justify-center">15</button>
-              <button className="px-2.5 py-1 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50">&gt;</button>
+              <button disabled className="px-2.5 py-1 rounded-full border border-slate-200 text-slate-600 opacity-40">&gt;</button>
             </div>
           </div>
         )}

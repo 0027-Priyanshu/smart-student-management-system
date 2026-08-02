@@ -344,7 +344,7 @@ export default function Students() {
           </div>
         </div>
 
-        {/* Top 4 KPI Metric Cards Banner (Reference Image 2) */}
+        {/* Top 4 KPI Metric Cards Banner */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="p-4 bg-white border border-slate-200/80 rounded-3xl shadow-card flex items-center gap-3">
             <div className="p-3 bg-purple-50 text-purple-600 rounded-2xl border border-purple-100">
@@ -352,7 +352,7 @@ export default function Students() {
             </div>
             <div>
               <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Total Students</p>
-              <h4 className="text-xl font-black text-slate-900 tracking-tight">{totalItems || 2453}</h4>
+              <h4 className="text-xl font-black text-slate-900 tracking-tight">{totalItems}</h4>
             </div>
           </div>
 
@@ -362,7 +362,9 @@ export default function Students() {
             </div>
             <div>
               <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Male Students</p>
-              <h4 className="text-xl font-black text-slate-900 tracking-tight">1,268</h4>
+              <h4 className="text-xl font-black text-slate-900 tracking-tight">
+                {students.filter(s => s.gender?.toLowerCase() === 'male').length}
+              </h4>
             </div>
           </div>
 
@@ -372,7 +374,9 @@ export default function Students() {
             </div>
             <div>
               <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Female Students</p>
-              <h4 className="text-xl font-black text-slate-900 tracking-tight">1,185</h4>
+              <h4 className="text-xl font-black text-slate-900 tracking-tight">
+                {students.filter(s => s.gender?.toLowerCase() === 'female').length}
+              </h4>
             </div>
           </div>
 
@@ -382,7 +386,9 @@ export default function Students() {
             </div>
             <div>
               <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">New This Month</p>
-              <h4 className="text-xl font-black text-slate-900 tracking-tight">128</h4>
+              <h4 className="text-xl font-black text-slate-900 tracking-tight">
+                {students.filter(s => s.createdAt && new Date(s.createdAt).getMonth() === new Date().getMonth()).length}
+              </h4>
             </div>
           </div>
         </div>
@@ -516,7 +522,7 @@ export default function Students() {
           {/* Reference Image 2 Pagination Footer Bar */}
           {!loading && (
             <div className="p-4 bg-white border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400 font-bold">
-              <span>Showing 1 to {students.length} of {totalItems || 2453}</span>
+              <span>Showing {totalItems > 0 ? (page - 1) * 6 + 1 : 0} to {Math.min(page * 6, totalItems)} of {totalItems}</span>
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => setPage(p => Math.max(p - 1, 1))}
@@ -526,21 +532,16 @@ export default function Students() {
                   &lt;
                 </button>
                 <button className="h-7 w-7 rounded-full bg-[#ff6b00] text-white font-extrabold flex items-center justify-center shadow-glow">
-                  1
+                  {page}
                 </button>
-                <button onClick={() => setPage(2)} className="h-7 w-7 rounded-full text-slate-600 hover:bg-slate-100 font-bold flex items-center justify-center">
-                  2
-                </button>
-                <button onClick={() => setPage(3)} className="h-7 w-7 rounded-full text-slate-600 hover:bg-slate-100 font-bold flex items-center justify-center">
-                  3
-                </button>
-                <span className="px-1 text-slate-300">...</span>
-                <button onClick={() => setPage(totalPages)} className="h-7 w-7 rounded-full text-slate-600 hover:bg-slate-100 font-bold flex items-center justify-center">
-                  {totalPages > 1 ? totalPages : 409}
-                </button>
+                {totalPages > 1 && (
+                  <button onClick={() => setPage(Math.min(page + 1, totalPages))} className="h-7 w-7 rounded-full text-slate-600 hover:bg-slate-100 font-bold flex items-center justify-center">
+                    {Math.min(page + 1, totalPages)}
+                  </button>
+                )}
                 <button
                   onClick={() => setPage(p => Math.min(p + 1, totalPages))}
-                  disabled={page === totalPages}
+                  disabled={page >= totalPages}
                   className="px-2.5 py-1 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50 disabled:opacity-40"
                 >
                   &gt;

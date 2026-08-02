@@ -44,6 +44,20 @@ export default function Attendance() {
 
   // Heatmap state
   const [heatmap, setHeatmap] = useState<any[]>([]);
+  const [attendanceList, setAttendanceList] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function fetchAttendance() {
+      try {
+        const res = await api.get(`/attendance`, { params: { date: selectedDate } });
+        setAttendanceList(res.data.attendance || []);
+      } catch (err) {
+        console.error(err);
+        setAttendanceList([]);
+      }
+    }
+    fetchAttendance();
+  }, [selectedDate]);
   
   const [, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -393,10 +407,15 @@ export default function Attendance() {
           </div>
 
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-            {/* Date Selector Pill */}
-            <div className="flex items-center gap-2 px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900">
+            {/* Date Selector Input Pill */}
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900">
               <Calendar size={14} className="text-[#ff6b00]" />
-              <span>Today, 2 Aug 2026</span>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="bg-transparent text-xs font-bold text-slate-900 focus:outline-none cursor-pointer"
+              />
             </div>
 
             {/* Filter Toggle */}
@@ -420,7 +439,7 @@ export default function Attendance() {
           </div>
         </div>
 
-        {/* Top 4 KPI Metric Cards Banner (Reference Image 4) */}
+        {/* Top 4 KPI Metric Cards Banner */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="p-4 bg-white border border-slate-200/80 rounded-3xl shadow-card flex items-center gap-3">
             <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100">
@@ -428,7 +447,12 @@ export default function Attendance() {
             </div>
             <div>
               <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Average Attendance</p>
-              <h4 className="text-xl font-black text-slate-900 tracking-tight">89% <span className="text-[10px] text-emerald-600 font-bold">This Week</span></h4>
+              <h4 className="text-xl font-black text-slate-900 tracking-tight">
+                {attendanceList.length > 0
+                  ? `${Math.round(((attendanceList.filter((a: any) => a.status === 'Present' || a.status === 'Late').length) / attendanceList.length) * 100)}%`
+                  : 'No data'
+                }
+              </h4>
             </div>
           </div>
 
@@ -438,7 +462,9 @@ export default function Attendance() {
             </div>
             <div>
               <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Present Today</p>
-              <h4 className="text-xl font-black text-slate-900 tracking-tight">1,842</h4>
+              <h4 className="text-xl font-black text-slate-900 tracking-tight">
+                {attendanceList.filter((a: any) => a.status === 'Present').length}
+              </h4>
             </div>
           </div>
 
@@ -448,7 +474,9 @@ export default function Attendance() {
             </div>
             <div>
               <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Absent Today</p>
-              <h4 className="text-xl font-black text-slate-900 tracking-tight">611</h4>
+              <h4 className="text-xl font-black text-slate-900 tracking-tight">
+                {attendanceList.filter((a: any) => a.status === 'Absent').length}
+              </h4>
             </div>
           </div>
 
@@ -458,7 +486,9 @@ export default function Attendance() {
             </div>
             <div>
               <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Late Today</p>
-              <h4 className="text-xl font-black text-slate-900 tracking-tight">128</h4>
+              <h4 className="text-xl font-black text-slate-900 tracking-tight">
+                {attendanceList.filter((a: any) => a.status === 'Late').length}
+              </h4>
             </div>
           </div>
         </div>

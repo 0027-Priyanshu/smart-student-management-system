@@ -40,118 +40,15 @@ export async function connectDB() {
 
       const salt = bcrypt.genSaltSync(10);
       const adminHash = bcrypt.hashSync('admin123', salt);
-      const facultyHash = bcrypt.hashSync('faculty123', salt);
-      const studentHash = bcrypt.hashSync('student123', salt);
 
-      const users = await User.insertMany([
-        {
-          name: "System Admin",
-          email: "admin@sms.com",
-          password: adminHash,
-          role: "Admin"
-        },
-        {
-          name: "Dr. Robert Carter",
-          email: "faculty@sms.com",
-          password: facultyHash,
-          role: "Faculty"
-        },
-        {
-          name: "John Doe",
-          email: "student@sms.com",
-          password: studentHash,
-          role: "Student"
-        }
-      ]);
-
-      const courses = await Course.insertMany([
-        {
-          name: "Introduction to Programming",
-          code: "CS101",
-          description: "Fundamental programming constructs using Python and basic problem solving.",
-          credits: 3,
-          semester: 1,
-          department: "CSE",
-          capacity: 40,
-          prerequisites: []
-        },
-        {
-          name: "Database Management Systems",
-          code: "CS202",
-          description: "Relational database concepts, schema normalization, and SQL query design.",
-          credits: 4,
-          semester: 2,
-          department: "CSE",
-          capacity: 45,
-          prerequisites: ["CS101"]
-        },
-        {
-          name: "Machine Learning Frameworks",
-          code: "CS303",
-          description: "Supervised and unsupervised models using standard scikit-learn interfaces.",
-          credits: 4,
-          semester: 3,
-          department: "CSE",
-          capacity: 30,
-          prerequisites: ["CS202"]
-        }
-      ]);
-
-      const adminUser = users.find(u => u.role === 'Admin');
-      const facultyUser = users.find(u => u.role === 'Faculty');
-      const studentUser = users.find(u => u.role === 'Student');
-
-      const student = await Student.create({
-        userId: studentUser?._id,
-        name: "John Doe",
-        email: "student@sms.com",
-        enrollmentNo: "ENR78294021",
-        age: 20,
-        gender: "Male",
-        grade: "Sophomore",
-        department: "CSE",
-        semester: 2,
-        parentName: "Richard Doe",
-        parentPhone: "9876543210",
-        address: "123 Science Dr, Tech City",
-        enrolledCourses: [courses[0]._id, courses[1]._id],
-        isDeleted: false,
-        academicHistory: [
-          { school: "Tech High", board: "State Board", percentage: 88, passingYear: 2024 }
-        ]
+      await User.create({
+        name: "System Admin",
+        email: "admin@sms.com",
+        password: adminHash,
+        role: "Admin"
       });
 
-      await Faculty.create({
-        userId: facultyUser?._id,
-        name: "Dr. Robert Carter",
-        email: "faculty@sms.com",
-        department: "CSE",
-        designation: "Professor",
-        assignedCourses: [courses[0]._id]
-      });
-
-      await Attendance.create({
-        studentId: student._id,
-        courseId: courses[0]._id,
-        date: new Date().toISOString().split('T')[0],
-        status: "Present",
-        markedBy: adminUser?._id
-      });
-
-      await Result.create({
-        studentId: student._id,
-        courseId: courses[0]._id,
-        semester: 1,
-        internal: 18,
-        external: 43,
-        assignment: 13,
-        practical: 14,
-        grade: "A+",
-        gpa: 4.0,
-        markedBy: facultyUser?._id
-      });
-
-      console.log('🌱 MongoDB seeded successfully with default records!');
+      console.log('🌱 MongoDB initialized with default System Admin account (admin@sms.com)!');
     }
   } catch (error) {
     isMongoConnected = false;
@@ -188,139 +85,14 @@ function initJsonDb() {
           role: "Admin",
           createdAt: new Date('2026-06-01T10:00:00Z').toISOString(),
           updatedAt: new Date('2026-06-01T10:00:00Z').toISOString()
-        },
-        {
-          _id: "654c1a5f4f89ef1234567891",
-          name: "Dr. Robert Carter",
-          email: "faculty@sms.com",
-          password: facultyHash,
-          role: "Faculty",
-          createdAt: new Date('2026-06-02T11:00:00Z').toISOString(),
-          updatedAt: new Date('2026-06-02T11:00:00Z').toISOString()
-        },
-        {
-          _id: "654c1a5f4f89ef1234567892",
-          name: "John Doe",
-          email: "student@sms.com",
-          password: studentHash,
-          role: "Student",
-          createdAt: new Date('2026-07-01T09:30:00Z').toISOString(),
-          updatedAt: new Date('2026-07-01T09:30:00Z').toISOString()
         }
       ],
-      students: [
-        {
-          _id: "654c1a5f4f89ef1234567893",
-          userId: "654c1a5f4f89ef1234567892",
-          name: "John Doe",
-          email: "student@sms.com",
-          enrollmentNo: "ENR78294021",
-          age: 20,
-          gender: "Male",
-          grade: "Sophomore",
-          department: "CSE",
-          semester: 2,
-          parentName: "Richard Doe",
-          parentPhone: "9876543210",
-          address: "123 Science Dr, Tech City",
-          enrolledCourses: ["654c1a5f4f89ef1234567895", "654c1a5f4f89ef1234567896"],
-          isDeleted: false,
-          academicHistory: [
-            { school: "Tech High", board: "State Board", percentage: 88, passingYear: 2024 }
-          ],
-          createdAt: new Date('2026-07-01T09:30:00Z').toISOString(),
-          updatedAt: new Date('2026-07-01T09:30:00Z').toISOString()
-        }
-      ],
-      faculties: [
-        {
-          _id: "654c1a5f4f89ef1234567894",
-          userId: "654c1a5f4f89ef1234567891",
-          name: "Dr. Robert Carter",
-          email: "faculty@sms.com",
-          department: "CSE",
-          designation: "Professor",
-          assignedCourses: ["654c1a5f4f89ef1234567895"],
-          createdAt: new Date('2026-06-02T11:00:00Z').toISOString()
-        }
-      ],
-      courses: [
-        {
-          _id: "654c1a5f4f89ef1234567895",
-          name: "Introduction to Programming",
-          code: "CS101",
-          description: "Fundamental programming constructs using Python and basic problem solving.",
-          credits: 3,
-          semester: 1,
-          department: "CSE",
-          capacity: 40,
-          prerequisites: [],
-          createdAt: new Date('2026-06-01T10:30:00Z').toISOString()
-        },
-        {
-          _id: "654c1a5f4f89ef1234567896",
-          name: "Database Management Systems",
-          code: "CS202",
-          description: "Relational database concepts, schema normalization, and SQL query design.",
-          credits: 4,
-          semester: 2,
-          department: "CSE",
-          capacity: 45,
-          prerequisites: ["CS101"],
-          createdAt: new Date('2026-06-01T10:45:00Z').toISOString()
-        },
-        {
-          _id: "654c1a5f4f89ef1234567897",
-          name: "Machine Learning Frameworks",
-          code: "CS303",
-          description: "Supervised and unsupervised models using standard scikit-learn interfaces.",
-          credits: 4,
-          semester: 3,
-          department: "CSE",
-          capacity: 30,
-          prerequisites: ["CS202"],
-          createdAt: new Date('2026-06-01T11:00:00Z').toISOString()
-        }
-      ],
-      attendance: [
-        {
-          _id: "654c1a5f4f89ef1234567898",
-          studentId: "654c1a5f4f89ef1234567893",
-          courseId: "654c1a5f4f89ef1234567895",
-          date: new Date().toISOString().split('T')[0],
-          status: "Present",
-          markedBy: "654c1a5f4f89ef1234567890",
-          createdAt: new Date().toISOString()
-        }
-      ],
-      results: [
-        {
-          _id: "654c1a5f4f89ef1234567899",
-          studentId: "654c1a5f4f89ef1234567893",
-          courseId: "654c1a5f4f89ef1234567895",
-          semester: 1,
-          internal: 18,
-          external: 43,
-          assignment: 13,
-          practical: 14,
-          grade: "A+",
-          gpa: 4.0,
-          markedBy: "654c1a5f4f89ef1234567891",
-          createdAt: new Date('2026-06-25T15:00:00Z').toISOString(),
-          updatedAt: new Date('2026-06-25T15:00:00Z').toISOString()
-        }
-      ],
-      logs: [
-        {
-          _id: "654c1a5f4f89ef1234567900",
-          userId: "654c1a5f4f89ef1234567890",
-          userName: "System Admin",
-          role: "Admin",
-          action: "Database Seeding",
-          details: "Initialized database with seed course registries and default profiles",
-          createdAt: new Date('2026-06-01T10:05:00Z').toISOString()
-        }
-      ]
+      students: [],
+      faculties: [],
+      courses: [],
+      attendance: [],
+      results: [],
+      logs: []
     };
     fs.writeFileSync(JSON_DB_PATH, JSON.stringify(defaultData, null, 2), 'utf8');
     console.log('📂 Local JSON file database initialized at: data/db.json with demo records!');

@@ -130,9 +130,9 @@ export default function Dashboard() {
   }
 
   const atRiskList = data?.atRiskStudents || [];
-  const totalStudents = data?.metrics?.totalStudents || 2453;
-  const avgAttendance = data?.metrics?.avgAttendance || 89;
-  const avgGpa = data?.metrics?.avgCgpa || 3.24;
+  const totalStudents = data?.metrics?.totalStudents || 0;
+  const avgAttendance = data?.metrics?.avgAttendance || 0;
+  const avgGpa = data?.metrics?.avgCgpa || 0;
 
   return (
     <DashboardShell title="Dashboard Overview">

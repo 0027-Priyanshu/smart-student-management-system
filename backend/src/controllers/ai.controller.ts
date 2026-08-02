@@ -515,13 +515,17 @@ export class AIController {
             gpa: r.gpa
           };
         });
-        const gpa = totalCredits > 0 ? totalGradePoints / totalCredits : 0.0;
+        const gpa = totalCredits > 0 
+          ? totalGradePoints / totalCredits 
+          : (student.cgpa !== undefined && student.cgpa !== null ? student.cgpa : 3.20);
 
         const attendanceLogs = attendanceByStudent[studentId] || [];
         const validLogs = attendanceLogs.filter(a => a.status !== 'On Leave');
         const totalDays = validLogs.length;
         const presentDays = validLogs.filter(a => a.status === 'Present' || a.status === 'Late').length;
-        const attendanceRate = totalDays > 0 ? (presentDays / totalDays) * 100 : 100.0;
+        const attendanceRate = totalDays > 0 
+          ? (presentDays / totalDays) * 100 
+          : (student.attendanceRate !== undefined && student.attendanceRate !== null ? student.attendanceRate : 85.0);
 
         const riskData = await predictRisk(
           student.name,

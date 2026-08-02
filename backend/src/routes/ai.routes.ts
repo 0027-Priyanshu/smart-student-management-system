@@ -37,6 +37,14 @@ router.get(
   AIController.getAcademicInsights
 );
 
+// GET: /api/ai/at-risk-students (Protected - Admin & Faculty)
+router.get(
+  '/at-risk-students',
+  authenticateJWT,
+  requireRole(['Super Admin', 'Admin', 'Faculty']),
+  AIController.getAtRiskStudents
+);
+
 // GET: /api/ai/suggested-prompts (Protected - Page-aware prompt recommendations)
 router.get('/suggested-prompts', authenticateJWT, AIController.getSuggestedPrompts);
 

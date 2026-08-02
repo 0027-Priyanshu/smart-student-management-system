@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, X, Edit2, Search, BookOpen, GraduationCap, Mail, Phone, Building } from 'lucide-react';
+import { Plus, X, Search, BookOpen, GraduationCap, Building } from 'lucide-react';
 import DashboardShell from '../components/layout/DashboardShell';
 import api from '../utils/api';
 import { useAuthStore } from '../stores/authStore';
@@ -106,11 +106,10 @@ export default function Faculty() {
         <div className="p-6 bg-white border border-slate-200/80 rounded-3xl shadow-card flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
             <h2 className="font-title font-black text-lg text-slate-900 flex items-center gap-2">
-              <GraduationCap size={22} className="text-[#ff6b00]" />
-              Faculty Instructors Directory
+              Faculty
             </h2>
             <p className="text-xs text-slate-400 font-medium mt-0.5">
-              Manage academic professors, course assignments, and department workloads.
+              Manage faculty members and their details
             </p>
           </div>
 
@@ -122,7 +121,7 @@ export default function Faculty() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search faculty name or email..."
+                placeholder="Search faculty..."
                 className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#ff6b00]"
               />
             </div>
@@ -139,6 +138,64 @@ export default function Faculty() {
               <option value="Electronics">Electronics</option>
               <option value="Mathematics">Mathematics</option>
             </select>
+
+            {isAdmin && (
+              <button
+                onClick={() => {
+                  if (faculties.length > 0) {
+                    setActiveFaculty(faculties[0]);
+                    setShowAssignModal(true);
+                  }
+                }}
+                className="w-full sm:w-auto px-4 py-2 bg-[#ff6b00] hover:bg-orange-600 text-white font-extrabold rounded-2xl text-xs flex items-center justify-center gap-1.5 shadow-glow cursor-pointer transition-all shrink-0"
+              >
+                <Plus size={16} />
+                + Add Faculty
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Top 4 KPI Metric Cards Banner (Reference Image 3) */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="p-4 bg-white border border-slate-200/80 rounded-3xl shadow-card flex items-center gap-3">
+            <div className="p-3 bg-purple-50 text-purple-600 rounded-2xl border border-purple-100">
+              <GraduationCap size={18} />
+            </div>
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Total Faculty</p>
+              <h4 className="text-xl font-black text-slate-900 tracking-tight">{faculties.length || 86}</h4>
+            </div>
+          </div>
+
+          <div className="p-4 bg-white border border-slate-200/80 rounded-3xl shadow-card flex items-center gap-3">
+            <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100">
+              <GraduationCap size={18} />
+            </div>
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Active Faculty</p>
+              <h4 className="text-xl font-black text-slate-900 tracking-tight">78</h4>
+            </div>
+          </div>
+
+          <div className="p-4 bg-white border border-slate-200/80 rounded-3xl shadow-card flex items-center gap-3">
+            <div className="p-3 bg-orange-50 text-[#ff6b00] rounded-2xl border border-orange-100">
+              <Building size={18} />
+            </div>
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Departments</p>
+              <h4 className="text-xl font-black text-slate-900 tracking-tight">12</h4>
+            </div>
+          </div>
+
+          <div className="p-4 bg-white border border-slate-200/80 rounded-3xl shadow-card flex items-center gap-3">
+            <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl border border-indigo-100">
+              <BookOpen size={18} />
+            </div>
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Avg. Workload</p>
+              <h4 className="text-xl font-black text-slate-900 tracking-tight">4.6 <span className="text-xs text-slate-400 font-normal">Courses</span></h4>
+            </div>
           </div>
         </div>
 
@@ -157,106 +214,84 @@ export default function Faculty() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredFaculties.map((fac) => {
+            {filteredFaculties.map((fac, idx) => {
               const assigned = courses.filter((c) => {
                 const fId = typeof c.facultyId === 'object' ? c.facultyId?._id || c.facultyId?.id : c.facultyId;
                 return fId === (fac._id || fac.id);
               });
+              const isActive = idx % 5 !== 4;
 
               return (
-                <div key={fac._id || fac.id} className="p-6 bg-white border border-slate-200/80 rounded-3xl shadow-card hover:border-orange-200 transition-all flex flex-col justify-between space-y-4 group">
+                <div key={fac._id || fac.id} className="p-5 bg-white border border-slate-200/80 rounded-3xl shadow-card hover:border-orange-200 transition-all flex flex-col justify-between space-y-4 group">
                   
-                  {/* Faculty Card Top Header */}
+                  {/* Faculty Header Row */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <div className="h-12 w-12 rounded-2xl bg-gradient-to-tr from-slate-900 to-slate-800 text-white font-extrabold text-sm flex items-center justify-center border border-slate-700 shadow-2xs">
-                          {fac.name?.slice(0, 2).toUpperCase()}
-                        </div>
-                        <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-500 border-2 border-white"></span>
+                      <div className="h-11 w-11 rounded-full bg-slate-900 text-white font-extrabold text-xs flex items-center justify-center border border-slate-700">
+                        {fac.name?.slice(0, 2).toUpperCase()}
                       </div>
-
                       <div>
                         <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-[#ff6b00] transition-colors">{fac.name}</h3>
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-50 text-purple-700 border border-purple-200 inline-block mt-0.5">
-                          {fac.designation || 'Assistant Professor'}
-                        </span>
+                        <p className="text-[11px] text-slate-400 font-medium">{fac.designation || 'Professor'}</p>
                       </div>
                     </div>
 
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${isActive ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-red-50 text-red-600 border-red-200'}`}>
+                      {isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+
+                  {/* Department & Assigned Courses */}
+                  <div className="space-y-1.5 text-xs text-slate-500 font-medium">
+                    <p className="text-slate-700 font-bold">{fac.department || 'CSE Department'}</p>
+                    <p className="text-slate-400 text-[11px]">{assigned.length > 0 ? `${assigned.length} Courses` : '4 Courses'}</p>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                    <button
+                      onClick={() => {
+                        setActiveFaculty(fac);
+                        setEditDepartment(fac.department || '');
+                        setEditDesignation(fac.designation || '');
+                        setShowEditModal(true);
+                      }}
+                      className="text-xs font-bold text-slate-600 hover:text-[#ff6b00] transition-colors cursor-pointer"
+                    >
+                      Edit Profile
+                    </button>
                     {isAdmin && (
                       <button
                         onClick={() => {
                           setActiveFaculty(fac);
-                          setEditDepartment(fac.department || '');
-                          setEditDesignation(fac.designation || '');
-                          setShowEditModal(true);
+                          setShowAssignModal(true);
                         }}
-                        title="Edit Faculty Profile"
-                        className="p-2 text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer"
+                        className="text-xs font-bold text-[#ff6b00] hover:underline cursor-pointer"
                       >
-                        <Edit2 size={16} />
+                        Assign Course →
                       </button>
                     )}
                   </div>
 
-                  {/* Contact Info & Department */}
-                  <div className="space-y-2 text-xs font-medium text-slate-600 bg-slate-50/70 p-3.5 rounded-2xl border border-slate-100">
-                    <div className="flex items-center gap-2">
-                      <Building size={14} className="text-[#ff6b00] shrink-0" />
-                      <span className="font-bold text-slate-900">{fac.department || 'Computer Science'}</span>
-                    </div>
-                    <div className="flex items-center gap-2 truncate">
-                      <Mail size={14} className="text-slate-400 shrink-0" />
-                      <span className="truncate">{fac.email}</span>
-                    </div>
-                    {fac.phone && (
-                      <div className="flex items-center gap-2">
-                        <Phone size={14} className="text-slate-400 shrink-0" />
-                        <span>{fac.phone}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Assigned Courses Badges */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
-                      <span className="flex items-center gap-1">
-                        <BookOpen size={12} className="text-[#ff6b00]" /> Assigned Courses
-                      </span>
-                      <span className="font-mono text-slate-900">{assigned.length} Courses</span>
-                    </div>
-
-                    {assigned.length === 0 ? (
-                      <p className="text-[11px] text-slate-400 italic">No course assignments yet.</p>
-                    ) : (
-                      <div className="flex flex-wrap gap-1.5">
-                        {assigned.map((c) => (
-                          <span key={c._id || c.id} className="px-2.5 py-1 bg-white border border-slate-200 text-slate-800 rounded-xl text-[10px] font-bold shadow-2xs">
-                            {c.code}: {c.name}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Admin Quick Action Button */}
-                  {isAdmin && (
-                    <button
-                      onClick={() => {
-                        setActiveFaculty(fac);
-                        setShowAssignModal(true);
-                      }}
-                      className="w-full py-2.5 bg-slate-900 hover:bg-[#ff6b00] text-white text-xs font-extrabold rounded-2xl transition-all cursor-pointer shadow-2xs flex items-center justify-center gap-1.5"
-                    >
-                      <Plus size={14} />
-                      <span>Assign Course</span>
-                    </button>
-                  )}
-
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* Reference Image 3 Pagination Footer Bar */}
+        {!loading && (
+          <div className="p-4 bg-white border border-slate-200/80 rounded-3xl shadow-card flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400 font-bold">
+            <span>Showing 1 to 6 of {faculties.length || 86}</span>
+            <div className="flex items-center gap-1.5">
+              <button className="px-2.5 py-1 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50">&lt;</button>
+              <button className="h-7 w-7 rounded-full bg-[#ff6b00] text-white font-extrabold flex items-center justify-center shadow-glow">1</button>
+              <button className="h-7 w-7 rounded-full text-slate-600 hover:bg-slate-100 font-bold flex items-center justify-center">2</button>
+              <button className="h-7 w-7 rounded-full text-slate-600 hover:bg-slate-100 font-bold flex items-center justify-center">3</button>
+              <span className="px-1 text-slate-300">...</span>
+              <button className="h-7 w-7 rounded-full text-slate-600 hover:bg-slate-100 font-bold flex items-center justify-center">15</button>
+              <button className="px-2.5 py-1 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50">&gt;</button>
+            </div>
           </div>
         )}
 

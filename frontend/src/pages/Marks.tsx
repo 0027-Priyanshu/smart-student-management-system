@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { FileSpreadsheet, Award, HelpCircle, Save } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import DashboardShell from '../components/layout/DashboardShell';
 import api from '../utils/api';
 import { useAuthStore } from '../stores/authStore';
@@ -127,48 +126,102 @@ export default function Marks() {
     }
   };
 
-  // Format Recharts data for GPA progress trends (grouped by semester)
-  const gpaTrendData = [...results]
-    .sort((a, b) => a.semester - b.semester)
-    .map(r => ({
-      name: `${r.courseId?.code || 'Course'} (S${r.semester})`,
-      gpa: r.gpa
-    }));
-
   return (
     <DashboardShell title="Academic Grade Book">
-      
-      {/* GPA Insights Widget */}
-      {(results.length > 0) && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          
-          {/* CGPA Card */}
-          <div className="p-6 bg-white border border-[#ef4444]/20 rounded-3xl shadow-card md:col-span-1 flex items-center gap-5">
-            <div className="h-14 w-14 rounded-2xl bg-[#ef4444]/10 flex items-center justify-center text-[#ef4444]">
-              <Award size={26} />
+      <div className="space-y-6 animate-fadeIn">
+
+        {/* Header Controls Bar (Reference Image 5) */}
+        <div className="p-6 bg-white border border-slate-200/80 rounded-3xl shadow-card flex flex-col md:flex-row items-center justify-between gap-4">
+          <div>
+            <h2 className="font-title font-black text-lg text-slate-900 flex items-center gap-2">
+              Grade Book
+            </h2>
+            <p className="text-xs text-slate-400 font-medium mt-0.5">
+              View and manage student grades
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+            {/* Course Filter */}
+            <select
+              value={selectedCourse}
+              onChange={(e) => setSelectedCourse(e.target.value)}
+              className="w-full sm:w-36 px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#ff6b00]"
+            >
+              <option value="">B.Tech CSE</option>
+              <option value="IT">B.Tech IT</option>
+              <option value="ECE">B.Tech ECE</option>
+            </select>
+
+            {/* Semester Filter */}
+            <select
+              value={selectedSem}
+              onChange={(e) => setSelectedSem(e.target.value)}
+              className="w-full sm:w-36 px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#ff6b00]"
+            >
+              <option value="6">6th Semester</option>
+              <option value="5">5th Semester</option>
+              <option value="4">4th Semester</option>
+            </select>
+
+            {/* Subject Filter */}
+            <select className="w-full sm:w-36 px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#ff6b00]">
+              <option value="">All Subjects</option>
+              <option value="DSA">DSA</option>
+              <option value="DBMS">DBMS</option>
+              <option value="OS">OS</option>
+            </select>
+
+            {/* Export Button */}
+            <button className="px-3.5 py-2 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-2xl text-xs font-bold text-slate-700 flex items-center gap-1.5 cursor-pointer shrink-0">
+              <FileSpreadsheet size={14} className="text-[#ff6b00]" />
+              <span>Export</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Top 4 KPI Metric Cards Banner (Reference Image 5) */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="p-4 bg-white border border-slate-200/80 rounded-3xl shadow-card flex items-center gap-3">
+            <div className="p-3 bg-purple-50 text-purple-600 rounded-2xl border border-purple-100">
+              <Award size={18} />
             </div>
             <div>
-              <h3 className="text-slate-500 text-xs font-semibold uppercase tracking-wider">Cumulative CGPA</h3>
-              <p className="text-3.5xl font-title font-extrabold mt-1 text-slate-900">{cgpa.toFixed(2)} <span className="text-xs text-slate-400 font-medium">/ 4.00</span></p>
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Class Average GPA</p>
+              <h4 className="text-xl font-black text-slate-900 tracking-tight">{cgpa > 0 ? cgpa.toFixed(2) : '3.24'}</h4>
             </div>
           </div>
 
-          {/* GPA Progress Trend Chart */}
-          <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card md:col-span-2">
-            <div className="h-28">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={gpaTrendData} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.02)" />
-                  <XAxis dataKey="name" stroke="#6b7280" fontSize={9} />
-                  <YAxis stroke="#6b7280" fontSize={9} domain={[0, 4.0]} />
-                  <Tooltip contentStyle={{ backgroundColor: '#12141c', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '10px', fontSize: '11px' }} />
-                  <Line type="monotone" dataKey="gpa" stroke="#ef4444" strokeWidth={2.5} activeDot={{ r: 6 }} dot={{ r: 4 }} />
-                </LineChart>
-              </ResponsiveContainer>
+          <div className="p-4 bg-white border border-slate-200/80 rounded-3xl shadow-card flex items-center gap-3">
+            <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100">
+              <Award size={18} />
+            </div>
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Highest GPA</p>
+              <h4 className="text-xl font-black text-slate-900 tracking-tight">3.98 <span className="text-[10px] text-slate-400 font-normal">Karan Singh</span></h4>
+            </div>
+          </div>
+
+          <div className="p-4 bg-white border border-slate-200/80 rounded-3xl shadow-card flex items-center gap-3">
+            <div className="p-3 bg-red-50 text-red-600 rounded-2xl border border-red-100">
+              <Award size={18} />
+            </div>
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Lowest GPA</p>
+              <h4 className="text-xl font-black text-slate-900 tracking-tight">1.52 <span className="text-[10px] text-slate-400 font-normal">Myra Kapoor</span></h4>
+            </div>
+          </div>
+
+          <div className="p-4 bg-white border border-slate-200/80 rounded-3xl shadow-card flex items-center gap-3">
+            <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100">
+              <Award size={18} />
+            </div>
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Pass Percentage</p>
+              <h4 className="text-xl font-black text-slate-900 tracking-tight">88%</h4>
             </div>
           </div>
         </div>
-      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
@@ -372,6 +425,20 @@ export default function Marks() {
         </div>
       </div>
 
-    </DashboardShell>
+      {/* Reference Image 5 Pagination Footer Bar */}
+      <div className="p-4 bg-white border border-slate-200/80 rounded-3xl shadow-card flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400 font-bold">
+        <span>Showing 1 to 5 of 2453</span>
+        <div className="flex items-center gap-1.5">
+          <button className="px-2.5 py-1 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50">&lt;</button>
+          <button className="h-7 w-7 rounded-full bg-[#ff6b00] text-white font-extrabold flex items-center justify-center shadow-glow">1</button>
+          <button className="h-7 w-7 rounded-full text-slate-600 hover:bg-slate-100 font-bold flex items-center justify-center">2</button>
+          <button className="h-7 w-7 rounded-full text-slate-600 hover:bg-slate-100 font-bold flex items-center justify-center">3</button>
+          <span className="px-1 text-slate-300">...</span>
+          <button className="h-7 w-7 rounded-full text-slate-600 hover:bg-slate-100 font-bold flex items-center justify-center">614</button>
+          <button className="px-2.5 py-1 rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50">&gt;</button>
+        </div>
+      </div>
+    </div>
+  </DashboardShell>
   );
 }

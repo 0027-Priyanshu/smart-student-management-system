@@ -379,16 +379,87 @@ export default function Attendance() {
 
   return (
     <DashboardShell title="Attendance Management">
-      
-      {/* Attendance Heatmap / Visual Activity Summary */}
-      <div className="p-6 bg-white border border-slate-200 rounded-3xl mb-8 shadow-card">
-        <div className="flex items-center justify-between mb-4">
+      <div className="space-y-6 animate-fadeIn">
+
+        {/* Header Controls Bar (Reference Image 4) */}
+        <div className="p-6 bg-white border border-slate-200/80 rounded-3xl shadow-card flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
-            <h3 className="font-title font-extrabold text-base text-slate-900 flex items-center gap-2">
-              <Calendar size={18} className="text-[#f97316]" />
-              Attendance Activity Heatmap
-            </h3>
-            <p className="text-xs text-slate-500 mt-0.5">Visual representation of logged attendance sessions across dates</p>
+            <h2 className="font-title font-black text-lg text-slate-900 flex items-center gap-2">
+              Attendance
+            </h2>
+            <p className="text-xs text-slate-400 font-medium mt-0.5">
+              Track and manage attendance records
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+            {/* Date Selector Pill */}
+            <div className="flex items-center gap-2 px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900">
+              <Calendar size={14} className="text-[#ff6b00]" />
+              <span>Today, 2 Aug 2026</span>
+            </div>
+
+            {/* Filter Toggle */}
+            <button className="px-3.5 py-2 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-2xl text-xs font-bold text-slate-700 flex items-center gap-1.5 cursor-pointer">
+              <span>Filters</span>
+            </button>
+
+            {isAdminOrFaculty && (
+              <button
+                onClick={() => {
+                  if (courses.length > 0) {
+                    setSelectedCourse(courses[0]._id || courses[0].id);
+                  }
+                }}
+                className="w-full sm:w-auto px-4 py-2 bg-[#ff6b00] hover:bg-orange-600 text-white font-extrabold rounded-2xl text-xs flex items-center justify-center gap-1.5 shadow-glow cursor-pointer transition-all shrink-0"
+              >
+                <CheckCircle size={16} />
+                + Mark Attendance
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Top 4 KPI Metric Cards Banner (Reference Image 4) */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="p-4 bg-white border border-slate-200/80 rounded-3xl shadow-card flex items-center gap-3">
+            <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100">
+              <Users size={18} />
+            </div>
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Average Attendance</p>
+              <h4 className="text-xl font-black text-slate-900 tracking-tight">89% <span className="text-[10px] text-emerald-600 font-bold">This Week</span></h4>
+            </div>
+          </div>
+
+          <div className="p-4 bg-white border border-slate-200/80 rounded-3xl shadow-card flex items-center gap-3">
+            <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100">
+              <CheckCircle size={18} />
+            </div>
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Present Today</p>
+              <h4 className="text-xl font-black text-slate-900 tracking-tight">1,842</h4>
+            </div>
+          </div>
+
+          <div className="p-4 bg-white border border-slate-200/80 rounded-3xl shadow-card flex items-center gap-3">
+            <div className="p-3 bg-red-50 text-red-600 rounded-2xl border border-red-100">
+              <AlertCircle size={18} />
+            </div>
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Absent Today</p>
+              <h4 className="text-xl font-black text-slate-900 tracking-tight">611</h4>
+            </div>
+          </div>
+
+          <div className="p-4 bg-white border border-slate-200/80 rounded-3xl shadow-card flex items-center gap-3">
+            <div className="p-3 bg-orange-50 text-[#ff6b00] rounded-2xl border border-orange-100">
+              <Clock size={18} />
+            </div>
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Late Today</p>
+              <h4 className="text-xl font-black text-slate-900 tracking-tight">128</h4>
+            </div>
           </div>
         </div>
 

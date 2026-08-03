@@ -30,12 +30,22 @@ export default function Login() {
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    await performLogin(email, password);
+  };
+
+  const handleDemoLogin = async (demoEmail: string, demoPass: string) => {
+    setEmail(demoEmail);
+    setPassword(demoPass);
+    await performLogin(demoEmail, demoPass);
+  };
+
+  const performLogin = async (loginEmail: string, loginPass: string) => {
     setError('');
     setSuccess('');
     setLoading(true);
 
     try {
-      await login(email, password);
+      await login(loginEmail, loginPass);
       navigate('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Login failed. Please check your credentials.');
@@ -240,19 +250,19 @@ export default function Login() {
             <div className="mt-6 p-4 bg-slate-50 border border-slate-200 rounded-2xl text-[11px] text-slate-600 space-y-2">
               <span className="font-bold text-slate-800 block mb-1">Demo Credentials (Click to auto-fill):</span>
               <div 
-                onClick={() => { setEmail('admin@sms.com'); setPassword('admin123'); }}
+                onClick={() => handleDemoLogin('admin@sms.com', 'admin123')}
                 className="cursor-pointer hover:bg-white p-1.5 -ml-1.5 rounded-lg transition-colors flex items-center gap-1 border border-transparent hover:border-slate-200"
               >
                 • Admin: <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded font-mono">admin@sms.com</code> / <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded font-mono">admin123</code>
               </div>
               <div 
-                onClick={() => { setEmail('faculty@sms.com'); setPassword('faculty123'); }}
+                onClick={() => handleDemoLogin('faculty@sms.com', 'faculty123')}
                 className="cursor-pointer hover:bg-white p-1.5 -ml-1.5 rounded-lg transition-colors flex items-center gap-1 border border-transparent hover:border-slate-200"
               >
                 • Faculty: <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded font-mono">faculty@sms.com</code> / <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded font-mono">faculty123</code>
               </div>
               <div 
-                onClick={() => { setEmail('student@sms.com'); setPassword('student123'); }}
+                onClick={() => handleDemoLogin('student@sms.com', 'student123')}
                 className="cursor-pointer hover:bg-white p-1.5 -ml-1.5 rounded-lg transition-colors flex items-center gap-1 border border-transparent hover:border-slate-200"
               >
                 • Student: <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded font-mono">student@sms.com</code> / <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded font-mono">student123</code>

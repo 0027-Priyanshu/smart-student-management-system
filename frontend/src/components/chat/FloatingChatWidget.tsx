@@ -280,6 +280,7 @@ export default function FloatingChatWidget() {
 
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [dragHasMoved, setDragHasMoved] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -305,8 +306,10 @@ export default function FloatingChatWidget() {
   }, []);
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    // Ignore drag if clicking inputs/buttons
-    if ((e.target as HTMLElement).closest('button, input, textarea, a')) return;
+    // Ignore drag if clicking inputs/buttons that are not the drag handle itself
+    const target = e.target as HTMLElement;
+    if (target.closest('button, input, textarea, a') && !target.closest('.drag-handle')) return;
+    setDragHasMoved(false);
     setIsDragging(true);
     setDragOffset({
       x: e.clientX - position.x,
@@ -314,15 +317,35 @@ export default function FloatingChatWidget() {
     });
   };
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDragging) return;
-    const widgetWidth = isExpanded ? Math.min(700, window.innerWidth - 40) : 400;
-    const widgetHeight = isExpanded ? Math.min(750, window.innerHeight - 40) : 560;
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('button, input, textarea, a') && !target.closest('.drag-handle')) return;
+    setDragHasMoved(false);
+    setIsDragging(true);
+    const touch = e.touches[0];
+    setDragOffset({
+      x: touch.clientX - position.x,
+      y: touch.clientY - position.y
+    });
+  };
 
-    const newX = Math.max(10, Math.min(window.innerWidth - widgetWidth, e.clientX - dragOffset.x));
-    const newY = Math.max(10, Math.min(window.innerHeight - widgetHeight, e.clientY - dragOffset.y));
+  const handleMouseMove = useCallback((e: MouseEvent | TouchEvent) => {
+    if (!isDragging) return;
+    setDragHasMoved(true);
+
+    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+
+    const isWidgetOpen = isOpen && !isMinimized;
+    
+    // Calculate actual pixel dimensions matching the CSS rules
+    const actualWidth = isWidgetOpen ? (isExpanded ? Math.min(700, window.innerWidth * 0.94) : Math.min(400, window.innerWidth * 0.92)) : 180;
+    const actualHeight = isWidgetOpen ? (isExpanded ? Math.min(750, window.innerHeight * 0.90) : Math.min(560, window.innerHeight * 0.85)) : 60;
+
+    const newX = Math.max(5, Math.min(window.innerWidth - actualWidth - 5, clientX - dragOffset.x));
+    const newY = Math.max(5, Math.min(window.innerHeight - actualHeight - 5, clientY - dragOffset.y));
     setPosition({ x: newX, y: newY });
-  }, [isDragging, dragOffset, isExpanded]);
+  }, [isDragging, dragOffset, isExpanded, isOpen, isMinimized]);
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
@@ -330,15 +353,21 @@ export default function FloatingChatWidget() {
 
   useEffect(() => {
     if (isDragging) {
-      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mousemove', handleMouseMove as any, { passive: false });
+      window.addEventListener('touchmove', handleMouseMove as any, { passive: false });
       window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('touchend', handleMouseUp);
     } else {
-      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mousemove', handleMouseMove as any);
+      window.removeEventListener('touchmove', handleMouseMove as any);
       window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchend', handleMouseUp);
     }
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mousemove', handleMouseMove as any);
+      window.removeEventListener('touchmove', handleMouseMove as any);
       window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchend', handleMouseUp);
     };
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
@@ -360,23 +389,31 @@ export default function FloatingChatWidget() {
     >
       {/* Trigger Pill Button when Closed or Minimized */}
       {(!isOpen || isMinimized) && (
-        <button
-          onClick={() => {
+        <div
+          onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
+          onClick={(e) => {
+            if (dragHasMoved) {
+              e.preventDefault();
+              e.stopPropagation();
+              return;
+            }
             setIsOpen(true);
             setIsMinimized(false);
           }}
-          className="group flex items-center gap-2.5 px-4.5 py-3.5 bg-slate-900 text-white rounded-full shadow-2xl hover:scale-105 transition-all cursor-pointer border border-slate-800"
+          className={`drag-handle group flex items-center gap-2.5 px-4.5 py-3.5 bg-slate-900 text-white rounded-full shadow-2xl transition-all border border-slate-800 ${isDragging ? 'cursor-grabbing' : 'cursor-grab hover:scale-105'}`}
+          style={{ touchAction: 'none' }}
           aria-label="Open AI Assistant"
         >
-          <div className="relative p-1.5 bg-[#ff6b00] rounded-full text-white shadow-glow">
+          <div className="relative p-1.5 bg-[#ff6b00] rounded-full text-white shadow-glow pointer-events-none">
             <Sparkles size={16} className="group-hover:rotate-12 transition-transform" />
             <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#ff6b00]"></span>
             </span>
           </div>
-          <span className="font-title font-extrabold text-xs tracking-wide">AI Assistant</span>
-        </button>
+          <span className="font-title font-extrabold text-xs tracking-wide pointer-events-none">AI Assistant</span>
+        </div>
       )}
 
       {/* Floating Movable Drawer Panel */}
@@ -384,14 +421,17 @@ export default function FloatingChatWidget() {
         <div
           style={{
             width: isExpanded ? 'min(700px, 94vw)' : 'min(400px, 92vw)',
-            height: isExpanded ? 'min(750px, 90vh)' : '560px'
+            height: isExpanded ? 'min(750px, 90vh)' : 'min(560px, 85vh)',
+            touchAction: isDragging ? 'none' : 'auto'
           }}
           className="bg-white/95 backdrop-blur-xl border border-slate-200/90 rounded-3xl shadow-card flex flex-col overflow-hidden animate-scaleUp transition-all duration-200"
         >
           {/* Drawer Drag Handle Header */}
           <div
             onMouseDown={handleMouseDown}
-            className={`p-4 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+            onTouchStart={handleTouchStart}
+            className={`drag-handle p-3 sm:p-4 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+            style={{ touchAction: 'none' }}
           >
             <div className="flex items-center gap-2.5">
               <div className="p-2 bg-[#fff4ed] text-[#ff6b00] rounded-2xl border border-orange-200/50">

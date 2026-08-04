@@ -90,7 +90,7 @@ export default function DashboardShell({ children }: DashboardShellProps) {
 
       {/* Desktop & Mobile Sidebar Drawer */}
       <aside 
-        className={`${isSidebarOpen ? 'w-64' : 'w-20'} hidden md:flex flex-col bg-white border-r border-slate-200/80 transition-all duration-300 relative z-40 shadow-[4px_0_24px_rgba(0,0,0,0.02)]`}
+        className={`fixed md:relative inset-y-0 left-0 h-full flex flex-col bg-white border-r border-slate-200/80 transition-all duration-300 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)] ${isSidebarOpen ? 'w-64 translate-x-0' : 'w-64 -translate-x-full md:w-20 md:translate-x-0'}`}
       >
         {/* Sidebar Brand Header */}
         <div className="h-20 flex items-center justify-between px-6 border-b border-slate-100">
@@ -248,7 +248,7 @@ export default function DashboardShell({ children }: DashboardShellProps) {
           {/* Header Title & Subtitle */}
           <div className="flex items-center gap-4">
             {!isSidebarOpen && (
-              <button onClick={() => setIsSidebarOpen(true)} className="hidden md:block text-slate-500 hover:text-slate-900 mr-1 cursor-pointer">
+              <button onClick={() => setIsSidebarOpen(true)} className="block text-slate-500 hover:text-slate-900 mr-1 cursor-pointer">
                 <Menu size={20} />
               </button>
             )}

@@ -106,7 +106,8 @@ export default function Courses() {
     setActionLoading(true);
     try {
       const cId = activeCourse?._id || activeCourse?.id;
-      const res = await api.post(`/courses/${cId}/students`, {
+      const res = await api.post('/courses/assign', {
+        courseId: cId,
         studentId: selectedStudentId
       });
 

@@ -19,6 +19,12 @@ import Attendance from '../models/Attendance';
 import Result from '../models/Result';
 
 export async function connectDB() {
+  if (!process.env.MONGODB_URI) {
+    console.log('ℹ️  No MONGODB_URI set. Falling back immediately to local JSON File Database.');
+    isMongoConnected = false;
+    initJsonDb();
+    return;
+  }
   try {
     mongoose.set('strictQuery', true);
     await mongoose.connect(MONGODB_URI, {
@@ -204,7 +210,105 @@ export function readJsonDb() {
   initJsonDb();
   try {
     const data = fs.readFileSync(JSON_DB_PATH, 'utf8');
-    return JSON.parse(data);
+    const parsed = JSON.parse(data);
+
+    // Ensure default users (admin, faculty, student) exist with correct passwords
+    let modified = false;
+    if (!parsed.users) parsed.users = [];
+    if (!parsed.students) parsed.students = [];
+    if (!parsed.faculties) parsed.faculties = [];
+
+    const salt = bcrypt.genSaltSync(10);
+
+    const defaultUsers = [
+      {
+        _id: "654c1a5f4f89ef1234567890",
+        name: "System Admin",
+        email: "admin@sms.com",
+        password: bcrypt.hashSync('admin123', salt),
+        role: "Admin",
+        isVerified: true,
+        createdAt: new Date('2026-06-01T10:00:00Z').toISOString(),
+        updatedAt: new Date('2026-06-01T10:00:00Z').toISOString()
+      },
+      {
+        _id: "654c1a5f4f89ef1234567891",
+        name: "Dr. Faculty",
+        email: "faculty@sms.com",
+        password: bcrypt.hashSync('faculty123', salt),
+        role: "Faculty",
+        isVerified: true,
+        createdAt: new Date('2026-06-01T10:00:00Z').toISOString(),
+        updatedAt: new Date('2026-06-01T10:00:00Z').toISOString()
+      },
+      {
+        _id: "654c1a5f4f89ef1234567892",
+        name: "Demo Student",
+        email: "student@sms.com",
+        password: bcrypt.hashSync('student123', salt),
+        role: "Student",
+        isVerified: true,
+        createdAt: new Date('2026-06-01T10:00:00Z').toISOString(),
+        updatedAt: new Date('2026-06-01T10:00:00Z').toISOString()
+      }
+    ];
+
+    for (const defUser of defaultUsers) {
+      const idx = parsed.users.findIndex((u: any) => u.email === defUser.email);
+      if (idx === -1) {
+        parsed.users.push(defUser);
+        modified = true;
+      } else {
+        // Ensure password matches expected hash if needed
+        if (!bcrypt.compareSync(defUser.email === 'admin@sms.com' ? 'admin123' : defUser.email === 'faculty@sms.com' ? 'faculty123' : 'student123', parsed.users[idx].password)) {
+          parsed.users[idx].password = defUser.password;
+          modified = true;
+        }
+      }
+    }
+
+    if (!parsed.students.find((s: any) => s.email === 'student@sms.com')) {
+      parsed.students.push({
+        _id: "654c1a5f4f89ef1234567992",
+        userId: "654c1a5f4f89ef1234567892",
+        name: "Demo Student",
+        email: "student@sms.com",
+        enrollmentNo: "ENR12345678",
+        age: 20,
+        gender: "Male",
+        grade: "Junior",
+        department: "Computer Science",
+        semester: 5,
+        parentName: "John Doe",
+        parentPhone: "9999999999",
+        address: "Demo City",
+        isDeleted: false,
+        createdAt: new Date('2026-06-01T10:00:00Z').toISOString(),
+        updatedAt: new Date('2026-06-01T10:00:00Z').toISOString()
+      });
+      modified = true;
+    }
+
+    if (!parsed.faculties.find((f: any) => f.email === 'faculty@sms.com')) {
+      parsed.faculties.push({
+        _id: "654c1a5f4f89ef1234567991",
+        userId: "654c1a5f4f89ef1234567891",
+        name: "Dr. Faculty",
+        email: "faculty@sms.com",
+        department: "Computer Science",
+        designation: "Professor",
+        isDeleted: false,
+        createdAt: new Date('2026-06-01T10:00:00Z').toISOString(),
+        updatedAt: new Date('2026-06-01T10:00:00Z').toISOString()
+      });
+      modified = true;
+    }
+
+    if (modified) {
+      fs.writeFileSync(JSON_DB_PATH, JSON.stringify(parsed, null, 2), 'utf8');
+    }
+
+    return parsed;
   } catch (error) {
     console.error('Error reading JSON DB:', error);
     return { users: [], students: [], faculties: [], courses: [], attendance: [], results: [], logs: [] };
@@ -220,3 +324,4 @@ export function writeJsonDb(data: any) {
     return false;
   }
 }
+

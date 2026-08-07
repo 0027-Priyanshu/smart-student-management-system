@@ -286,7 +286,6 @@ export async function predictRisk(
   };
 }
 
-// 6. Natural Language Search to Query Translator
 export async function translateNlSearch(query: string): Promise<{ type: 'attendance' | 'gpa' | 'department', operator: '<' | '>' | '<=' | '>=' | '=', value: number | string } | null> {
   const prompt = `You are a Smart Search interpreter. The user wants to filter students via natural language.
   Translate the following query into a JSON object representing the database filter intention.
@@ -306,21 +305,63 @@ export async function translateNlSearch(query: string): Promise<{ type: 'attenda
       });
       let text = response.text || '';
       text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
-      if (!text || text === '{}') return null;
-      
-      const parsed = JSON.parse(text);
-      if (parsed.type) {
-        if (typeof parsed.value === 'string' && parsed.value.includes('%')) {
-          parsed.value = Number(parsed.value.replace('%', ''));
+      if (text && text !== '{}') {
+        const parsed = JSON.parse(text);
+        if (parsed.type) {
+          if (typeof parsed.value === 'string' && parsed.value.includes('%')) {
+            parsed.value = Number(parsed.value.replace('%', ''));
+          }
+          return parsed;
         }
-        return parsed;
       }
     } catch (error) {
       console.error('Gemini NL search failed:', error);
     }
   }
+
+  // Deterministic Rule-Based Fallback
+  const qLower = query.toLowerCase().trim();
+
+  // 1. Department matching
+  const depts = [
+    { key: 'cse', val: 'CSE' },
+    { key: 'ece', val: 'ECE' },
+    { key: 'me', val: 'ME' },
+    { key: 'it', val: 'IT' },
+    { key: 'computer science', val: 'Computer Science' },
+    { key: 'general sciences', val: 'General Sciences' }
+  ];
+  for (const d of depts) {
+    if (qLower.includes(d.key)) {
+      return { type: 'department', operator: '=', value: d.val };
+    }
+  }
+
+  // 2. Attendance matching
+  const attMatch = qLower.match(/attendance\s*(<|<=|>|>=|=)?\s*(\d+)/i) || qLower.match(/(below|above|less than|greater than)\s*(\d+)%?\s*attendance/i) || qLower.match(/(below|above)\s*(\d+)%/i);
+  if (attMatch) {
+    let op: '<' | '>' | '<=' | '>=' | '=' = '<';
+    let val = 75;
+    if (qLower.includes('above') || qLower.includes('greater than') || qLower.includes('>')) op = '>';
+    if (attMatch[2]) val = parseInt(attMatch[2], 10);
+    else if (attMatch[1] && !isNaN(Number(attMatch[1]))) val = parseInt(attMatch[1], 10);
+    return { type: 'attendance', operator: op, value: val };
+  }
+
+  // 3. GPA matching
+  const gpaMatch = qLower.match(/(gpa|cgpa)\s*(<|<=|>|>=|=)?\s*([\d.]+)/i) || qLower.match(/(below|above)\s*([\d.]+)\s*(gpa|cgpa)/i);
+  if (gpaMatch) {
+    let op: '<' | '>' | '<=' | '>=' | '=' = '<';
+    let val = 2.5;
+    if (qLower.includes('above') || qLower.includes('greater than') || qLower.includes('>')) op = '>';
+    if (gpaMatch[3]) val = parseFloat(gpaMatch[3]);
+    else if (gpaMatch[2] && !isNaN(Number(gpaMatch[2]))) val = parseFloat(gpaMatch[2]);
+    return { type: 'gpa', operator: op, value: val };
+  }
+
   return null;
 }
+
 
 // 7. Generate Parent Notification Email
 export async function generateParentEmail(studentName: string, gpa: number, attendance: number, weakSubjects: string[], parentName: string): Promise<string> {

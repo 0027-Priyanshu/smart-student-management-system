@@ -6,8 +6,10 @@ import { saveResultSchema } from '../schemas/result.schema';
 
 const router = Router();
 
-// GET: /api/results/:studentId (Protected)
+// GET: /api/results & /api/results/:studentId (Protected)
+router.get('/', authenticateJWT, ResultController.getResults);
 router.get('/:studentId', authenticateJWT, ResultController.getResults);
+
 
 // POST: /api/results (Admin or Faculty only - Save/Update Marks)
 router.post(

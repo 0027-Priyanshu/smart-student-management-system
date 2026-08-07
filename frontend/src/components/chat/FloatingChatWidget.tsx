@@ -134,13 +134,6 @@ export default function FloatingChatWidget() {
     const textToSend = customText || inputMessage;
     if (!textToSend.trim() || loading) return;
 
-    // Check if query triggers navigation action directly
-    if (textToSend.toLowerCase().includes('open detailed') || textToSend.toLowerCase().includes('academic intelligence')) {
-      navigate('/academic-intelligence');
-      setIsOpen(false);
-      return;
-    }
-
     const userMsg: ChatMessage = {
       id: `user-${Date.now()}`,
       role: 'user',
@@ -162,23 +155,9 @@ export default function FloatingChatWidget() {
 
       const replyText = res.data.reply || 'I am processing your query.';
       
-      // Propose action if user explicitly requested an operation
-      let action: ProposedAction | undefined = undefined;
-      const lower = textToSend.toLowerCase();
-      if (lower.includes('mark') && (lower.includes('present') || lower.includes('absent'))) {
-        action = {
-          actionType: 'mark_attendance',
-          title: 'Confirm Attendance Entry',
-          description: 'Mark student attendance status for today.',
-          payload: { status: lower.includes('present') ? 'Present' : 'Absent', date: new Date().toISOString().split('T')[0] }
-        };
-      } else if (lower.includes('parent email') || lower.includes('notify parent')) {
-        action = {
-          actionType: 'send_parent_email',
-          title: 'Confirm Parent Email Notification',
-          description: 'Dispatch academic warning draft to parent/guardian.',
-          payload: { studentId: '656565656565656565656565' }
-        };
+      // The backend AI tool calls decide whether to navigate or propose actions
+      if (res.data.navigateTo) {
+        navigate(res.data.navigateTo);
       }
 
       const botMsg: ChatMessage = {
@@ -186,7 +165,7 @@ export default function FloatingChatWidget() {
         role: 'model',
         content: replyText,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        proposedAction: action
+        proposedAction: res.data.proposedAction
       };
 
       setMessages(prev => [...prev, botMsg]);
@@ -218,7 +197,6 @@ export default function FloatingChatWidget() {
 
       if (res.data.targetUrl) {
         navigate(res.data.targetUrl);
-        setIsOpen(false);
       }
     } catch (err: any) {
       toast.error(err.response?.data?.error || 'Failed to execute action.');

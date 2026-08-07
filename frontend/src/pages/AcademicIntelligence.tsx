@@ -24,29 +24,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { toast } from '../stores/toastStore';
-
-export const customMarkdownComponents = {
-  h1: ({ children }: any) => <h1 style={{ color: '#0f172a' }} className="text-base font-extrabold text-slate-900 mt-2 mb-1.5 leading-snug">{children}</h1>,
-  h2: ({ children }: any) => <h2 style={{ color: '#0f172a' }} className="text-sm font-bold text-slate-900 mt-2 mb-1 leading-snug">{children}</h2>,
-  h3: ({ children }: any) => <h3 style={{ color: '#0f172a' }} className="text-xs font-bold text-slate-900 mt-1.5 mb-1 leading-snug">{children}</h3>,
-  h4: ({ children }: any) => <h4 style={{ color: '#0f172a' }} className="text-xs font-bold text-slate-900 mt-1 mb-0.5 leading-snug">{children}</h4>,
-  p: ({ children }: any) => <p style={{ color: '#1e293b' }} className="text-xs text-slate-800 leading-relaxed mb-1.5">{children}</p>,
-  strong: ({ children }: any) => <strong style={{ color: '#0f172a' }} className="font-extrabold text-slate-900">{children}</strong>,
-  b: ({ children }: any) => <b style={{ color: '#0f172a' }} className="font-extrabold text-slate-900">{children}</b>,
-  em: ({ children }: any) => <em style={{ color: '#1e293b' }} className="italic text-slate-800">{children}</em>,
-  ul: ({ children }: any) => <ul style={{ color: '#1e293b' }} className="list-disc list-inside text-xs text-slate-800 space-y-1 my-1.5 pl-1">{children}</ul>,
-  ol: ({ children }: any) => <ol style={{ color: '#1e293b' }} className="list-decimal list-inside text-xs text-slate-800 space-y-1 my-1.5 pl-1">{children}</ol>,
-  li: ({ children }: any) => <li style={{ color: '#1e293b' }} className="text-xs text-slate-800 font-medium leading-relaxed">{children}</li>,
-  table: ({ children }: any) => <div className="overflow-x-auto my-2 rounded-xl border border-slate-200"><table className="w-full text-xs text-slate-800 border-collapse">{children}</table></div>,
-  thead: ({ children }: any) => <thead style={{ backgroundColor: '#f1f5f9', color: '#0f172a' }} className="bg-slate-100 text-slate-900 font-bold border-b border-slate-200">{children}</thead>,
-  tbody: ({ children }: any) => <tbody className="divide-y divide-slate-200 bg-white">{children}</tbody>,
-  tr: ({ children }: any) => <tr className="hover:bg-slate-50 transition-colors">{children}</tr>,
-  th: ({ children }: any) => <th style={{ color: '#0f172a' }} className="px-3 py-2 text-left text-xs font-extrabold text-slate-900 border-r border-slate-200 last:border-0">{children}</th>,
-  td: ({ children }: any) => <td style={{ color: '#1e293b' }} className="px-3 py-2 text-xs text-slate-800 border-r border-slate-200 last:border-0">{children}</td>,
-  code: ({ children }: any) => <code style={{ backgroundColor: '#f1f5f9', color: '#0f172a' }} className="bg-slate-100 text-slate-900 font-mono text-[11px] px-1.5 py-0.5 rounded border border-slate-200">{children}</code>,
-  pre: ({ children }: any) => <pre style={{ backgroundColor: '#0f172a', color: '#f8fafc' }} className="bg-slate-900 text-slate-100 font-mono text-[11px] p-3 rounded-xl overflow-x-auto my-2">{children}</pre>,
-  blockquote: ({ children }: any) => <blockquote style={{ color: '#1e293b' }} className="border-l-4 border-[#f97316] pl-3 py-1.5 text-slate-800 font-medium italic bg-orange-50/70 rounded-r my-2">{children}</blockquote>,
-};
+import { customMarkdownComponents } from '../utils/markdownComponents';
 
 export default function AcademicIntelligence() {
   const { user } = useAuthStore();

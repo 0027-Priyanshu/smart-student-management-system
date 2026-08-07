@@ -249,7 +249,7 @@ export default function Marks() {
             )}
 
             {success && (
-              <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 text-[#eab308] rounded-xl text-xs">
+              <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 font-medium rounded-xl text-xs">
                 {success}
               </div>
             )}
@@ -364,7 +364,7 @@ export default function Marks() {
               <button
                 type="submit"
                 disabled={actionLoading}
-                className="w-full py-3 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-slate-900 font-bold rounded-xl text-xs shadow-card transition-all flex items-center justify-center gap-1.5"
+                className="w-full py-3 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-white font-extrabold rounded-xl text-xs shadow-card hover:opacity-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Save size={14} />
                 {actionLoading ? 'Saving...' : 'Save Grades'}

@@ -36,7 +36,7 @@ import AnimatedCounter from '../common/AnimatedCounter';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useNavigate } from 'react-router-dom';
-import { customMarkdownComponents } from '../../pages/AiAssistant';
+import { customMarkdownComponents } from '../../utils/markdownComponents';
 
 const COLORS = ['#f97316', '#ef4444', '#eab308', '#ef4444', '#ea580c', '#d97706'];
 
@@ -130,6 +130,20 @@ export default function StudentDashboard() {
     }
   };
 
+  const fetchAiSummary = useCallback(async () => {
+    if (!studentId) return;
+    setAiLoading(true);
+    try {
+      const aiRes = await api.get(`/ai/student-summary/${studentId}`);
+      setAiSummary(aiRes.data.summary || '');
+    } catch (error) {
+      console.error('AI Summary fetch failed', error);
+      setAiSummary('AI insights currently unavailable.');
+    } finally {
+      setAiLoading(false);
+    }
+  }, [studentId]);
+
   const fetchData = useCallback(async () => {
     if (!studentId) return;
     try {
@@ -155,21 +169,7 @@ export default function StudentDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [studentId]);
-
-  const fetchAiSummary = async () => {
-    if (!studentId) return;
-    setAiLoading(true);
-    try {
-      const aiRes = await api.get(`/ai/student-summary/${studentId}`);
-      setAiSummary(aiRes.data.summary || '');
-    } catch (error) {
-      console.error('AI Summary fetch failed', error);
-      setAiSummary('AI insights currently unavailable.');
-    } finally {
-      setAiLoading(false);
-    }
-  };
+  }, [studentId, fetchAiSummary]);
 
   useEffect(() => {
     fetchData();

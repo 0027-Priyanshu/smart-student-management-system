@@ -99,6 +99,46 @@ export default function Attendance() {
     }
   }, [isStudent, user]);
 
+  // Student fetches QR session info
+  const handleStudentFetchSession = useCallback(async (sId?: string) => {
+    const rawInput = sId || studentSessionInput;
+    if (!rawInput) return;
+
+    let targetSessionId = rawInput.trim();
+    if (targetSessionId.includes('session=')) {
+      targetSessionId = targetSessionId.split('session=')[1].split('&')[0];
+    }
+    if (targetSessionId.includes('/')) {
+      targetSessionId = targetSessionId.split('/').pop() || targetSessionId;
+    }
+    targetSessionId = targetSessionId.trim().toUpperCase();
+
+    if (!targetSessionId) {
+      setError('Please enter a valid session ID or URL.');
+      return;
+    }
+
+    setError('');
+    setSuccess('');
+    setActionLoading(true);
+
+    try {
+      const res = await api.get(`/attendance/qr/session/${targetSessionId}`);
+      if (res.data.isExpired) {
+        setError('This QR Code session has expired. Please ask your instructor for a new QR code.');
+        setStudentSessionData(null);
+      } else {
+        setStudentSessionData(res.data.session);
+        setStudentSessionInput(targetSessionId);
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to fetch session. Please verify the session code.');
+      setStudentSessionData(null);
+    } finally {
+      setActionLoading(false);
+    }
+  }, [studentSessionInput]);
+
   // Auto-detect ?session= parameter in URL on mount (e.g. scanned from phone camera / Google Lens)
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -108,7 +148,7 @@ export default function Attendance() {
       setStudentSessionInput(cleanSessionId);
       handleStudentFetchSession(cleanSessionId);
     }
-  }, []);
+  }, [handleStudentFetchSession]);
 
   useEffect(() => {
     fetchHeatmapData();
@@ -215,46 +255,6 @@ export default function Attendance() {
     setSuccess(msg);
     setTimeout(() => setSuccess(''), 4000);
   };
-
-  // Student fetches QR session info
-  const handleStudentFetchSession = useCallback(async (sId?: string) => {
-    const rawInput = sId || studentSessionInput;
-    if (!rawInput) return;
-
-    let targetSessionId = rawInput.trim();
-    if (targetSessionId.includes('session=')) {
-      targetSessionId = targetSessionId.split('session=')[1].split('&')[0];
-    }
-    if (targetSessionId.includes('/')) {
-      targetSessionId = targetSessionId.split('/').pop() || targetSessionId;
-    }
-    targetSessionId = targetSessionId.trim().toUpperCase();
-
-    if (!targetSessionId) {
-      setError('Please enter a valid session ID or URL.');
-      return;
-    }
-
-    setError('');
-    setSuccess('');
-    setActionLoading(true);
-
-    try {
-      const res = await api.get(`/attendance/qr/session/${targetSessionId}`);
-      if (res.data.isExpired) {
-        setError('This QR Code session has expired. Please ask your instructor for a new QR code.');
-        setStudentSessionData(null);
-      } else {
-        setStudentSessionData(res.data.session);
-        setStudentSessionInput(targetSessionId);
-      }
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Invalid or expired QR session token.');
-      setStudentSessionData(null);
-    } finally {
-      setActionLoading(false);
-    }
-  }, [studentSessionInput]);
 
   const stopCameraScanner = useCallback(async () => {
     if (html5QrcodeRef.current) {

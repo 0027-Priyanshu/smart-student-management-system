@@ -21,12 +21,21 @@ export default function Faculty() {
   const [selectedDeptFilter, setSelectedDeptFilter] = useState('');
 
   // Modals
+  const [showAddModal, setShowAddModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [activeFaculty, setActiveFaculty] = useState<FacultyType | null>(null);
   const [selectedCourseId, setSelectedCourseId] = useState('');
   const [editDepartment, setEditDepartment] = useState('');
   const [editDesignation, setEditDesignation] = useState('');
+
+  const [addFormData, setAddFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    department: 'Computer Science',
+    designation: 'Assistant Professor'
+  });
 
   async function loadData() {
     setLoading(true);
@@ -48,6 +57,35 @@ export default function Faculty() {
   useEffect(() => {
     loadData();
   }, []);
+
+  const handleAddFacultySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addFormData.name || !addFormData.email || !addFormData.password) {
+      toast.error('Name, Email, and Password are required');
+      return;
+    }
+    setActionLoading(true);
+    try {
+      await api.post('/auth/register', {
+        ...addFormData,
+        role: 'Faculty'
+      });
+      toast.success(`Faculty member ${addFormData.name} registered successfully!`);
+      setShowAddModal(false);
+      setAddFormData({
+        name: '',
+        email: '',
+        password: '',
+        department: 'Computer Science',
+        designation: 'Assistant Professor'
+      });
+      loadData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Failed to register faculty member');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const handleAssignSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,10 +180,9 @@ export default function Faculty() {
             {isAdmin && (
               <button
                 onClick={() => {
-                  if (faculties.length > 0) {
-                    setActiveFaculty(faculties[0]);
-                    setShowAssignModal(true);
-                  }
+                  setShowAssignModal(false);
+                  setShowEditModal(false);
+                  setShowAddModal(true);
                 }}
                 className="w-full sm:w-auto px-4 py-2 bg-[#ff6b00] hover:bg-orange-600 text-white font-extrabold rounded-2xl text-xs flex items-center justify-center gap-1.5 shadow-glow cursor-pointer transition-all shrink-0"
               >
@@ -321,7 +358,9 @@ export default function Faculty() {
                     onChange={(e) => setSelectedCourseId(e.target.value)}
                     className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#ff6b00]"
                   >
-                    <option value="">Select a course to assign...</option>
+                    <option value="" disabled={courses.length === 0}>
+                      {courses.length === 0 ? 'No courses available to assign' : 'Select a course to assign...'}
+                    </option>
                     {courses.map((c) => (
                       <option key={c._id || c.id} value={c._id || c.id}>
                         {c.code} - {c.name} ({c.department})
@@ -406,6 +445,104 @@ export default function Faculty() {
                     className="px-4 py-2.5 bg-[#ff6b00] hover:bg-orange-600 text-white text-xs font-bold rounded-2xl transition-all cursor-pointer"
                   >
                     {actionLoading ? 'Saving...' : 'Save Profile'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Add Faculty Modal */}
+        {showAddModal && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white border border-slate-200 rounded-3xl shadow-card max-w-md w-full p-6 space-y-4 animate-scaleUp">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 className="font-title font-extrabold text-sm text-slate-900">
+                  Register New Faculty Member
+                </h3>
+                <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-900 cursor-pointer">
+                  <X size={18} />
+                </button>
+              </div>
+
+              <form onSubmit={handleAddFacultySubmit} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700">Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Dr. Robert Chen"
+                    value={addFormData.name}
+                    onChange={(e) => setAddFormData({ ...addFormData, name: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#ff6b00]"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700">Email Address *</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="e.g. robert.chen@sms.com"
+                    value={addFormData.email}
+                    onChange={(e) => setAddFormData({ ...addFormData, email: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#ff6b00]"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700">Initial Password *</label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="••••••••"
+                    value={addFormData.password}
+                    onChange={(e) => setAddFormData({ ...addFormData, password: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#ff6b00]"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700">Department</label>
+                  <select
+                    value={addFormData.department}
+                    onChange={(e) => setAddFormData({ ...addFormData, department: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#ff6b00]"
+                  >
+                    <option value="Computer Science">Computer Science</option>
+                    <option value="Information Technology">Information Technology</option>
+                    <option value="Electronics">Electronics</option>
+                    <option value="Mathematics">Mathematics</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700">Designation</label>
+                  <select
+                    value={addFormData.designation}
+                    onChange={(e) => setAddFormData({ ...addFormData, designation: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#ff6b00]"
+                  >
+                    <option value="Professor">Professor</option>
+                    <option value="Associate Professor">Associate Professor</option>
+                    <option value="Assistant Professor">Assistant Professor</option>
+                  </select>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddModal(false)}
+                    className="px-4 py-2.5 bg-slate-100 text-slate-700 text-xs font-bold rounded-2xl hover:bg-slate-200 cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={actionLoading}
+                    className="px-4 py-2.5 bg-[#ff6b00] hover:bg-orange-600 text-white text-xs font-bold rounded-2xl transition-all cursor-pointer shadow-glow"
+                  >
+                    {actionLoading ? 'Creating...' : 'Register Faculty'}
                   </button>
                 </div>
               </form>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Plus, UserPlus, X, BookOpen, Search } from 'lucide-react';
 import DashboardShell from '../components/layout/DashboardShell';
 import api from '../utils/api';
@@ -38,7 +38,7 @@ export default function Courses() {
     prerequisites: ''
   });
 
-  async function loadData() {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
       const [coursesRes, studentsRes] = await Promise.all([
@@ -53,11 +53,11 @@ export default function Courses() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [isAdmin]);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [loadData]);
 
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,7 +72,8 @@ export default function Courses() {
         ...formData,
         credits: Number(formData.credits),
         semester: Number(formData.semester),
-        capacity: Number(formData.capacity)
+        capacity: Number(formData.capacity),
+        prerequisites: formData.prerequisites.trim() ? formData.prerequisites.split(',').map(s => s.trim()).filter(Boolean) : []
       });
 
       toast.success(res.data.message || 'Course created successfully!');

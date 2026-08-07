@@ -1,4 +1,3 @@
-import AcademicIntelligence, { customMarkdownComponents } from './AcademicIntelligence';
+import AcademicIntelligence from './AcademicIntelligence';
 
-export { customMarkdownComponents };
 export default AcademicIntelligence;

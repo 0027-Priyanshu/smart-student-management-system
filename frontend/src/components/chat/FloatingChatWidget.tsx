@@ -6,7 +6,7 @@ import remarkGfm from 'remark-gfm';
 import api from '../../utils/api';
 import { useAuthStore } from '../../stores/authStore';
 import { toast } from '../../stores/toastStore';
-import { customMarkdownComponents } from '../../pages/AcademicIntelligence';
+import { customMarkdownComponents } from '../../utils/markdownComponents';
 
 interface ProposedAction {
   actionType: 'mark_attendance' | 'send_parent_email' | 'navigate_analytics';
@@ -123,7 +123,7 @@ export default function FloatingChatWidget() {
   const speakText = (text: string) => {
     if (!isSpeaking || typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
-    const cleanText = text.replace(/[*#`_\-]/g, '');
+    const cleanText = text.replace(/[*#`_-]/g, '');
     const utterance = new SpeechSynthesisUtterance(cleanText.slice(0, 300));
     utterance.rate = 1.0;
     utterance.pitch = 1.0;

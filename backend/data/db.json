@@ -7,16 +7,446 @@
       "password": "$2a$10$vN6ByH2.jApb.wo1AfTkW.nXeg9gbt8vGJyB3SGUXMdZo/hFzoJLm",
       "role": "Admin",
       "createdAt": "2026-06-01T10:00:00.000Z",
-      "updatedAt": "2026-08-02T16:40:00.000Z"
+      "updatedAt": "2026-08-07T14:24:26.008Z",
+      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NTRjMWE1ZjRmODllZjEyMzQ1Njc4OTAiLCJpYXQiOjE3ODYxMTI2NjUsImV4cCI6MTc4NjcxNzQ2NX0.QKEXWWgBv5XQjZosIGovr3qaAQLIr8bQSmLKMwH7zHY"
+    },
+    {
+      "_id": "6a75e45e8c52fd90e31eeed0",
+      "name": "Audit Test Student",
+      "email": "audit_stu_1786111070402@sms.com",
+      "password": "$2a$10$dFBDxEfL.ectSdVPHX.RfO0skkRphjmx7bEMTVRGtID18ZFyt1NBG",
+      "role": "Student",
+      "isVerified": true,
+      "createdAt": "2026-08-07T13:57:50.465Z",
+      "updatedAt": "2026-08-07T13:57:50.532Z"
+    },
+    {
+      "_id": "6a75e4a88c52fd90e31eeed4",
+      "name": "Audit Test Student",
+      "email": "audit_stu_1786111144903@sms.com",
+      "password": "$2a$10$cft/BikDoFMXLsrbOfoJSuUEPSyxuVQhv3ydmeMxGTxC.XNrFEQzC",
+      "role": "Student",
+      "isVerified": true,
+      "createdAt": "2026-08-07T13:59:04.968Z",
+      "updatedAt": "2026-08-07T13:59:05.037Z"
+    },
+    {
+      "_id": "654c1a5f4f89ef1234567891",
+      "name": "Dr. Faculty",
+      "email": "faculty@sms.com",
+      "password": "$2a$10$T4pEZz3LfhK1VGo144JPgON0CE1Di8ppdEJDjxn721/EHs7yyFTyK",
+      "role": "Faculty",
+      "isVerified": true,
+      "createdAt": "2026-06-01T10:00:00.000Z",
+      "updatedAt": "2026-08-07T14:24:27.205Z",
+      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NTRjMWE1ZjRmODllZjEyMzQ1Njc4OTEiLCJpYXQiOjE3ODYxMTI2NjYsImV4cCI6MTc4NjcxNzQ2Nn0.6pj0MRQo3mhpnaN0yXzh1Uak7XjAfAusvx_EzkYtJ-E"
+    },
+    {
+      "_id": "654c1a5f4f89ef1234567892",
+      "name": "Demo Student",
+      "email": "student@sms.com",
+      "password": "$2a$10$T4pEZz3LfhK1VGo144JPgO7fPtqNejSzP9JMhH5D75rL1fwW2w8rK",
+      "role": "Student",
+      "isVerified": true,
+      "createdAt": "2026-06-01T10:00:00.000Z",
+      "updatedAt": "2026-08-07T14:24:28.785Z",
+      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NTRjMWE1ZjRmODllZjEyMzQ1Njc4OTIiLCJpYXQiOjE3ODYxMTI2NjgsImV4cCI6MTc4NjcxNzQ2OH0.KEYcscrSUBHrDcs9yNYWW4wo-IF8YpzuryBha6pcPrk"
+    },
+    {
+      "_id": "6a75e4dc5c4e53c89f42c774",
+      "name": "Audit Test Student",
+      "email": "audit_stu_1786111195525@sms.com",
+      "password": "$2a$10$7DEIFd3ZH/jd5BxRpQXMQOx8PuBYNou8WSuhl47Vn6.FGcnxmEsNS",
+      "role": "Student",
+      "isVerified": true,
+      "createdAt": "2026-08-07T13:59:56.345Z",
+      "updatedAt": "2026-08-07T13:59:59.082Z"
+    },
+    {
+      "_id": "6a75e4f35c4e53c89f42c77a",
+      "name": "Audit Test Student",
+      "email": "audit_stu_1786111217958@sms.com",
+      "password": "$2a$10$PEzoHAJ7tVer5Od/fxjsK.3ybz8uyRdqwNlXfi1G2PjOQf47.9iYO",
+      "role": "Student",
+      "isVerified": true,
+      "createdAt": "2026-08-07T14:00:19.180Z",
+      "updatedAt": "2026-08-07T14:00:21.957Z"
+    },
+    {
+      "_id": "6a75e50cc88eb7b69b93d99c",
+      "name": "Audit Test Student",
+      "email": "audit_stu_1786111243820@sms.com",
+      "password": "$2a$10$PS2hI5Zcusv6elnM4Vpxt.j39x53YNKfAcNuDNcbho9/Qhei.KbqW",
+      "role": "Student",
+      "isVerified": true,
+      "createdAt": "2026-08-07T14:00:44.650Z",
+      "updatedAt": "2026-08-07T14:00:47.495Z"
+    },
+    {
+      "_id": "6a75eaa178298daa577bd749",
+      "name": "Audit Test Student",
+      "email": "audit_stu_1786112672554@sms.com",
+      "password": "$2a$10$Utjg7xR8Ym6BnQgPMPkQbuhxKsxpei2cy6PBk7PjRRvd/qFMUaVvC",
+      "role": "Student",
+      "isVerified": true,
+      "createdAt": "2026-08-07T14:24:33.370Z",
+      "updatedAt": "2026-08-07T14:24:36.123Z"
     }
   ],
-  "students": [],
-  "faculties": [],
-  "courses": [],
-  "attendance": [],
-  "results": [],
+  "students": [
+    {
+      "_id": "6a75e45e8c52fd90e31eeed1",
+      "userId": "6a75e45e8c52fd90e31eeed0",
+      "name": "Audit Test Student",
+      "email": "audit_stu_1786111070402@sms.com",
+      "enrollmentNo": "ENR11070465",
+      "age": 21,
+      "gender": "Male",
+      "grade": "Senior Honor",
+      "department": "CSE",
+      "semester": 1,
+      "parentName": "Parent Test",
+      "parentPhone": "9876543210",
+      "address": "Test Address",
+      "enrolledCourses": [],
+      "academicHistory": [],
+      "isDeleted": false,
+      "createdAt": "2026-08-07T13:57:50.465Z",
+      "updatedAt": "2026-08-07T13:57:50.534Z"
+    },
+    {
+      "_id": "6a75e4a88c52fd90e31eeed5",
+      "userId": "6a75e4a88c52fd90e31eeed4",
+      "name": "Audit Test Student",
+      "email": "audit_stu_1786111144903@sms.com",
+      "enrollmentNo": "ENR11144969",
+      "age": 21,
+      "gender": "Male",
+      "grade": "Senior Honor",
+      "department": "CSE",
+      "semester": 1,
+      "parentName": "Parent Test",
+      "parentPhone": "9876543210",
+      "address": "Test Address",
+      "enrolledCourses": [],
+      "academicHistory": [],
+      "isDeleted": false,
+      "createdAt": "2026-08-07T13:59:04.969Z",
+      "updatedAt": "2026-08-07T13:59:05.039Z"
+    },
+    {
+      "_id": "654c1a5f4f89ef1234567992",
+      "userId": "654c1a5f4f89ef1234567892",
+      "name": "Demo Student",
+      "email": "student@sms.com",
+      "enrollmentNo": "ENR12345678",
+      "age": 20,
+      "gender": "Male",
+      "grade": "Junior",
+      "department": "Computer Science",
+      "semester": 5,
+      "parentName": "John Doe",
+      "parentPhone": "9999999999",
+      "address": "Demo City",
+      "isDeleted": false,
+      "createdAt": "2026-06-01T10:00:00.000Z",
+      "updatedAt": "2026-06-01T10:00:00.000Z"
+    },
+    {
+      "_id": "6a75e4dc5c4e53c89f42c775",
+      "userId": "6a75e4dc5c4e53c89f42c774",
+      "name": "Audit Test Student",
+      "email": "audit_stu_1786111195525@sms.com",
+      "enrollmentNo": "ENR11196345",
+      "age": 21,
+      "gender": "Male",
+      "grade": "Senior Honor",
+      "department": "CSE",
+      "semester": 1,
+      "parentName": "Parent Test",
+      "parentPhone": "9876543210",
+      "address": "Test Address",
+      "enrolledCourses": [],
+      "academicHistory": [],
+      "isDeleted": false,
+      "createdAt": "2026-08-07T13:59:56.720Z",
+      "updatedAt": "2026-08-07T14:00:00.667Z"
+    },
+    {
+      "_id": "6a75e4f35c4e53c89f42c77b",
+      "userId": "6a75e4f35c4e53c89f42c77a",
+      "name": "Audit Test Student",
+      "email": "audit_stu_1786111217958@sms.com",
+      "enrollmentNo": "ENR11219180",
+      "age": 21,
+      "gender": "Male",
+      "grade": "Senior Honor",
+      "department": "CSE",
+      "semester": 1,
+      "parentName": "Parent Test",
+      "parentPhone": "9876543210",
+      "address": "Test Address",
+      "enrolledCourses": [],
+      "academicHistory": [],
+      "isDeleted": false,
+      "createdAt": "2026-08-07T14:00:19.574Z",
+      "updatedAt": "2026-08-07T14:00:23.610Z"
+    },
+    {
+      "_id": "6a75e50dc88eb7b69b93d99d",
+      "userId": "6a75e50cc88eb7b69b93d99c",
+      "name": "Audit Test Student",
+      "email": "audit_stu_1786111243820@sms.com",
+      "enrollmentNo": "ENR11244650",
+      "age": 21,
+      "gender": "Male",
+      "grade": "Senior Honor",
+      "department": "CSE",
+      "semester": 1,
+      "parentName": "Parent Test",
+      "parentPhone": "9876543210",
+      "address": "Test Address",
+      "enrolledCourses": [],
+      "academicHistory": [],
+      "isDeleted": false,
+      "createdAt": "2026-08-07T14:00:45.037Z",
+      "updatedAt": "2026-08-07T14:00:49.098Z"
+    },
+    {
+      "_id": "6a75eaa178298daa577bd74a",
+      "userId": "6a75eaa178298daa577bd749",
+      "name": "Audit Test Student",
+      "email": "audit_stu_1786112672554@sms.com",
+      "enrollmentNo": "ENR12673370",
+      "age": 21,
+      "gender": "Male",
+      "grade": "Senior Honor",
+      "department": "CSE",
+      "semester": 1,
+      "parentName": "Parent Test",
+      "parentPhone": "9876543210",
+      "address": "Test Address",
+      "enrolledCourses": [],
+      "academicHistory": [],
+      "isDeleted": false,
+      "createdAt": "2026-08-07T14:24:33.747Z",
+      "updatedAt": "2026-08-07T14:24:37.662Z"
+    }
+  ],
+  "faculties": [
+    {
+      "_id": "654c1a5f4f89ef1234567991",
+      "userId": "654c1a5f4f89ef1234567891",
+      "name": "Dr. Faculty",
+      "email": "faculty@sms.com",
+      "department": "Computer Science",
+      "designation": "Professor",
+      "isDeleted": false,
+      "createdAt": "2026-06-01T10:00:00.000Z",
+      "updatedAt": "2026-06-01T10:00:00.000Z"
+    }
+  ],
+  "courses": [
+    {
+      "_id": "6a75e4e35c4e53c89f42c776",
+      "name": "Audit Data Science 101 Advanced",
+      "code": "CS_2241",
+      "description": "Standard academic course curriculum.",
+      "credits": 3,
+      "semester": 1,
+      "capacity": 40,
+      "prerequisites": [],
+      "isDeleted": false,
+      "createdAt": "2026-08-07T14:00:03.021Z"
+    },
+    {
+      "_id": "6a75e513c88eb7b69b93d99e",
+      "name": "Audit Data Science 101 Advanced",
+      "code": "CS_0693",
+      "description": "Standard academic course curriculum.",
+      "credits": 3,
+      "semester": 1,
+      "capacity": 40,
+      "prerequisites": [],
+      "isDeleted": false,
+      "createdAt": "2026-08-07T14:00:51.548Z"
+    },
+    {
+      "_id": "6a75eaa878298daa577bd74b",
+      "name": "Audit Data Science 101 Advanced",
+      "code": "CS_9263",
+      "description": "Standard academic course curriculum.",
+      "credits": 3,
+      "semester": 1,
+      "capacity": 40,
+      "prerequisites": [],
+      "isDeleted": false,
+      "createdAt": "2026-08-07T14:24:40.032Z"
+    }
+  ],
+  "attendance": [
+    {
+      "_id": "6a75e4e55c4e53c89f42c777",
+      "studentId": "6a75e4dc5c4e53c89f42c775",
+      "courseId": "6a75e4e35c4e53c89f42c776",
+      "date": "2026-08-07",
+      "status": "Present",
+      "markedBy": "654c1a5f4f89ef1234567890",
+      "createdAt": "2026-08-07T14:00:05.373Z"
+    },
+    {
+      "_id": "6a75e516c88eb7b69b93d99f",
+      "studentId": "6a75e50dc88eb7b69b93d99d",
+      "courseId": "6a75e513c88eb7b69b93d99e",
+      "date": "2026-08-07",
+      "status": "Present",
+      "markedBy": "654c1a5f4f89ef1234567890",
+      "createdAt": "2026-08-07T14:00:54.022Z"
+    },
+    {
+      "_id": "6a75eaaa78298daa577bd74c",
+      "studentId": "6a75eaa178298daa577bd74a",
+      "courseId": "6a75eaa878298daa577bd74b",
+      "date": "2026-08-07",
+      "status": "Present",
+      "markedBy": "654c1a5f4f89ef1234567890",
+      "createdAt": "2026-08-07T14:24:42.399Z"
+    }
+  ],
+  "results": [
+    {
+      "_id": "6a75e517c88eb7b69b93d9a0",
+      "studentId": "6a75e50dc88eb7b69b93d99d",
+      "courseId": "6a75e513c88eb7b69b93d99e",
+      "semester": 5,
+      "internal": 18,
+      "external": 45,
+      "assignment": 14,
+      "practical": 13,
+      "grade": "A+",
+      "gpa": 4,
+      "markedBy": "654c1a5f4f89ef1234567890",
+      "createdAt": "2026-08-07T14:00:55.572Z",
+      "updatedAt": "2026-08-07T14:00:55.572Z"
+    },
+    {
+      "_id": "6a75eaab78298daa577bd74d",
+      "studentId": "6a75eaa178298daa577bd74a",
+      "courseId": "6a75eaa878298daa577bd74b",
+      "semester": 5,
+      "internal": 18,
+      "external": 45,
+      "assignment": 14,
+      "practical": 13,
+      "grade": "A+",
+      "gpa": 4,
+      "markedBy": "654c1a5f4f89ef1234567890",
+      "createdAt": "2026-08-07T14:24:43.942Z",
+      "updatedAt": "2026-08-07T14:24:43.942Z"
+    }
+  ],
   "qr_sessions": [],
   "chat_history": [],
   "activities": [],
-  "logs": []
+  "logs": [],
+  "chatHistory": [
+    {
+      "_id": "6a75bfa98c52fd90e31eeecc",
+      "userId": "654c1a5f4f89ef1234567890",
+      "role": "user",
+      "content": "HII",
+      "createdAt": "2026-08-07T11:21:13.109Z"
+    },
+    {
+      "_id": "6a75bfa98c52fd90e31eeecd",
+      "userId": "654c1a5f4f89ef1234567890",
+      "role": "model",
+      "content": "### 📘 Attendance Management Page (/attendance)\n\nThe Attendance page supports manual attendance logging, automatic 75% compliance alerts, and live QR code scanning.\n\nAttendance System Features:\n- Manual Attendance Log: Select Date and Course to toggle student status (Present, Absent, Late, On Leave) or use Batch Actions (Mark All Present / Mark All Absent).\n- Live Dynamic QR Attendance Generator (Faculty): Faculty selects course and session duration to display a scannable dynamic QR code with live countdown.\n- Live Camera QR Scanner (Student): Students click \"Scan & Mark Attendance\" to activate device camera or type session code manually.\n- Low Attendance Alert Threshold: Students dropping below 75% attendance are highlighted with red alerts and automated parent notification triggers.",
+      "createdAt": "2026-08-07T11:21:13.110Z"
+    },
+    {
+      "_id": "6a75bfd28c52fd90e31eeece",
+      "userId": "654c1a5f4f89ef1234567890",
+      "role": "user",
+      "content": "LIST OF ALL EMPLOYEES",
+      "createdAt": "2026-08-07T11:21:54.890Z"
+    },
+    {
+      "_id": "6a75bfd28c52fd90e31eeecf",
+      "userId": "654c1a5f4f89ef1234567890",
+      "role": "model",
+      "content": "### 📘 Attendance Management Page (/attendance)\n\nThe Attendance page supports manual attendance logging, automatic 75% compliance alerts, and live QR code scanning.\n\nAttendance System Features:\n- Manual Attendance Log: Select Date and Course to toggle student status (Present, Absent, Late, On Leave) or use Batch Actions (Mark All Present / Mark All Absent).\n- Live Dynamic QR Attendance Generator (Faculty): Faculty selects course and session duration to display a scannable dynamic QR code with live countdown.\n- Live Camera QR Scanner (Student): Students click \"Scan & Mark Attendance\" to activate device camera or type session code manually.\n- Low Attendance Alert Threshold: Students dropping below 75% attendance are highlighted with red alerts and automated parent notification triggers.",
+      "createdAt": "2026-08-07T11:21:54.891Z"
+    },
+    {
+      "_id": "6a75e4628c52fd90e31eeed2",
+      "userId": "654c1a5f4f89ef1234567890",
+      "role": "user",
+      "content": "How many students are enrolled?",
+      "createdAt": "2026-08-07T13:57:54.050Z"
+    },
+    {
+      "_id": "6a75e4628c52fd90e31eeed3",
+      "userId": "654c1a5f4f89ef1234567890",
+      "role": "model",
+      "content": "### 📘 Student Directory Page (/students)\n\nThe Student Directory allows searching, filtering, adding, importing, and managing student profiles.\n\nStudent Directory Features:\n- Instant Search: Search by Student Name or Enrollment Number (e.g. ENR25844945).\n- Filter Controls: Filter by Department (Computer Science, IT, Electronics, Mathematics), Semester, Status (Active, Suspended, Graduated), or Risk Level (High Risk, Medium Risk, Low Risk).\n- Add Student Modal: Create a new student record manually with contact and academic details.\n- Bulk CSV Import Modal: Upload an Excel or CSV file to import multiple student profiles simultaneously.\n- Student Drawer: Click any student row to view full contact details, attendance breakdown, GPA trend, and send parent notifications.\n\n\n[VERIFIED LIVE DATABASE SUMMARY]: Total registered students in system: 1. Departments: Computer Science, IT, Electronics, Mathematics.",
+      "createdAt": "2026-08-07T13:57:54.050Z"
+    },
+    {
+      "_id": "6a75e4a98c52fd90e31eeed6",
+      "userId": "654c1a5f4f89ef1234567890",
+      "role": "user",
+      "content": "How many students are enrolled?",
+      "createdAt": "2026-08-07T13:59:05.057Z"
+    },
+    {
+      "_id": "6a75e4a98c52fd90e31eeed7",
+      "userId": "654c1a5f4f89ef1234567890",
+      "role": "model",
+      "content": "### 📘 Student Directory Page (/students)\n\nThe Student Directory allows searching, filtering, adding, importing, and managing student profiles.\n\nStudent Directory Features:\n- Instant Search: Search by Student Name or Enrollment Number (e.g. ENR25844945).\n- Filter Controls: Filter by Department (Computer Science, IT, Electronics, Mathematics), Semester, Status (Active, Suspended, Graduated), or Risk Level (High Risk, Medium Risk, Low Risk).\n- Add Student Modal: Create a new student record manually with contact and academic details.\n- Bulk CSV Import Modal: Upload an Excel or CSV file to import multiple student profiles simultaneously.\n- Student Drawer: Click any student row to view full contact details, attendance breakdown, GPA trend, and send parent notifications.\n\n\n[VERIFIED LIVE DATABASE SUMMARY]: Total registered students in system: 2. Departments: Computer Science, IT, Electronics, Mathematics.",
+      "createdAt": "2026-08-07T13:59:05.058Z"
+    },
+    {
+      "_id": "6a75e4f05c4e53c89f42c778",
+      "userId": "654c1a5f4f89ef1234567890",
+      "role": "user",
+      "content": "How many students are enrolled?",
+      "createdAt": "2026-08-07T14:00:16.785Z"
+    },
+    {
+      "_id": "6a75e4f15c4e53c89f42c779",
+      "userId": "654c1a5f4f89ef1234567890",
+      "role": "model",
+      "content": "### 📘 Student Directory Page (/students)\n\nThe Student Directory allows searching, filtering, adding, importing, and managing student profiles.\n\nStudent Directory Features:\n- Instant Search: Search by Student Name or Enrollment Number (e.g. ENR25844945).\n- Filter Controls: Filter by Department (Computer Science, IT, Electronics, Mathematics), Semester, Status (Active, Suspended, Graduated), or Risk Level (High Risk, Medium Risk, Low Risk).\n- Add Student Modal: Create a new student record manually with contact and academic details.\n- Bulk CSV Import Modal: Upload an Excel or CSV file to import multiple student profiles simultaneously.\n- Student Drawer: Click any student row to view full contact details, attendance breakdown, GPA trend, and send parent notifications.\n\n\n[VERIFIED LIVE DATABASE SUMMARY]: Total registered students in system: 4. Departments: Computer Science, IT, Electronics, Mathematics.",
+      "createdAt": "2026-08-07T14:00:17.574Z"
+    },
+    {
+      "_id": "6a75e51bc88eb7b69b93d9a1",
+      "userId": "654c1a5f4f89ef1234567890",
+      "role": "user",
+      "content": "How many students are enrolled?",
+      "createdAt": "2026-08-07T14:00:59.768Z"
+    },
+    {
+      "_id": "6a75e51cc88eb7b69b93d9a2",
+      "userId": "654c1a5f4f89ef1234567890",
+      "role": "model",
+      "content": "### 📘 Student Directory Page (/students)\n\nThe Student Directory allows searching, filtering, adding, importing, and managing student profiles.\n\nStudent Directory Features:\n- Instant Search: Search by Student Name or Enrollment Number (e.g. ENR25844945).\n- Filter Controls: Filter by Department (Computer Science, IT, Electronics, Mathematics), Semester, Status (Active, Suspended, Graduated), or Risk Level (High Risk, Medium Risk, Low Risk).\n- Add Student Modal: Create a new student record manually with contact and academic details.\n- Bulk CSV Import Modal: Upload an Excel or CSV file to import multiple student profiles simultaneously.\n- Student Drawer: Click any student row to view full contact details, attendance breakdown, GPA trend, and send parent notifications.\n\n\n[VERIFIED LIVE DATABASE SUMMARY]: Total registered students in system: 6. Departments: Computer Science, IT, Electronics, Mathematics.",
+      "createdAt": "2026-08-07T14:01:00.563Z"
+    },
+    {
+      "_id": "6a75eaaf78298daa577bd74e",
+      "userId": "654c1a5f4f89ef1234567890",
+      "role": "user",
+      "content": "How many students are enrolled?",
+      "createdAt": "2026-08-07T14:24:47.777Z"
+    },
+    {
+      "_id": "6a75eab078298daa577bd74f",
+      "userId": "654c1a5f4f89ef1234567890",
+      "role": "model",
+      "content": "### 📘 Student Directory Page (/students)\n\nThe Student Directory allows searching, filtering, adding, importing, and managing student profiles.\n\nStudent Directory Features:\n- Instant Search: Search by Student Name or Enrollment Number (e.g. ENR25844945).\n- Filter Controls: Filter by Department (Computer Science, IT, Electronics, Mathematics), Semester, Status (Active, Suspended, Graduated), or Risk Level (High Risk, Medium Risk, Low Risk).\n- Add Student Modal: Create a new student record manually with contact and academic details.\n- Bulk CSV Import Modal: Upload an Excel or CSV file to import multiple student profiles simultaneously.\n- Student Drawer: Click any student row to view full contact details, attendance breakdown, GPA trend, and send parent notifications.\n\n\n[VERIFIED LIVE DATABASE SUMMARY]: Total registered students in system: 7. Departments: Computer Science, IT, Electronics, Mathematics.",
+      "createdAt": "2026-08-07T14:24:48.538Z"
+    }
+  ]
 }

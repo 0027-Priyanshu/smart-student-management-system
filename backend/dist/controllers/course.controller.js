@@ -12,22 +12,16 @@ class CourseController {
             let courses = await repo_service_1.RepoService.findCourses({ isDeleted: showDeleted });
             if (requester.role === 'Student') {
                 const studentProfile = await repo_service_1.RepoService.findStudentByUserId(requester.userId);
-                if (studentProfile) {
-                    const enrolledIds = studentProfile.enrolledCourses?.map((c) => (c._id || c.id || c).toString()) || [];
+                if (studentProfile && studentProfile.enrolledCourses && studentProfile.enrolledCourses.length > 0) {
+                    const enrolledIds = studentProfile.enrolledCourses.map((c) => (c._id || c.id || c).toString());
                     courses = courses.filter((c) => enrolledIds.includes((c._id || c.id).toString()));
-                }
-                else {
-                    courses = [];
                 }
             }
             else if (requester.role === 'Faculty') {
                 const facultyProfile = await repo_service_1.RepoService.findFacultyByUserId(requester.userId);
-                if (facultyProfile) {
-                    const assignedIds = facultyProfile.assignedCourses?.map((c) => (c._id || c.id || c).toString()) || [];
+                if (facultyProfile && facultyProfile.assignedCourses && facultyProfile.assignedCourses.length > 0) {
+                    const assignedIds = facultyProfile.assignedCourses.map((c) => (c._id || c.id || c).toString());
                     courses = courses.filter((c) => assignedIds.includes((c._id || c.id).toString()) || c.facultyId?.toString() === requester.userId);
-                }
-                else {
-                    courses = [];
                 }
             }
             return res.json({ courses });

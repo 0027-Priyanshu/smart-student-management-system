@@ -12,19 +12,15 @@ export class CourseController {
 
       if (requester.role === 'Student') {
         const studentProfile = await RepoService.findStudentByUserId(requester.userId);
-        if (studentProfile) {
-          const enrolledIds = studentProfile.enrolledCourses?.map((c: any) => (c._id || c.id || c).toString()) || [];
+        if (studentProfile && studentProfile.enrolledCourses && studentProfile.enrolledCourses.length > 0) {
+          const enrolledIds = studentProfile.enrolledCourses.map((c: any) => (c._id || c.id || c).toString());
           courses = courses.filter((c: any) => enrolledIds.includes((c._id || c.id).toString()));
-        } else {
-          courses = [];
         }
       } else if (requester.role === 'Faculty') {
         const facultyProfile = await RepoService.findFacultyByUserId(requester.userId);
-        if (facultyProfile) {
-          const assignedIds = facultyProfile.assignedCourses?.map((c: any) => (c._id || c.id || c).toString()) || [];
+        if (facultyProfile && facultyProfile.assignedCourses && facultyProfile.assignedCourses.length > 0) {
+          const assignedIds = facultyProfile.assignedCourses.map((c: any) => (c._id || c.id || c).toString());
           courses = courses.filter((c: any) => assignedIds.includes((c._id || c.id).toString()) || c.facultyId?.toString() === requester.userId);
-        } else {
-          courses = [];
         }
       }
 

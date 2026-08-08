@@ -7,8 +7,8 @@
       "password": "$2a$10$vN6ByH2.jApb.wo1AfTkW.nXeg9gbt8vGJyB3SGUXMdZo/hFzoJLm",
       "role": "Admin",
       "createdAt": "2026-06-01T10:00:00.000Z",
-      "updatedAt": "2026-08-08T08:55:27.919Z",
-      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NTRjMWE1ZjRmODllZjEyMzQ1Njc4OTAiLCJpYXQiOjE3ODYxNzkzMjcsImV4cCI6MTc4Njc4NDEyN30.g3qGV-qcrA0vMV5ZVlKJ97CD-KoliWOofw3UG5MNTFs"
+      "updatedAt": "2026-08-08T13:23:58.275Z",
+      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NTRjMWE1ZjRmODllZjEyMzQ1Njc4OTAiLCJpYXQiOjE3ODYxOTU0MzgsImV4cCI6MTc4NjgwMDIzOH0.4AizXdqPNnpjcf9_McbIJFcHVncr3Tx7Ld3KV-25CB4"
     },
     {
       "_id": "6a75e45e8c52fd90e31eeed0",
@@ -38,8 +38,8 @@
       "role": "Faculty",
       "isVerified": true,
       "createdAt": "2026-06-01T10:00:00.000Z",
-      "updatedAt": "2026-08-08T10:20:11.493Z",
-      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NTRjMWE1ZjRmODllZjEyMzQ1Njc4OTEiLCJpYXQiOjE3ODYxODQ0MTEsImV4cCI6MTc4Njc4OTIxMX0.sv6DsysHMmrzpGRujA1wiBpfYdTytgMLduOQ-1RwSgE"
+      "updatedAt": "2026-08-08T13:25:04.241Z",
+      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NTRjMWE1ZjRmODllZjEyMzQ1Njc4OTEiLCJpYXQiOjE3ODYxOTU1MDQsImV4cCI6MTc4NjgwMDMwNH0.yHM67kTBMKIMkkE0rAh04MWdKnXeO1n7R5cnGUaF_34"
     },
     {
       "_id": "654c1a5f4f89ef1234567892",
@@ -148,6 +148,11 @@
       "parentName": "John Doe",
       "parentPhone": "9999999999",
       "address": "Demo City",
+      "enrolledCourses": [
+        "6a772d68d4376794ad6c5719",
+        "6a75e513c88eb7b69b93d99e",
+        "6a75e4e35c4e53c89f42c776"
+      ],
       "isDeleted": false,
       "createdAt": "2026-06-01T10:00:00.000Z",
       "updatedAt": "2026-06-01T10:00:00.000Z"
@@ -241,6 +246,11 @@
       "email": "faculty@sms.com",
       "department": "Computer Science",
       "designation": "Professor",
+      "assignedCourses": [
+        "6a772d68d4376794ad6c5719",
+        "6a75e513c88eb7b69b93d99e",
+        "6a75e4e35c4e53c89f42c776"
+      ],
       "isDeleted": false,
       "createdAt": "2026-06-01T10:00:00.000Z",
       "updatedAt": "2026-06-01T10:00:00.000Z"
@@ -282,6 +292,19 @@
       "prerequisites": [],
       "isDeleted": false,
       "createdAt": "2026-08-07T14:24:40.032Z"
+    },
+    {
+      "_id": "6a772d68d4376794ad6c5719",
+      "code": "CS501",
+      "description": "Standard academic course curriculum.",
+      "credits": 3,
+      "semester": 1,
+      "capacity": 40,
+      "prerequisites": [],
+      "facultyId": null,
+      "enrolledStudents": [],
+      "isDeleted": false,
+      "createdAt": "2026-08-08T13:21:44.995Z"
     }
   ],
   "attendance": [
@@ -766,5 +789,7 @@
       "scannedStudents": [],
       "createdAt": "2026-08-08T07:36:42.062Z"
     }
-  ]
+  ],
+  "faceSessions": [],
+  "notifications": []
 }

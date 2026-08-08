@@ -20,12 +20,26 @@ router.get('/qr/session/:sessionId', auth_middleware_1.authenticateJWT, attendan
 router.post('/qr/confirm', auth_middleware_1.authenticateJWT, (0, auth_middleware_1.requireRole)(['Student']), attendance_controller_1.AttendanceController.confirmQrAttendance);
 // GET: /api/attendance/heatmap (Protected)
 router.get('/heatmap', auth_middleware_1.authenticateJWT, attendance_controller_1.AttendanceController.getHeatmap);
-// POST: /api/attendance/face/register (Admin or Faculty only)
-router.post('/face/register', auth_middleware_1.authenticateJWT, (0, auth_middleware_1.requireRole)(['Super Admin', 'Admin', 'Faculty']), attendance_controller_1.AttendanceController.registerFace);
-// DELETE: /api/attendance/face/register/:studentId (Admin or Faculty only)
-router.delete('/face/register/:studentId', auth_middleware_1.authenticateJWT, (0, auth_middleware_1.requireRole)(['Super Admin', 'Admin', 'Faculty']), attendance_controller_1.AttendanceController.removeFace);
-// GET: /api/attendance/face/embeddings (Admin or Faculty only)
-router.get('/face/embeddings', auth_middleware_1.authenticateJWT, (0, auth_middleware_1.requireRole)(['Super Admin', 'Admin', 'Faculty']), attendance_controller_1.AttendanceController.getFaceEmbeddings);
-// POST: /api/attendance/face/mark (Admin or Faculty only)
+// POST: /api/attendance/face/register (Admin ONLY)
+router.post('/face/register', auth_middleware_1.authenticateJWT, (0, auth_middleware_1.requireRole)(['Super Admin', 'Admin']), attendance_controller_1.AttendanceController.registerFace);
+// DELETE: /api/attendance/face/register/:studentId (Admin ONLY)
+router.delete('/face/register/:studentId', auth_middleware_1.authenticateJWT, (0, auth_middleware_1.requireRole)(['Super Admin', 'Admin']), attendance_controller_1.AttendanceController.removeFace);
+// GET: /api/attendance/face/embeddings (Admin ONLY)
+router.get('/face/embeddings', auth_middleware_1.authenticateJWT, (0, auth_middleware_1.requireRole)(['Super Admin', 'Admin']), attendance_controller_1.AttendanceController.getFaceEmbeddings);
+// POST: /api/attendance/face/mark (Admin or Faculty oversight)
 router.post('/face/mark', auth_middleware_1.authenticateJWT, (0, auth_middleware_1.requireRole)(['Super Admin', 'Admin', 'Faculty']), attendance_controller_1.AttendanceController.markFaceAttendance);
+// ==================== TIMED FACE SESSION & NOTIFICATIONS ====================
+// POST: /api/attendance/face/session/start (Faculty or Admin)
+router.post('/face/session/start', auth_middleware_1.authenticateJWT, (0, auth_middleware_1.requireRole)(['Super Admin', 'Admin', 'Faculty']), attendance_controller_1.AttendanceController.startFaceSession);
+// GET: /api/attendance/face/session/active (Protected)
+router.get('/face/session/active', auth_middleware_1.authenticateJWT, attendance_controller_1.AttendanceController.getActiveFaceSession);
+// GET: /api/attendance/face/session/:sessionId (Protected)
+router.get('/face/session/:sessionId', auth_middleware_1.authenticateJWT, attendance_controller_1.AttendanceController.getFaceSession);
+// POST: /api/attendance/face/session/end (Faculty or Admin)
+router.post('/face/session/end', auth_middleware_1.authenticateJWT, (0, auth_middleware_1.requireRole)(['Super Admin', 'Admin', 'Faculty']), attendance_controller_1.AttendanceController.endFaceSession);
+// POST: /api/attendance/face/verify-self (Student ONLY - 1-to-1 Biometric Matching)
+router.post('/face/verify-self', auth_middleware_1.authenticateJWT, (0, auth_middleware_1.requireRole)(['Student']), attendance_controller_1.AttendanceController.verifySelfFace);
+// GET & PUT Notifications (Protected)
+router.get('/notifications', auth_middleware_1.authenticateJWT, attendance_controller_1.AttendanceController.getNotifications);
+router.put('/notifications/:id/read', auth_middleware_1.authenticateJWT, attendance_controller_1.AttendanceController.markNotificationRead);
 exports.default = router;

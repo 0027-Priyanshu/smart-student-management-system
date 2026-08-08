@@ -761,4 +761,354 @@ export class RepoService {
       return session;
     }
   }
+
+  // ==================== TIMED FACE ATTENDANCE SESSIONS & NOTIFICATIONS ====================
+
+  static async createFaceSession(sessionData: {
+    courseId: string;
+    courseName: string;
+    lectureTitle: string;
+    facultyId: string;
+    facultyName: string;
+    durationMinutes: number;
+  }): Promise<any> {
+    const sessionId = 'FACE_' + Math.random().toString(36).substring(2, 9).toUpperCase();
+    const now = new Date();
+    const duration = sessionData.durationMinutes || 10;
+    const expiresAt = new Date(now.getTime() + duration * 60 * 1000).toISOString();
+
+    const newSession = {
+      _id: generateId(),
+      sessionId,
+      courseId: sessionData.courseId,
+      courseName: sessionData.courseName,
+      lectureTitle: sessionData.lectureTitle,
+      facultyId: sessionData.facultyId,
+      facultyName: sessionData.facultyName,
+      durationMinutes: duration,
+      startTime: now.toISOString(),
+      expiresAt,
+      status: 'ACTIVE',
+      verifiedStudents: [],
+      createdAt: now.toISOString()
+    };
+
+    const db = readJsonDb();
+    if (!db.faceSessions) db.faceSessions = [];
+    
+    // Close any previous active session for this course
+    db.faceSessions.forEach((s: any) => {
+      if (s.courseId === sessionData.courseId && s.status === 'ACTIVE') {
+        s.status = 'CLOSED';
+      }
+    });
+
+    db.faceSessions.push(newSession);
+
+    // Find all students enrolled in this course to send notifications
+    const enrolledStudents = db.students.filter((s: any) => 
+      !s.isDeleted && ((s.enrolledCourses || []).includes(sessionData.courseId) || !s.enrolledCourses || s.enrolledCourses.length === 0)
+    );
+
+    if (!db.notifications) db.notifications = [];
+    const createdNotifications: any[] = [];
+
+    enrolledStudents.forEach((student: any) => {
+      const studentId = student._id || student.id;
+      const notif = {
+        _id: generateId(),
+        studentId,
+        sessionId,
+        courseId: sessionData.courseId,
+        courseName: sessionData.courseName,
+        lectureTitle: sessionData.lectureTitle,
+        title: 'Attendance Session Open',
+        message: `${sessionData.courseName} attendance is now open for "${sessionData.lectureTitle}". Please verify your face to mark Present.`,
+        type: 'FACE_ATTENDANCE',
+        durationMinutes: duration,
+        expiresAt,
+        isRead: false,
+        createdAt: now.toISOString()
+      };
+      db.notifications.push(notif);
+      createdNotifications.push(notif);
+    });
+
+    writeJsonDb(db);
+    return { session: newSession, notificationsCount: createdNotifications.length };
+  }
+
+  static async findFaceSessionById(sessionId: string): Promise<any> {
+    const db = readJsonDb();
+    if (!db.faceSessions) db.faceSessions = [];
+    const session = db.faceSessions.find((s: any) => s.sessionId === sessionId);
+    if (!session) return null;
+
+    // Check expiry
+    const isExpired = new Date(session.expiresAt).getTime() < Date.now();
+    if (isExpired && session.status === 'ACTIVE') {
+      session.status = 'CLOSED';
+      writeJsonDb(db);
+    }
+    return session;
+  }
+
+  static async getActiveFaceSessionForCourse(courseId: string): Promise<any> {
+    const db = readJsonDb();
+    if (!db.faceSessions) db.faceSessions = [];
+    const session = db.faceSessions.find((s: any) => s.courseId === courseId && s.status === 'ACTIVE');
+    if (!session) return null;
+
+    if (new Date(session.expiresAt).getTime() < Date.now()) {
+      session.status = 'CLOSED';
+      writeJsonDb(db);
+      return null;
+    }
+    return session;
+  }
+
+  static async getActiveFaceSessionForStudent(studentId: string): Promise<any> {
+    const db = readJsonDb();
+    if (!db.students) return null;
+    const student = db.students.find((s: any) => s._id === studentId || s.id === studentId || s.userId === studentId);
+    if (!student) return null;
+
+    const actualStudentId = student._id || student.id;
+
+    if (!db.faceSessions) return null;
+    const now = Date.now();
+
+    // Find active non-expired session for course student is enrolled in
+    const session = db.faceSessions.find((s: any) => {
+      if (s.status !== 'ACTIVE') return false;
+      if (new Date(s.expiresAt).getTime() < now) {
+        s.status = 'CLOSED';
+        return false;
+      }
+      if (!student.enrolledCourses || student.enrolledCourses.length === 0) return true;
+      return student.enrolledCourses.includes(s.courseId);
+    });
+
+    writeJsonDb(db);
+    return session || null;
+  }
+
+  static async endFaceSession(sessionId: string): Promise<any> {
+    const db = readJsonDb();
+    if (!db.faceSessions) return null;
+    const session = db.faceSessions.find((s: any) => s.sessionId === sessionId);
+    if (!session) return null;
+
+    session.status = 'CLOSED';
+
+    // Automatically mark missing enrolled students as Absent
+    const today = session.startTime.split('T')[0];
+    const enrolledStudents = db.students.filter((s: any) => 
+      !s.isDeleted && ((s.enrolledCourses || []).includes(session.courseId) || !s.enrolledCourses || s.enrolledCourses.length === 0)
+    );
+
+    const verifiedIds = (session.verifiedStudents || []).map((v: any) => v.studentId);
+
+    if (!db.attendance) db.attendance = [];
+
+    enrolledStudents.forEach((st: any) => {
+      const stId = st._id || st.id;
+      if (!verifiedIds.includes(stId)) {
+        const existing = db.attendance.find((a: any) => a.studentId === stId && a.courseId === session.courseId && a.date === today);
+        if (!existing) {
+          db.attendance.push({
+            _id: generateId(),
+            studentId: stId,
+            courseId: session.courseId,
+            date: today,
+            status: 'Absent',
+            attendanceMethod: 'FACE',
+            lectureTitle: session.lectureTitle,
+            markedBy: session.facultyName || 'Faculty',
+            createdAt: new Date().toISOString()
+          });
+        }
+      }
+    });
+
+    writeJsonDb(db);
+    return session;
+  }
+
+  static async verifyStudentFace1to1(params: {
+    studentUserIdOrId: string;
+    capturedDescriptor: number[];
+    sessionId?: string;
+  }): Promise<{
+    success: boolean;
+    status: number;
+    error?: string;
+    student?: any;
+    confidence?: number;
+    attendance?: any;
+    session?: any;
+  }> {
+    const db = readJsonDb();
+    
+    // Find Student record matching user or student ID
+    const student = db.students.find((s: any) => 
+      s._id === params.studentUserIdOrId || 
+      s.id === params.studentUserIdOrId || 
+      s.userId === params.studentUserIdOrId
+    );
+
+    if (!student) {
+      return { success: false, status: 404, error: 'Student record not found.' };
+    }
+
+    const actualStudentId = student._id || student.id;
+
+    // Failure Case 1: Face Not Registered
+    if (!student.isFaceRegistered || !student.faceDescriptor || student.faceDescriptor.length === 0) {
+      return { 
+        success: false, 
+        status: 400, 
+        error: 'Your face is not registered. Please contact the administrator.' 
+      };
+    }
+
+    // Determine Active Session
+    let session: any = null;
+    if (params.sessionId) {
+      session = db.faceSessions?.find((s: any) => s.sessionId === params.sessionId);
+    } else {
+      session = db.faceSessions?.find((s: any) => {
+        if (s.status !== 'ACTIVE') return false;
+        if (new Date(s.expiresAt).getTime() < Date.now()) return false;
+        if (!student.enrolledCourses || student.enrolledCourses.length === 0) return true;
+        return student.enrolledCourses.includes(s.courseId);
+      });
+    }
+
+    // Failure Case: Session Expired / Not Found
+    if (!session || session.status !== 'ACTIVE' || new Date(session.expiresAt).getTime() < Date.now()) {
+      if (session) session.status = 'CLOSED';
+      writeJsonDb(db);
+      return { success: false, status: 400, error: 'This attendance session has ended.' };
+    }
+
+    // Failure Case: Student Not Enrolled
+    if (student.enrolledCourses && student.enrolledCourses.length > 0 && !student.enrolledCourses.includes(session.courseId)) {
+      return { success: false, status: 403, error: 'You are not enrolled in this class.' };
+    }
+
+    // Failure Case: Attendance Already Marked
+    const today = new Date().toISOString().split('T')[0];
+    const alreadyVerifiedInSession = (session.verifiedStudents || []).some((v: any) => v.studentId === actualStudentId);
+    const existingAttendance = db.attendance.find((a: any) => 
+      a.studentId === actualStudentId && 
+      a.courseId === session.courseId && 
+      a.date === today
+    );
+
+    if (alreadyVerifiedInSession || (existingAttendance && existingAttendance.status === 'Present')) {
+      return { success: false, status: 409, error: 'Attendance already recorded for this session.' };
+    }
+
+    // Perform 1-to-1 Biometric Matching
+    let sumSq = 0;
+    const registered = student.faceDescriptor;
+    const captured = params.capturedDescriptor;
+
+    if (registered.length !== captured.length) {
+      return { success: false, status: 400, error: 'Biometric descriptor format mismatch.' };
+    }
+
+    for (let i = 0; i < registered.length; i++) {
+      const diff = registered[i] - captured[i];
+      sumSq += diff * diff;
+    }
+    const distance = Math.sqrt(sumSq);
+
+    // Failure Case: Face Does Not Match (Threshold 0.50)
+    if (distance >= 0.50) {
+      return { 
+        success: false, 
+        status: 400, 
+        error: 'Face verification failed. Please try again.' 
+      };
+    }
+
+    const confidence = Math.round((1 - distance) * 100);
+    const now = new Date();
+
+    // Mark Attendance
+    const attendanceRecord = {
+      _id: generateId(),
+      studentId: actualStudentId,
+      courseId: session.courseId,
+      date: today,
+      status: 'Present',
+      attendanceMethod: 'FACE',
+      recognitionConfidence: confidence,
+      lectureTitle: session.lectureTitle,
+      markedBy: session.facultyName || 'Faculty',
+      createdAt: now.toISOString()
+    };
+
+    if (existingAttendance) {
+      Object.assign(existingAttendance, attendanceRecord);
+    } else {
+      db.attendance.push(attendanceRecord);
+    }
+
+    // Record in Session Verified List
+    if (!session.verifiedStudents) session.verifiedStudents = [];
+    const verifiedEntry = {
+      studentId: actualStudentId,
+      studentName: student.name,
+      enrollmentNo: student.enrollmentNo,
+      timestamp: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      confidence
+    };
+    session.verifiedStudents.push(verifiedEntry);
+
+    writeJsonDb(db);
+
+    return {
+      success: true,
+      status: 200,
+      student,
+      confidence,
+      attendance: attendanceRecord,
+      session
+    };
+  }
+
+  static async getUserNotifications(userIdOrStudentId: string): Promise<any[]> {
+    const db = readJsonDb();
+    if (!db.notifications) return [];
+
+    const student = db.students.find((s: any) => 
+      s._id === userIdOrStudentId || 
+      s.id === userIdOrStudentId || 
+      s.userId === userIdOrStudentId
+    );
+
+    const actualId = student ? (student._id || student.id) : userIdOrStudentId;
+    const now = Date.now();
+
+    return db.notifications.filter((n: any) => 
+      (n.studentId === actualId || n.studentId === userIdOrStudentId) &&
+      new Date(n.expiresAt).getTime() > now
+    ).sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  static async markNotificationRead(notificationId: string): Promise<boolean> {
+    const db = readJsonDb();
+    if (!db.notifications) return false;
+    const notif = db.notifications.find((n: any) => n._id === notificationId || n.id === notificationId);
+    if (notif) {
+      notif.isRead = true;
+      writeJsonDb(db);
+      return true;
+    }
+    return false;
+  }
 }
+

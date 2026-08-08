@@ -212,6 +212,10 @@ function readJsonDb() {
             parsed.results = [];
         if (!parsed.logs)
             parsed.logs = [];
+        if (!parsed.faceSessions)
+            parsed.faceSessions = [];
+        if (!parsed.notifications)
+            parsed.notifications = [];
         return parsed;
     }
     catch (error) {

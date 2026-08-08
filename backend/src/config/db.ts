@@ -219,6 +219,8 @@ export function readJsonDb() {
     if (!parsed.attendance) parsed.attendance = [];
     if (!parsed.results) parsed.results = [];
     if (!parsed.logs) parsed.logs = [];
+    if (!parsed.faceSessions) parsed.faceSessions = [];
+    if (!parsed.notifications) parsed.notifications = [];
 
     return parsed;
   } catch (error) {

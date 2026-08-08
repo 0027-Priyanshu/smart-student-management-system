@@ -246,26 +246,50 @@ export default function Login() {
               </Link>
             </div>
 
-            {/* Hint Panel */}
-            <div className="mt-6 p-4 bg-slate-50 border border-slate-200 rounded-2xl text-[11px] text-slate-600 space-y-2">
-              <span className="font-bold text-slate-800 block mb-1">Demo Credentials (Click to auto-fill):</span>
-              <div 
-                onClick={() => handleDemoLogin('admin@sms.com', 'admin123')}
-                className="cursor-pointer hover:bg-white p-1.5 -ml-1.5 rounded-lg transition-colors flex items-center gap-1 border border-transparent hover:border-slate-200"
-              >
-                • Admin: <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded font-mono">admin@sms.com</code> / <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded font-mono">admin123</code>
-              </div>
-              <div 
-                onClick={() => handleDemoLogin('faculty@sms.com', 'faculty123')}
-                className="cursor-pointer hover:bg-white p-1.5 -ml-1.5 rounded-lg transition-colors flex items-center gap-1 border border-transparent hover:border-slate-200"
-              >
-                • Faculty: <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded font-mono">faculty@sms.com</code> / <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded font-mono">faculty123</code>
-              </div>
-              <div 
-                onClick={() => handleDemoLogin('student@sms.com', 'student123')}
-                className="cursor-pointer hover:bg-white p-1.5 -ml-1.5 rounded-lg transition-colors flex items-center gap-1 border border-transparent hover:border-slate-200"
-              >
-                • Student: <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded font-mono">student@sms.com</code> / <code className="text-[#f97316] bg-[#f97316]/10 px-1 py-0.5 rounded font-mono">student123</code>
+            {/* Premium 3D Demo Role Selection Buttons */}
+            <div className="mt-6 pt-5 border-t border-slate-100">
+              <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 mb-3 text-center">
+                Instant Demo Access — Select Role
+              </p>
+              <div className="grid grid-cols-3 gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => handleDemoLogin('admin@sms.com', 'admin123')}
+                  className="group relative flex flex-col items-center justify-center p-3 bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700/60 hover:border-orange-500/50 text-white rounded-2xl shadow-md hover:shadow-xl hover:shadow-orange-500/10 transform hover:-translate-y-1 hover:scale-[1.03] active:translate-y-0 active:scale-100 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#f97316]"
+                  aria-label="Demo Admin Login"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-orange-500/20 text-[#f97316] flex items-center justify-center mb-1.5 group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                  </div>
+                  <span className="text-xs font-title font-black tracking-wide text-slate-100">Admin</span>
+                  <span className="text-[9px] text-slate-400 font-medium mt-0.5">System Access</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleDemoLogin('faculty@sms.com', 'faculty123')}
+                  className="group relative flex flex-col items-center justify-center p-3 bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700/60 hover:border-amber-500/50 text-white rounded-2xl shadow-md hover:shadow-xl hover:shadow-amber-500/10 transform hover:-translate-y-1 hover:scale-[1.03] active:translate-y-0 active:scale-100 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  aria-label="Demo Faculty Login"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center mb-1.5 group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                  </div>
+                  <span className="text-xs font-title font-black tracking-wide text-slate-100">Faculty</span>
+                  <span className="text-[9px] text-slate-400 font-medium mt-0.5">Course Instructor</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleDemoLogin('student@sms.com', 'student123')}
+                  className="group relative flex flex-col items-center justify-center p-3 bg-gradient-to-b from-slate-800 to-slate-900 border border-slate-700/60 hover:border-emerald-500/50 text-white rounded-2xl shadow-md hover:shadow-xl hover:shadow-emerald-500/10 transform hover:-translate-y-1 hover:scale-[1.03] active:translate-y-0 active:scale-100 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  aria-label="Demo Student Login"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mb-1.5 group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  </div>
+                  <span className="text-xs font-title font-black tracking-wide text-slate-100">Student</span>
+                  <span className="text-[9px] text-slate-400 font-medium mt-0.5">Learner Portal</span>
+                </button>
               </div>
             </div>
           </motion.div>

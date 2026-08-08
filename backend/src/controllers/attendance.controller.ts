@@ -442,4 +442,194 @@ export class AttendanceController {
       next(error);
     }
   }
+
+  // ==================== TIMED FACE SESSION & 1-TO-1 SELF VERIFICATION ====================
+
+  static async startFaceSession(req: Request, res: Response, next: NextFunction) {
+    try {
+      const requester = (req as any).user;
+      const { courseId, courseName, lectureTitle, durationMinutes } = req.body;
+
+      if (!courseId || !lectureTitle) {
+        return res.status(400).json({ error: 'Course ID and Lecture Title are required.' });
+      }
+
+      let name = courseName;
+      if (!name) {
+        const courseObj = await RepoService.findCourseById(courseId);
+        name = courseObj ? courseObj.name : 'Academic Class';
+      }
+
+      const result = await RepoService.createFaceSession({
+        courseId,
+        courseName: name,
+        lectureTitle,
+        facultyId: requester.userId,
+        facultyName: requester.name,
+        durationMinutes: Number(durationMinutes) || 10
+      });
+
+      // Socket broadcast to all students
+      emitLiveUpdate('face_attendance_opened', {
+        sessionId: result.session.sessionId,
+        courseId,
+        courseName: name,
+        lectureTitle,
+        durationMinutes: result.session.durationMinutes,
+        expiresAt: result.session.expiresAt
+      });
+
+      await RepoService.createLog({
+        userId: requester.userId,
+        userName: requester.name,
+        role: requester.role,
+        action: 'Start Face Attendance Session',
+        details: `Started ${result.session.durationMinutes}-min face attendance window for course: ${name} (${lectureTitle})`
+      });
+
+      return res.status(201).json({
+        message: `Face Attendance session initialized successfully! ${result.notificationsCount} students notified.`,
+        session: result.session
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getFaceSession(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { sessionId } = req.params;
+      const session = await RepoService.findFaceSessionById(sessionId);
+      if (!session) {
+        return res.status(404).json({ error: 'Face Attendance session not found.' });
+      }
+      return res.json({ session });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getActiveFaceSession(req: Request, res: Response, next: NextFunction) {
+    try {
+      const requester = (req as any).user;
+      const courseId = req.query.courseId as string;
+
+      if (requester.role === 'Student') {
+        const session = await RepoService.getActiveFaceSessionForStudent(requester.userId);
+        return res.json({ session });
+      }
+
+      if (courseId) {
+        const session = await RepoService.getActiveFaceSessionForCourse(courseId);
+        return res.json({ session });
+      }
+
+      return res.status(400).json({ error: 'Course ID is required for Faculty/Admin query.' });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async endFaceSession(req: Request, res: Response, next: NextFunction) {
+    try {
+      const requester = (req as any).user;
+      const { sessionId } = req.body;
+      if (!sessionId) {
+        return res.status(400).json({ error: 'Session ID is required.' });
+      }
+
+      const closed = await RepoService.endFaceSession(sessionId);
+      if (!closed) {
+        return res.status(404).json({ error: 'Session not found.' });
+      }
+
+      emitLiveUpdate('face_attendance_closed', { sessionId });
+
+      await RepoService.createLog({
+        userId: requester.userId,
+        userName: requester.name,
+        role: requester.role,
+        action: 'End Face Attendance Session',
+        details: `Closed face attendance session: ${sessionId}`
+      });
+
+      return res.json({ message: 'Attendance session ended successfully.', session: closed });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async verifySelfFace(req: Request, res: Response, next: NextFunction) {
+    try {
+      const requester = (req as any).user;
+      const { capturedDescriptor, sessionId } = req.body;
+
+      if (!capturedDescriptor || !Array.isArray(capturedDescriptor) || capturedDescriptor.length === 0) {
+        return res.status(400).json({ error: 'Valid captured face descriptor is required.' });
+      }
+
+      const result = await RepoService.verifyStudentFace1to1({
+        studentUserIdOrId: requester.userId,
+        capturedDescriptor,
+        sessionId
+      });
+
+      if (!result.success) {
+        return res.status(result.status || 400).json({ error: result.error });
+      }
+
+      // Notify Faculty via socket live update
+      emitLiveUpdate('face_attendance_marked', {
+        sessionId: result.session.sessionId,
+        courseId: result.session.courseId,
+        studentId: result.student._id || result.student.id,
+        studentName: result.student.name,
+        enrollmentNo: result.student.enrollmentNo,
+        confidence: result.confidence,
+        timestamp: new Date().toLocaleTimeString()
+      });
+
+      await RepoService.createLog({
+        userId: requester.userId,
+        userName: requester.name,
+        role: requester.role,
+        action: 'Self Face Attendance Verified',
+        details: `Verified 1-to-1 face match with ${result.confidence}% confidence for ${result.student.name} (${result.student.enrollmentNo})`
+      });
+
+      return res.status(200).json({
+        message: `Face Verified ✓ Attendance marked PRESENT for ${result.student.name}`,
+        student: {
+          name: result.student.name,
+          enrollmentNo: result.student.enrollmentNo
+        },
+        confidence: result.confidence,
+        attendance: result.attendance,
+        session: result.session
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getNotifications(req: Request, res: Response, next: NextFunction) {
+    try {
+      const requester = (req as any).user;
+      const notifications = await RepoService.getUserNotifications(requester.userId);
+      return res.json({ notifications });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async markNotificationRead(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      await RepoService.markNotificationRead(id);
+      return res.json({ message: 'Notification marked as read.' });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
+

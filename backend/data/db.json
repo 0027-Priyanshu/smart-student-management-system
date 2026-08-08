@@ -49,8 +49,8 @@
       "role": "Student",
       "isVerified": true,
       "createdAt": "2026-06-01T10:00:00.000Z",
-      "updatedAt": "2026-08-08T10:16:48.776Z",
-      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NTRjMWE1ZjRmODllZjEyMzQ1Njc4OTIiLCJpYXQiOjE3ODYxODQyMDgsImV4cCI6MTc4Njc4OTAwOH0.yxpFkqSvetQkUKoyPETvpaPaNLnddsuQCwRLtSsw-GU"
+      "updatedAt": "2026-08-08T13:26:34.645Z",
+      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NTRjMWE1ZjRmODllZjEyMzQ1Njc4OTIiLCJpYXQiOjE3ODYxOTU1OTQsImV4cCI6MTc4NjgwMDM5NH0.nfY0XNLjrsvoRr8P2GTbz8HjoJhjRXN_a65Smrte1iw"
     },
     {
       "_id": "6a75e4dc5c4e53c89f42c774",
@@ -790,6 +790,128 @@
       "createdAt": "2026-08-08T07:36:42.062Z"
     }
   ],
-  "faceSessions": [],
-  "notifications": []
+  "faceSessions": [
+    {
+      "_id": "6a772e807a3b15951d9ca7c9",
+      "sessionId": "FACE_T7UCA94",
+      "courseId": "6a75e513c88eb7b69b93d99e",
+      "courseName": "Audit Data Science 101 Advanced",
+      "lectureTitle": "Lecture 1 - AI",
+      "facultyId": "654c1a5f4f89ef1234567891",
+      "facultyName": "Dr. Faculty",
+      "durationMinutes": 10,
+      "startTime": "2026-08-08T13:26:24.134Z",
+      "expiresAt": "2026-08-08T13:36:24.134Z",
+      "status": "ACTIVE",
+      "verifiedStudents": [],
+      "createdAt": "2026-08-08T13:26:24.134Z"
+    }
+  ],
+  "notifications": [
+    {
+      "_id": "6a772e807a3b15951d9ca7ca",
+      "studentId": "6a75e45e8c52fd90e31eeed1",
+      "sessionId": "FACE_T7UCA94",
+      "courseId": "6a75e513c88eb7b69b93d99e",
+      "courseName": "Audit Data Science 101 Advanced",
+      "lectureTitle": "Lecture 1 - AI",
+      "title": "Attendance Session Open",
+      "message": "Audit Data Science 101 Advanced attendance is now open for \"Lecture 1 - AI\". Please verify your face to mark Present.",
+      "type": "FACE_ATTENDANCE",
+      "durationMinutes": 10,
+      "expiresAt": "2026-08-08T13:36:24.134Z",
+      "isRead": false,
+      "createdAt": "2026-08-08T13:26:24.134Z"
+    },
+    {
+      "_id": "6a772e807a3b15951d9ca7cb",
+      "studentId": "6a75e4a88c52fd90e31eeed5",
+      "sessionId": "FACE_T7UCA94",
+      "courseId": "6a75e513c88eb7b69b93d99e",
+      "courseName": "Audit Data Science 101 Advanced",
+      "lectureTitle": "Lecture 1 - AI",
+      "title": "Attendance Session Open",
+      "message": "Audit Data Science 101 Advanced attendance is now open for \"Lecture 1 - AI\". Please verify your face to mark Present.",
+      "type": "FACE_ATTENDANCE",
+      "durationMinutes": 10,
+      "expiresAt": "2026-08-08T13:36:24.134Z",
+      "isRead": false,
+      "createdAt": "2026-08-08T13:26:24.134Z"
+    },
+    {
+      "_id": "6a772e807a3b15951d9ca7cc",
+      "studentId": "654c1a5f4f89ef1234567992",
+      "sessionId": "FACE_T7UCA94",
+      "courseId": "6a75e513c88eb7b69b93d99e",
+      "courseName": "Audit Data Science 101 Advanced",
+      "lectureTitle": "Lecture 1 - AI",
+      "title": "Attendance Session Open",
+      "message": "Audit Data Science 101 Advanced attendance is now open for \"Lecture 1 - AI\". Please verify your face to mark Present.",
+      "type": "FACE_ATTENDANCE",
+      "durationMinutes": 10,
+      "expiresAt": "2026-08-08T13:36:24.134Z",
+      "isRead": false,
+      "createdAt": "2026-08-08T13:26:24.134Z"
+    },
+    {
+      "_id": "6a772e807a3b15951d9ca7cd",
+      "studentId": "6a75e4dc5c4e53c89f42c775",
+      "sessionId": "FACE_T7UCA94",
+      "courseId": "6a75e513c88eb7b69b93d99e",
+      "courseName": "Audit Data Science 101 Advanced",
+      "lectureTitle": "Lecture 1 - AI",
+      "title": "Attendance Session Open",
+      "message": "Audit Data Science 101 Advanced attendance is now open for \"Lecture 1 - AI\". Please verify your face to mark Present.",
+      "type": "FACE_ATTENDANCE",
+      "durationMinutes": 10,
+      "expiresAt": "2026-08-08T13:36:24.134Z",
+      "isRead": false,
+      "createdAt": "2026-08-08T13:26:24.134Z"
+    },
+    {
+      "_id": "6a772e807a3b15951d9ca7ce",
+      "studentId": "6a75e4f35c4e53c89f42c77b",
+      "sessionId": "FACE_T7UCA94",
+      "courseId": "6a75e513c88eb7b69b93d99e",
+      "courseName": "Audit Data Science 101 Advanced",
+      "lectureTitle": "Lecture 1 - AI",
+      "title": "Attendance Session Open",
+      "message": "Audit Data Science 101 Advanced attendance is now open for \"Lecture 1 - AI\". Please verify your face to mark Present.",
+      "type": "FACE_ATTENDANCE",
+      "durationMinutes": 10,
+      "expiresAt": "2026-08-08T13:36:24.134Z",
+      "isRead": false,
+      "createdAt": "2026-08-08T13:26:24.134Z"
+    },
+    {
+      "_id": "6a772e807a3b15951d9ca7cf",
+      "studentId": "6a75e50dc88eb7b69b93d99d",
+      "sessionId": "FACE_T7UCA94",
+      "courseId": "6a75e513c88eb7b69b93d99e",
+      "courseName": "Audit Data Science 101 Advanced",
+      "lectureTitle": "Lecture 1 - AI",
+      "title": "Attendance Session Open",
+      "message": "Audit Data Science 101 Advanced attendance is now open for \"Lecture 1 - AI\". Please verify your face to mark Present.",
+      "type": "FACE_ATTENDANCE",
+      "durationMinutes": 10,
+      "expiresAt": "2026-08-08T13:36:24.134Z",
+      "isRead": false,
+      "createdAt": "2026-08-08T13:26:24.134Z"
+    },
+    {
+      "_id": "6a772e807a3b15951d9ca7d0",
+      "studentId": "6a75eaa178298daa577bd74a",
+      "sessionId": "FACE_T7UCA94",
+      "courseId": "6a75e513c88eb7b69b93d99e",
+      "courseName": "Audit Data Science 101 Advanced",
+      "lectureTitle": "Lecture 1 - AI",
+      "title": "Attendance Session Open",
+      "message": "Audit Data Science 101 Advanced attendance is now open for \"Lecture 1 - AI\". Please verify your face to mark Present.",
+      "type": "FACE_ATTENDANCE",
+      "durationMinutes": 10,
+      "expiresAt": "2026-08-08T13:36:24.134Z",
+      "isRead": false,
+      "createdAt": "2026-08-08T13:26:24.134Z"
+    }
+  ]
 }

@@ -7,9 +7,26 @@ const notification_service_1 = require("../services/notification.service");
 class AttendanceController {
     static async getAttendance(req, res, next) {
         try {
-            const studentId = req.query.studentId;
+            const requester = req.user;
+            let studentId = req.query.studentId;
             const courseId = req.query.courseId;
             const date = req.query.date;
+            if (requester.role === 'Student') {
+                const studentProfile = await repo_service_1.RepoService.findStudentByUserId(requester.userId);
+                if (!studentProfile)
+                    return res.status(404).json({ error: 'Student profile not found.' });
+                // Force the query to only fetch this student's records
+                studentId = studentProfile._id || studentProfile.id;
+            }
+            if (requester.role === 'Faculty') {
+                const facultyProfile = await repo_service_1.RepoService.findFacultyByUserId(requester.userId);
+                if (!facultyProfile)
+                    return res.status(404).json({ error: 'Faculty profile not found.' });
+                const facultyCourses = facultyProfile.assignedCourses?.map((c) => (c._id || c.id || c).toString()) || [];
+                if (courseId && !facultyCourses.includes(courseId)) {
+                    return res.status(403).json({ error: 'Access denied: You are not assigned to this course.' });
+                }
+            }
             const query = {};
             if (studentId)
                 query.studentId = studentId;

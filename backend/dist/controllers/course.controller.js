@@ -7,8 +7,29 @@ const notification_service_1 = require("../services/notification.service");
 class CourseController {
     static async getCourses(req, res, next) {
         try {
+            const requester = req.user;
             const showDeleted = req.query.isDeleted === 'true';
-            const courses = await repo_service_1.RepoService.findCourses({ isDeleted: showDeleted });
+            let courses = await repo_service_1.RepoService.findCourses({ isDeleted: showDeleted });
+            if (requester.role === 'Student') {
+                const studentProfile = await repo_service_1.RepoService.findStudentByUserId(requester.userId);
+                if (studentProfile) {
+                    const enrolledIds = studentProfile.enrolledCourses?.map((c) => (c._id || c.id || c).toString()) || [];
+                    courses = courses.filter((c) => enrolledIds.includes((c._id || c.id).toString()));
+                }
+                else {
+                    courses = [];
+                }
+            }
+            else if (requester.role === 'Faculty') {
+                const facultyProfile = await repo_service_1.RepoService.findFacultyByUserId(requester.userId);
+                if (facultyProfile) {
+                    const assignedIds = facultyProfile.assignedCourses?.map((c) => (c._id || c.id || c).toString()) || [];
+                    courses = courses.filter((c) => assignedIds.includes((c._id || c.id).toString()) || c.facultyId?.toString() === requester.userId);
+                }
+                else {
+                    courses = [];
+                }
+            }
             return res.json({ courses });
         }
         catch (error) {
@@ -30,7 +51,7 @@ class CourseController {
     static async createCourse(req, res, next) {
         try {
             const requester = req.user;
-            const { name, code, description, credits, semester, department, capacity, prerequisites } = req.body;
+            const { name, code, description, credits, semester, department, capacity, prerequisites, facultyId } = req.body;
             const cleanCode = code.toUpperCase().trim();
             const existing = await repo_service_1.RepoService.findCourseByCode(cleanCode);
             if (existing) {
@@ -44,7 +65,9 @@ class CourseController {
                 semester: parseInt(semester, 10),
                 department,
                 capacity: parseInt(capacity, 10) || 40,
-                prerequisites: prerequisites || []
+                prerequisites: prerequisites || [],
+                facultyId: facultyId || null,
+                enrolledStudents: []
             });
             // Log Activity
             await repo_service_1.RepoService.createLog({
@@ -64,7 +87,7 @@ class CourseController {
     static async updateCourse(req, res, next) {
         try {
             const requester = req.user;
-            const { name, description, credits, semester, department, capacity, prerequisites } = req.body;
+            const { name, description, credits, semester, department, capacity, prerequisites, facultyId } = req.body;
             const course = await repo_service_1.RepoService.findCourseById(req.params.id);
             if (!course) {
                 return res.status(404).json({ error: 'Course not found' });
@@ -76,7 +99,8 @@ class CourseController {
                 semester: parseInt(semester, 10),
                 department,
                 capacity: parseInt(capacity, 10),
-                prerequisites: prerequisites || []
+                prerequisites: prerequisites || [],
+                ...(facultyId !== undefined && { facultyId: facultyId || null })
             });
             // Log Activity
             await repo_service_1.RepoService.createLog({
@@ -156,6 +180,10 @@ class CourseController {
             }
             const updatedCourses = [...studentCourses, courseId];
             await repo_service_1.RepoService.updateStudent(studentId, { enrolledCourses: updatedCourses });
+            const courseStudents = course.enrolledStudents?.map((s) => s._id?.toString() || s.id?.toString()) || [];
+            if (!courseStudents.includes(studentId)) {
+                await repo_service_1.RepoService.updateCourse(courseId, { enrolledStudents: [...courseStudents, studentId] });
+            }
             // Send course assignment email notification
             notification_service_1.NotificationService.sendCourseAssignmentNotification(student.email, student.name, course.name, course.code).catch(err => console.error(err));
             // Log Activity

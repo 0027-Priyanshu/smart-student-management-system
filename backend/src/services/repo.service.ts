@@ -356,13 +356,21 @@ export class RepoService {
 
   // ==================== COURSE OPERATIONS ====================
 
-  static async findCourses(query: { isDeleted?: boolean } = { isDeleted: false }): Promise<any[]> {
+  static async findCourses(query: { isDeleted?: boolean; facultyId?: string } = { isDeleted: false }): Promise<any[]> {
     const isDeleted = query.isDeleted !== undefined ? query.isDeleted : false;
+    const mongoQuery: any = { isDeleted };
+    if (query.facultyId) {
+      mongoQuery.facultyId = query.facultyId;
+    }
+    
     if (isMongoConnected) {
-      return await Course.find({ isDeleted }).sort({ code: 1 }).lean();
+      return await Course.find(mongoQuery).sort({ code: 1 }).lean();
     } else {
       const db = readJsonDb();
-      const filtered = db.courses.filter((c: any) => (c.isDeleted || false) === isDeleted);
+      let filtered = db.courses.filter((c: any) => (c.isDeleted || false) === isDeleted);
+      if (query.facultyId) {
+        filtered = filtered.filter((c: any) => c.facultyId === query.facultyId);
+      }
       return [...filtered].sort((a: any, b: any) => a.code.localeCompare(b.code));
     }
   }

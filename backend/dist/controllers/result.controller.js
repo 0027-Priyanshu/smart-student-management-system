@@ -6,7 +6,19 @@ const notification_service_1 = require("../services/notification.service");
 class ResultController {
     static async getResults(req, res, next) {
         try {
-            const results = await repo_service_1.RepoService.findResults(req.params.studentId);
+            const requester = req.user;
+            let targetStudentId = req.params.studentId;
+            if (requester.role === 'Student') {
+                const studentProfile = await repo_service_1.RepoService.findStudentByUserId(requester.userId);
+                if (!studentProfile)
+                    return res.status(404).json({ error: 'Student profile not found.' });
+                // Ensure student can only query their own results
+                if (targetStudentId && targetStudentId !== (studentProfile._id || studentProfile.id).toString()) {
+                    return res.status(403).json({ error: 'Access denied: You can only view your own grades.' });
+                }
+                targetStudentId = studentProfile._id || studentProfile.id;
+            }
+            const results = await repo_service_1.RepoService.findResults(targetStudentId);
             let totalGradePoints = 0;
             let totalCredits = 0;
             const formattedResults = results.map(r => {
@@ -33,6 +45,15 @@ class ResultController {
             const extVal = parseFloat(external) || 0;
             const assignVal = parseFloat(assignment) || 0;
             const pracVal = parseFloat(practical) || 0;
+            if (requester.role === 'Faculty') {
+                const facultyProfile = await repo_service_1.RepoService.findFacultyByUserId(requester.userId);
+                if (!facultyProfile)
+                    return res.status(404).json({ error: 'Faculty profile not found.' });
+                const facultyCourses = facultyProfile.assignedCourses?.map((c) => (c._id || c.id || c).toString()) || [];
+                if (!facultyCourses.includes(courseId)) {
+                    return res.status(403).json({ error: 'Access denied: You can only grade courses you teach.' });
+                }
+            }
             const total = intVal + extVal + assignVal + pracVal;
             // Grade calculation mapping
             let grade = 'F';

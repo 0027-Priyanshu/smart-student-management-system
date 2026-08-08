@@ -98,6 +98,9 @@ class RepoService {
             if (query.courseId) {
                 dbQuery.enrolledCourses = query.courseId;
             }
+            if (query.courseIds && query.courseIds.length > 0) {
+                dbQuery.enrolledCourses = { $in: query.courseIds };
+            }
             const totalItems = await Student_1.default.countDocuments(dbQuery);
             const totalPages = Math.ceil(totalItems / limit);
             const students = await Student_1.default.find(dbQuery)
@@ -122,6 +125,9 @@ class RepoService {
             }
             if (query.courseId) {
                 filtered = filtered.filter((s) => s.enrolledCourses?.includes(query.courseId));
+            }
+            if (query.courseIds && query.courseIds.length > 0) {
+                filtered = filtered.filter((s) => s.enrolledCourses?.some((cId) => query.courseIds?.includes(cId)));
             }
             // Populate courses manually
             const populated = filtered.map((s) => {
@@ -320,12 +326,19 @@ class RepoService {
     // ==================== COURSE OPERATIONS ====================
     static async findCourses(query = { isDeleted: false }) {
         const isDeleted = query.isDeleted !== undefined ? query.isDeleted : false;
+        const mongoQuery = { isDeleted };
+        if (query.facultyId) {
+            mongoQuery.facultyId = query.facultyId;
+        }
         if (db_1.isMongoConnected) {
-            return await Course_1.default.find({ isDeleted }).sort({ code: 1 }).lean();
+            return await Course_1.default.find(mongoQuery).sort({ code: 1 }).lean();
         }
         else {
             const db = (0, db_1.readJsonDb)();
-            const filtered = db.courses.filter((c) => (c.isDeleted || false) === isDeleted);
+            let filtered = db.courses.filter((c) => (c.isDeleted || false) === isDeleted);
+            if (query.facultyId) {
+                filtered = filtered.filter((c) => c.facultyId === query.facultyId);
+            }
             return [...filtered].sort((a, b) => a.code.localeCompare(b.code));
         }
     }

@@ -95,6 +95,7 @@ app.get('/', (req, res) => {
 // Centralized Global Error Handler Middleware
 app.use(error_middleware_1.errorHandler);
 // Start listener
-server.listen(Number(PORT), '127.0.0.1', () => {
-    logger_1.logger.info(`📡 Server listening on port http://127.0.0.1:${PORT}`);
+const HOST = process.env.HOST || '0.0.0.0';
+server.listen(Number(PORT), HOST, () => {
+    logger_1.logger.info(`📡 Server listening on http://${HOST}:${PORT}`);
 });

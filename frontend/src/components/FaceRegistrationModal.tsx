@@ -17,6 +17,7 @@ export default function FaceRegistrationModal({ student, onClose }: FaceRegistra
   const [statusText, setStatusText] = useState('Loading ML models...');
 
   useEffect(() => {
+    let isMounted = true;
     let stream: MediaStream | null = null;
     
     const loadModelsAndStartVideo = async () => {
@@ -27,23 +28,39 @@ export default function FaceRegistrationModal({ student, onClose }: FaceRegistra
           faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
           faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
         ]);
+
+        if (!isMounted) return;
         setModelsLoaded(true);
         setStatusText('Models loaded. Please face the camera directly.');
 
-        stream = await navigator.mediaDevices.getUserMedia({ video: {} });
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 640 }, height: { ideal: 480 } }
+        });
+
+        if (!isMounted) {
+          stream.getTracks().forEach(track => track.stop());
+          return;
+        }
+
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
+          videoRef.current.onloadedmetadata = () => {
+            videoRef.current?.play().catch(err => console.warn('Camera play warning:', err));
+          };
         }
       } catch (err) {
         console.error('Error setting up face registration:', err);
-        setStatusText('Failed to load models or access camera.');
-        toast.error('Failed to access camera.');
+        if (isMounted) {
+          setStatusText('Failed to load models or access camera.');
+          toast.error('Failed to access camera.');
+        }
       }
     };
 
     loadModelsAndStartVideo();
 
     return () => {
+      isMounted = false;
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
@@ -52,14 +69,22 @@ export default function FaceRegistrationModal({ student, onClose }: FaceRegistra
 
   const handleCapture = async () => {
     if (!videoRef.current || !modelsLoaded) return;
+    if (videoRef.current.videoWidth === 0 || videoRef.current.videoHeight === 0) {
+      toast.error('Camera stream is initializing. Please try again in 1 second.');
+      return;
+    }
+
     setScanning(true);
     setStatusText('Scanning face...');
 
     try {
-      const detection = await faceapi.detectSingleFace(videoRef.current).withFaceLandmarks().withFaceDescriptor();
+      const detection = await faceapi
+        .detectSingleFace(videoRef.current, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 }))
+        .withFaceLandmarks()
+        .withFaceDescriptor();
       
       if (!detection) {
-        setStatusText('No face detected. Please ensure you are well-lit and facing the camera.');
+        setStatusText('No face detected. Please ensure you are well-lit and facing the camera directly.');
         setScanning(false);
         return;
       }
@@ -81,7 +106,7 @@ export default function FaceRegistrationModal({ student, onClose }: FaceRegistra
       setStatusText('Registration complete.');
 
     } catch (err: any) {
-      console.error(err);
+      console.error('Face capture error:', err);
       setStatusText('Failed to save face data.');
       toast.error(err.response?.data?.error || 'Failed to save face data.');
       setScanning(false);

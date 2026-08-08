@@ -110,6 +110,6 @@ app.get('/', (req, res) => {
 app.use(errorHandler);
 
 // Start listener
-server.listen(PORT, () => {
-  logger.info(`📡 Server listening on port http://localhost:${PORT}`);
+server.listen(Number(PORT), '127.0.0.1', () => {
+  logger.info(`📡 Server listening on port http://127.0.0.1:${PORT}`);
 });

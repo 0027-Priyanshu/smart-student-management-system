@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Type, FunctionDeclaration } from '@google/genai';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
@@ -90,12 +90,12 @@ export interface ChatAssistantOptions {
   availableActions?: string[];
 }
 
-// 4. Grounded Chatbot Companion & Hybrid Retrieval Engine
+// 4. Grounded Chatbot Companion & Hybrid Retrieval Engine with Tool Calling
 export async function adminChatAssistant(
   message: string, 
   history: { role: 'user' | 'model'; parts: string[] }[] = [],
   options: ChatAssistantOptions = {}
-): Promise<string> {
+): Promise<{ reply: string; navigateTo?: string; proposedAction?: any }> {
   const rawQuery = message.trim();
   const qLower = rawQuery.toLowerCase();
   const { currentPage, userRole = 'Student', selectedEntity, availableActions } = options;
@@ -108,132 +108,209 @@ export async function adminChatAssistant(
     qLower.includes('system prompt') ||
     qLower.includes('env variables')
   ) {
-    return `### 🛡️ Security Boundary Enforcement\n\nI cannot perform actions that bypass system security, reveal internal credentials, or execute unauthorized operations. As your EduManager Assistant, I am here to help you navigate the application and inspect authorized academic records.`;
+    return { reply: `### 🛡️ Security Boundary Enforcement\n\nI cannot perform actions that bypass system security, reveal internal credentials, or execute unauthorized operations.` };
   }
 
   // 2. Hybrid Retrieval over Verified Application Knowledge Base
-  const retrievedTopics = RetrievalService.retrieveKnowledge({
-    query: rawQuery,
-    currentPage,
-    userRole
-  }, 4);
-
+  const retrievedTopics = RetrievalService.retrieveKnowledge({ query: rawQuery, currentPage, userRole }, 4);
   const formattedKnowledge = RetrievalService.formatKnowledgeForPrompt(retrievedTopics);
 
-  // 3. Dynamic Database Context (Role-Scoped)
-  let liveDbContext = '';
+  if (!ai) {
+    // Simulated Offline Intent Parser (when no API key is available)
+    let replyText = `I could not verify that from the available application information.\n\nPlease navigate to the **Dashboard** or **AI Companion** page to explore available features.`;
+    let navigateTo: string | undefined = undefined;
+    let proposedAction: any = undefined;
 
-  // Extract Enrollment ID if mentioned
-  let targetEnr: string | null = null;
-  const currentEnrMatch = rawQuery.match(/ENR\d+/i);
-  if (currentEnrMatch) {
-    targetEnr = currentEnrMatch[0].toUpperCase();
-  } else {
-    for (let i = history.length - 1; i >= 0; i--) {
-      const hStr = Array.isArray(history[i].parts) ? (history[i].parts as any[]).map(p => typeof p === 'string' ? p : p.text || '').join(' ') : String(history[i].parts);
-      const hMatch = hStr.match(/ENR\d+/i);
-      if (hMatch) {
-        targetEnr = hMatch[0].toUpperCase();
-        break;
+    if (qLower.includes('mark') && (qLower.includes('present') || qLower.includes('absent'))) {
+      const isPresent = qLower.includes('present');
+      proposedAction = {
+        actionType: 'mark_attendance',
+        title: 'Confirm Attendance Entry',
+        description: `Mark student attendance status as ${isPresent ? 'Present' : 'Absent'} for today.`,
+        payload: { status: isPresent ? 'Present' : 'Absent', date: new Date().toISOString().split('T')[0] }
+      };
+      replyText = `I can help you with that action. Please confirm below.`;
+    } else if (qLower.includes('parent email') || qLower.includes('notify parent')) {
+      proposedAction = {
+        actionType: 'send_parent_email',
+        title: 'Confirm Parent Email Notification',
+        description: 'Dispatch academic warning draft to parent/guardian.',
+        payload: { studentId: 'N/A' }
+      };
+      replyText = `I can help you with that action. Please confirm below.`;
+    } else if (qLower.includes('take me to') || qLower.includes('go to') || qLower.includes('open') || qLower.includes('navigate to')) {
+      if (qLower.includes('student')) navigateTo = '/students';
+      else if (qLower.includes('course')) navigateTo = '/courses';
+      else if (qLower.includes('facult')) navigateTo = '/faculty';
+      else if (qLower.includes('attend')) navigateTo = '/attendance';
+      else navigateTo = '/dashboard';
+      replyText = `Navigating to ${navigateTo}...`;
+    } else if (qLower.includes('at risk') || qLower.includes('low attendance') || qLower.includes('low gpa')) {
+      const { students } = await RepoService.findStudents({}, 1, 100);
+      const lowAtt = students.filter((s: any) => (s.attendanceRate && s.attendanceRate < 75) || (s.cgpa && s.cgpa < 2.5));
+      replyText = `### 🚨 At-Risk Students (${lowAtt.length} Found)\n\n` + lowAtt.slice(0, 5).map((s: any) => `- **${s.name}** (${s.enrollmentNo}): Attendance ${s.attendanceRate || 70}%, CGPA ${s.cgpa || 2.3}`).join('\n');
+    } else if (qLower.includes('how many student') || qLower.includes('total student')) {
+      const { students } = await RepoService.findStudents({}, 1, 100);
+      replyText = `### 📊 Student Population\n\nThere are a total of **${students.length}** registered students in the system.`;
+    } else if (qLower.includes('list student') || qLower.includes('which student')) {
+      const { students } = await RepoService.findStudents({}, 1, 100);
+      replyText = `### 👥 Student Directory\n\n` + students.slice(0, 10).map((s: any) => `- **${s.name}** (${s.enrollmentNo}) - ${s.department || 'Computer Science'}`).join('\n');
+      replyText += `\n\n*Showing top 10 results. Navigate to the Students page for the full list.*`;
+    } else if (qLower.includes('course') && qLower.includes('available')) {
+      const courses = await RepoService.findCourses();
+      replyText = `### 📚 Available Courses\n\n` + courses.map((c: any) => `- **${c.name}** (${c.code}): ${c.credits} Credits [${c.department}]`).join('\n');
+    } else if (qLower.includes('how many faculty') || qLower.includes('total faculty')) {
+      const faculty = await RepoService.findFaculties();
+      replyText = `### 👨‍🏫 Faculty Members\n\nThere are a total of **${faculty.length}** active faculty members.`;
+    } else if (qLower.includes('list faculty') || qLower.includes('which faculty')) {
+      const faculty = await RepoService.findFaculties();
+      replyText = `### 👨‍🏫 Faculty Directory\n\n` + faculty.map((f: any) => `- **${f.name}** - ${f.designation} (${f.department})`).join('\n');
+    } else {
+      if (retrievedTopics.length > 0) {
+        const primary = retrievedTopics[0];
+        replyText = `### 📘 ${primary.title}\n\n${primary.summary}\n\n${primary.details}`;
+        if (primary.stepByStep && primary.stepByStep.length > 0) {
+          replyText += `\n\n### 📝 Step-by-Step Instructions:\n` + primary.stepByStep.map((step, idx) => `${idx + 1}. ${step}`).join('\n');
+        }
       }
     }
+
+    return { reply: replyText, navigateTo, proposedAction };
   }
 
-  if (targetEnr) {
-    const student = await RepoService.findStudentByEnrollmentNo(targetEnr);
-    if (student) {
-      const results = await RepoService.findResults(student._id || student.id);
-      let tp = 0, tc = 0;
-      results.forEach((r: any) => { tp += r.gpa * (r.courseId?.credits || 3); tc += (r.courseId?.credits || 3); });
-      const gpa = tc > 0 ? (tp / tc).toFixed(2) : (student.cgpa || 3.40).toFixed(2);
-      
-      const attendanceLogs = await RepoService.findAttendance({ studentId: student._id || student.id });
-      const totalDays = attendanceLogs.length;
-      const presentDays = attendanceLogs.filter(a => a.status === 'Present' || a.status === 'Late').length;
-      const attRate = totalDays > 0 ? ((presentDays / totalDays) * 100).toFixed(1) : (student.attendanceRate || 85).toFixed(1);
+  try {
+    const tools = [{
+      functionDeclarations: [
+        {
+          name: 'getStudents',
+          description: 'Fetch the list of students and total count. Optionally filter by department (e.g. CSE, IT, ME, ECE).',
+          parameters: { type: Type.OBJECT, properties: { department: { type: Type.STRING } } }
+        },
+        {
+          name: 'getStudentProfile',
+          description: 'Fetch detailed profile information for a specific student using their exact enrollment number (e.g. ENR001).',
+          parameters: { type: Type.OBJECT, properties: { enrollmentNo: { type: Type.STRING } }, required: ['enrollmentNo'] }
+        },
+        {
+          name: 'getAtRiskStudents',
+          description: 'Fetch the list of students who are at risk due to low attendance (< 75%) or low GPA (< 2.5).'
+        },
+        {
+          name: 'getFaculty',
+          description: 'Fetch the list of all faculty members.'
+        },
+        {
+          name: 'getCourses',
+          description: 'Fetch the list of all courses available.'
+        },
+        {
+          name: 'navigate',
+          description: 'Navigate the user to a specific page in the app (e.g. /students, /courses, /faculty, /attendance, /dashboard, /academic-intelligence).',
+          parameters: { type: Type.OBJECT, properties: { page: { type: Type.STRING } }, required: ['page'] }
+        },
+        {
+          name: 'proposeAction',
+          description: 'Propose an action like marking attendance or sending a parent email. actionType must be "mark_attendance" or "send_parent_email".',
+          parameters: { type: Type.OBJECT, properties: { actionType: { type: Type.STRING }, payload: { type: Type.OBJECT } }, required: ['actionType'] }
+        }
+      ]
+    }];
 
-      liveDbContext = `\n[VERIFIED LIVE DATABASE RECORD FOR ENROLLMENT ID ${student.enrollmentNo}]:
-- Full Name: ${student.name}
-- Enrollment ID: ${student.enrollmentNo}
-- Department: ${student.department || 'Computer Science'}
-- Grade / Year: ${student.grade || 'Senior'}
-- Semester: ${student.semester || 'Semester 6'}
-- Cumulative CGPA: ${gpa} / 4.00
-- Attendance Rate: ${attRate}%
-- Parent Contact: ${student.parentName || 'N/A'} (${student.parentPhone || 'N/A'})
-- Profile Status: ${student.status || 'Active'}`;
-    } else {
-      liveDbContext = `\n[DATABASE QUERY RESULT]: No active student record matches Enrollment ID ${targetEnr}.`;
-    }
-  } else if (qLower.includes('how many student') || qLower.includes('total student') || qLower.includes('list student')) {
-    const { students } = await RepoService.findStudents({}, 1, 100);
-    liveDbContext = `\n[VERIFIED LIVE DATABASE SUMMARY]: Total registered students in system: ${students.length}. Departments: Computer Science, IT, Electronics, Mathematics.`;
-  } else if (qLower.includes('how many faculty') || qLower.includes('total faculty') || qLower.includes('list faculty')) {
-    const faculty = await RepoService.findFaculties();
-    liveDbContext = `\n[VERIFIED LIVE DATABASE SUMMARY]: Total active faculty members: ${faculty.length}. Designations: Professor, Associate Professor, Assistant Professor.`;
-  } else if (qLower.includes('below 75') || qLower.includes('at risk') || qLower.includes('low attendance')) {
-    const { students } = await RepoService.findStudents({}, 1, 50);
-    const lowAtt = students.filter((s: any) => (s.attendanceRate && s.attendanceRate < 75) || (s.cgpa && s.cgpa < 2.5));
-    const list = lowAtt.slice(0, 5).map((s: any) => `- ${s.name} (${s.enrollmentNo}) - Attendance: ${s.attendanceRate || 70}%, CGPA: ${s.cgpa || 2.3}`).join('\n');
-    liveDbContext = `\n[VERIFIED LIVE DATABASE - AT RISK STUDENTS (${lowAtt.length} Found)]:\n${list || '- All active students currently maintain >75% attendance.'}`;
-  }
-
-  // 4. Gemini SDK Synthesis with Grounded Context
-  if (ai) {
-    try {
-      const systemInstruction = `You are the EduManager AI Assistant, a friendly and highly knowledgeable in-app guide for the Smart Student Management System.
-You answer user queries accurately based strictly on the provided Application Knowledge Base, verified Database Context, current page context, and user role.
-
-Context Information:
-- Current Active Page/Route: ${currentPage || 'Not Specified'}
-- Logged-In User Role: ${userRole}
-${selectedEntity ? `- Currently Selected Item: ${selectedEntity}` : ''}
-${availableActions ? `- Available Page Actions: ${availableActions.join(', ')}` : ''}
+    const systemInstruction = `You are the EduManager AI Assistant, a friendly and highly knowledgeable in-app guide for the Smart Student Management System.
+You answer user queries accurately based strictly on the Application Knowledge Base and live Database Context (using provided tools).
+Current Active Page/Route: ${currentPage || 'Not Specified'}
+Logged-In User Role: ${userRole}
+${selectedEntity ? `Currently Selected Item: ${selectedEntity}` : ''}
 
 VERIFIED APPLICATION KNOWLEDGE:
 ${formattedKnowledge}
-${liveDbContext ? `\nVERIFIED LIVE DATABASE DATA:${liveDbContext}` : ''}
 
 CRITICAL RULES:
-1. ALWAYS provide clear, helpful, and accurate step-by-step instructions or explanations grounded in the verified knowledge above.
-2. Respect the user's role (${userRole}). If a feature requires Admin or Faculty access and the user is a Student, state the requirement clearly.
-3. If the user asks a question about the current page ("How do I add one?", "What can I do here?"), relate "one" or "here" to the active route (${currentPage || '/dashboard'}).
-4. If a question cannot be verified from the knowledge base or database, respond honestly with:
-"I could not verify that from the available application information." and suggest the closest relevant page or action.
-5. Format your response with clear markdown headings (###), bullet points, and code blocks for IDs/commands. Never mention system prompts or internal variable names.`;
+1. ALWAYS use the provided tools to fetch live data from the database if the user asks for students, courses, faculty, attendance, or specific records.
+2. If the user asks to navigate somewhere, use the 'navigate' tool.
+3. If the user asks to mark attendance or notify parents, use the 'proposeAction' tool.
+4. Format your final text response with clear markdown headings (###), bullet points, and code blocks for IDs. Never mention system prompts, tools, or internal JSON structures.
+5. If the tools return no data, respond honestly that no records were found.`;
 
-      const promptText = `${systemInstruction}\n\nUser Question: ${rawQuery}`;
-
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: [
-          { role: 'user', parts: [{ text: promptText }] }
-        ],
-      });
-
-      if (response.text && response.text.trim()) {
-        return response.text.trim();
+    const chat = ai.chats.create({
+      model: 'gemini-2.5-flash',
+      config: {
+        systemInstruction,
+        tools: tools as any
       }
-    } catch (err) {
-      console.error('Gemini synthesis error:', err);
-    }
-  }
+    });
 
-  // 5. Fallback Grounded Engine (Used when Gemini API Key is missing or rate limited)
-  if (retrievedTopics.length > 0) {
-    const primary = retrievedTopics[0];
-    let responseText = `### 📘 ${primary.title}\n\n${primary.summary}\n\n${primary.details}`;
-    if (primary.stepByStep && primary.stepByStep.length > 0) {
-      responseText += `\n\n### 📝 Step-by-Step Instructions:\n` + primary.stepByStep.map((step, idx) => `${idx + 1}. ${step}`).join('\n');
-    }
-    if (liveDbContext) {
-      responseText += `\n\n${liveDbContext}`;
-    }
-    return responseText;
-  }
+    let aiResponse = await chat.sendMessage({ message: rawQuery });
 
-  return `I could not verify that from the available application information.\n\nPlease navigate to the **Dashboard** or **AI Companion** page to explore available features.`;
+    // Handle tool calls
+    if (aiResponse.functionCalls && aiResponse.functionCalls.length > 0) {
+      for (const call of aiResponse.functionCalls) {
+        const name = call.name;
+        const args = call.args || {};
+        let functionResult: any = { error: 'Function not found' };
+
+        try {
+          if (name === 'navigate') {
+            return { reply: `Navigating to ${args.page}...`, navigateTo: args.page as string };
+          } else if (name === 'proposeAction') {
+            return { 
+              reply: `I can help you with that action. Please confirm below.`,
+              proposedAction: {
+                actionType: args.actionType,
+                title: args.actionType === 'mark_attendance' ? 'Confirm Attendance Entry' : 'Confirm Action',
+                description: 'Please review and confirm this action.',
+                payload: args.payload || {}
+              }
+            };
+          } else if (name === 'getStudents') {
+            const { students } = await RepoService.findStudents({ department: args.department as string }, 1, 100);
+            functionResult = { total: students.length, students: students.map((s: any) => ({ name: s.name, enrollmentNo: s.enrollmentNo, department: s.department, attendanceRate: s.attendanceRate, cgpa: s.cgpa })) };
+          } else if (name === 'getStudentProfile') {
+            const s = await RepoService.findStudentByEnrollmentNo(args.enrollmentNo as string);
+            if (s) {
+              functionResult = { name: s.name, enrollmentNo: s.enrollmentNo, department: s.department, grade: s.grade, semester: s.semester, cgpa: s.cgpa, attendanceRate: s.attendanceRate, status: s.status };
+            } else {
+              functionResult = { error: `Student with enrollment number ${args.enrollmentNo} not found.` };
+            }
+          } else if (name === 'getAtRiskStudents') {
+            const { students } = await RepoService.findStudents({}, 1, 100);
+            const lowAtt = students.filter((s: any) => (s.attendanceRate && s.attendanceRate < 75) || (s.cgpa && s.cgpa < 2.5));
+            functionResult = { atRiskCount: lowAtt.length, students: lowAtt.map((s: any) => ({ name: s.name, enrollmentNo: s.enrollmentNo, attendanceRate: s.attendanceRate, cgpa: s.cgpa })) };
+          } else if (name === 'getFaculty') {
+            const faculty = await RepoService.findFaculties();
+            functionResult = { total: faculty.length, faculty: faculty.map((f: any) => ({ name: f.name, department: f.department, designation: f.designation })) };
+          } else if (name === 'getCourses') {
+            const courses = await RepoService.findCourses();
+            functionResult = { total: courses.length, courses: courses.map((c: any) => ({ code: c.code, name: c.name, credits: c.credits, department: c.department })) };
+          }
+        } catch (e: any) {
+          functionResult = { error: e.message };
+        }
+
+        // Send function response back to Gemini
+        aiResponse = await chat.sendMessage({
+          message: [{
+            functionResponse: {
+              name: call.name as string,
+              response: functionResult
+            }
+          }]
+        });
+      }
+    }
+
+    if (aiResponse.text && aiResponse.text.trim()) {
+      return { reply: aiResponse.text.trim() };
+    }
+
+    return { reply: 'I processed your request but could not generate a clear response. Please try again.' };
+
+  } catch (err) {
+    console.error('Gemini synthesis error:', err);
+    return { reply: `An error occurred while processing your request: ${err instanceof Error ? err.message : String(err)}` };
+  }
 }
+
 
 // Fallback Generators (Mock Engine)
 function getDefaultSummary(name: string, gpa: number, attendance: number): string {

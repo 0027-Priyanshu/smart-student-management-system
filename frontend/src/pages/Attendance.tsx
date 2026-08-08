@@ -1,11 +1,15 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { Calendar, CheckCircle, AlertCircle, Scan, HelpCircle, QrCode, Clock, Users, ShieldCheck, Check, RefreshCw, Copy, Camera, X } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
+import { Calendar, CheckCircle, AlertCircle, Scan, HelpCircle, QrCode, Clock, Users, ShieldCheck, RefreshCw, Copy, Camera, X, ScanFace, Sparkles, UserCheck } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
 import DashboardShell from '../components/layout/DashboardShell';
 import api from '../utils/api';
 import { useAuthStore } from '../stores/authStore';
 import { useSocketStore } from '../stores/socketStore';
 import { toast } from '../stores/toastStore';
+
+// Lazy load heavy face recognition components so face-api models never load on initial app startup
+const FaceRecognitionScanner = lazy(() => import('../components/FaceRecognitionScanner'));
+const FaceRegistrationModal = lazy(() => import('../components/FaceRegistrationModal'));
 
 export default function Attendance() {
   const { user } = useAuthStore();
@@ -16,11 +20,21 @@ export default function Attendance() {
   const [courses, setCourses] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   
+  // Attendance Module Mode Switcher
+  const [attendanceMode, setAttendanceMode] = useState<'FACE' | 'QR' | 'MANUAL'>('FACE');
+
   // Selection states for manual attendance
   const [selectedCourse, setSelectedCourse] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [studentStatuses, setStudentStatuses] = useState<{ [key: string]: string }>({});
   
+  // Face Recognition & Demo Registration States
+  const [selectedDemoStudent, setSelectedDemoStudent] = useState<string>('');
+  const [showFaceRegistrationModal, setShowFaceRegistrationModal] = useState(false);
+  const [showLiveFaceScanner, setShowLiveFaceScanner] = useState(false);
+  const [faceLectureTitle, setFaceLectureTitle] = useState('Lecture 1 - AI & Machine Learning');
+  const [faceCourseId, setFaceCourseId] = useState('');
+
   // Smart QR Session States (Faculty / Admin)
   const [qrLectureTitle, setQrLectureTitle] = useState('');
   const [qrCourseId, setQrCourseId] = useState('');
@@ -41,6 +55,9 @@ export default function Attendance() {
   const [availableCameras, setAvailableCameras] = useState<any[]>([]);
   const [selectedCameraId, setSelectedCameraId] = useState('');
   const html5QrcodeRef = useRef<Html5Qrcode | null>(null);
+
+  // Face Verification State for Student QR scan
+  const [showFaceVerification, setShowFaceVerification] = useState(false);
 
   // Heatmap state
   const [heatmap, setHeatmap] = useState<any[]>([]);
@@ -70,11 +87,19 @@ export default function Attendance() {
     async function init() {
       try {
         const coursesRes = await api.get('/courses');
-        setCourses(coursesRes.data.courses || []);
+        const loadedCourses = coursesRes.data.courses || [];
+        setCourses(loadedCourses);
+        if (loadedCourses.length > 0) {
+          setFaceCourseId(loadedCourses[0]._id || loadedCourses[0].id);
+        }
         
         if (isAdminOrFaculty) {
           const studentsRes = await api.get('/students?limit=200');
-          setStudents(studentsRes.data.students || []);
+          const loadedStudents = studentsRes.data.students || [];
+          setStudents(loadedStudents);
+          if (loadedStudents.length > 0) {
+            setSelectedDemoStudent(loadedStudents[0]._id || loadedStudents[0].id);
+          }
         }
       } catch (err) {
         console.error(err);
@@ -139,14 +164,12 @@ export default function Attendance() {
     }
   }, [studentSessionInput]);
 
-  // Auto-detect ?session= parameter in URL on mount (e.g. scanned from phone camera / Google Lens)
+  // Auto-detect ?session= parameter in URL on mount
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const sessionParam = searchParams.get('session');
     if (sessionParam) {
-      const cleanSessionId = sessionParam.trim().toUpperCase();
-      setStudentSessionInput(cleanSessionId);
-      handleStudentFetchSession(cleanSessionId);
+      handleStudentFetchSession(sessionParam);
     }
   }, [handleStudentFetchSession]);
 
@@ -243,7 +266,7 @@ export default function Attendance() {
 
       setActiveSession(res.data.session);
       setLiveScannedCount(0);
-      toastSuccess('Dynamic QR Attendance session generated!');
+      toast.success('Dynamic QR Attendance session generated!');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to generate QR Code session.');
     } finally {
@@ -251,46 +274,24 @@ export default function Attendance() {
     }
   };
 
-  const toastSuccess = (msg: string) => {
-    setSuccess(msg);
-    setTimeout(() => setSuccess(''), 4000);
-  };
-
-  const stopCameraScanner = useCallback(async () => {
-    if (html5QrcodeRef.current) {
-      try {
-        await html5QrcodeRef.current.stop();
-      } catch (e) {
-        console.error(e);
-      }
-      html5QrcodeRef.current = null;
-    }
-    setIsScannerOpen(false);
-    setCameraError('');
-  }, []);
-
   const startCameraScanner = async (cameraId?: string) => {
-    setIsScannerOpen(true);
     setCameraError('');
-    
+    setIsScannerOpen(true);
+
     setTimeout(async () => {
       try {
         const devices = await Html5Qrcode.getCameras();
         if (!devices || devices.length === 0) {
-          setCameraError('No camera devices detected on this device.');
+          setCameraError('No camera devices found on this device.');
           return;
         }
 
         setAvailableCameras(devices);
-        const targetCamera = cameraId || (devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('environment'))?.id || devices[0].id);
+        const targetCamera = cameraId || selectedCameraId || devices[0].id;
         setSelectedCameraId(targetCamera);
 
         if (html5QrcodeRef.current) {
-          try {
-            await html5QrcodeRef.current.stop();
-          } catch (e) {
-            // ignore
-          }
+          await html5QrcodeRef.current.stop().catch(() => {});
         }
 
         const scanner = new Html5Qrcode("camera-reader");
@@ -310,9 +311,7 @@ export default function Attendance() {
               handleStudentFetchSession(decodedText);
             }).catch(console.error);
           },
-          () => {
-            // Frame scan check
-          }
+          () => {}
         );
       } catch (err: any) {
         console.error('Camera Scanner Error:', err);
@@ -321,7 +320,13 @@ export default function Attendance() {
     }, 300);
   };
 
-  // Student confirms attendance
+  const stopCameraScanner = () => {
+    if (html5QrcodeRef.current) {
+      html5QrcodeRef.current.stop().catch(() => {});
+    }
+    setIsScannerOpen(false);
+  };
+
   const handleStudentConfirmAttendance = async () => {
     if (!studentSessionData) return;
     setError('');
@@ -332,12 +337,28 @@ export default function Attendance() {
         sessionId: studentSessionData.sessionId
       });
       setStudentConfirmed(true);
-      toastSuccess(res.data.message || 'Attendance confirmed successfully!');
+      toast.success(res.data.message || 'Attendance confirmed successfully!');
       fetchHeatmapData();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to confirm attendance');
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  const handleRemoveFaceRegistration = async () => {
+    if (!selectedDemoStudent) return;
+    try {
+      await api.delete(`/attendance/face/register/${selectedDemoStudent}`);
+      toast.success('Face registration removed successfully.');
+      setStudents(prev => prev.map(s => {
+        if ((s._id || s.id) === selectedDemoStudent) {
+          return { ...s, isFaceRegistered: false, faceDescriptor: [] };
+        }
+        return s;
+      }));
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Failed to remove face registration');
     }
   };
 
@@ -368,11 +389,12 @@ export default function Attendance() {
           studentId,
           courseId: selectedCourse,
           date: selectedDate,
-          status
+          status,
+          attendanceMethod: 'MANUAL'
         });
       }
 
-      toastSuccess('Attendance entries recorded successfully!');
+      toast.success('Attendance entries recorded successfully!');
       fetchHeatmapData();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to record attendance');
@@ -391,24 +413,27 @@ export default function Attendance() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const selectedStudentObj = students.find(s => (s._id || s.id) === selectedDemoStudent);
+  const selectedCourseObj = courses.find(c => (c._id || c.id) === faceCourseId);
+
   return (
     <DashboardShell title="Attendance Management">
       <div className="space-y-6 animate-fadeIn">
 
-        {/* Header Controls Bar (Reference Image 4) */}
+        {/* Header Controls Bar */}
         <div className="p-6 bg-white border border-slate-200/80 rounded-3xl shadow-card flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
             <h2 className="font-title font-black text-lg text-slate-900 flex items-center gap-2">
-              Attendance
+              Attendance Module
             </h2>
             <p className="text-xs text-slate-400 font-medium mt-0.5">
-              Track and manage attendance records
+              Multi-method attendance tracking (Face Recognition, QR Code, Manual Registry)
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-            {/* Date Selector Input Pill */}
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900">
+            {/* Date Selector */}
+            <div className="flex items-center gap-2 px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900">
               <Calendar size={14} className="text-[#ff6b00]" />
               <input
                 type="date"
@@ -417,27 +442,47 @@ export default function Attendance() {
                 className="bg-transparent text-xs font-bold text-slate-900 focus:outline-none cursor-pointer"
               />
             </div>
-
-            {/* Filter Toggle */}
-            <button className="px-3.5 py-2 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-2xl text-xs font-bold text-slate-700 flex items-center gap-1.5 cursor-pointer">
-              <span>Filters</span>
-            </button>
-
-            {isAdminOrFaculty && (
-              <button
-                onClick={() => {
-                  if (courses.length > 0) {
-                    setSelectedCourse(courses[0]._id || courses[0].id);
-                  }
-                }}
-                className="w-full sm:w-auto px-4 py-2 bg-[#ff6b00] hover:bg-orange-600 text-white font-extrabold rounded-2xl text-xs flex items-center justify-center gap-1.5 shadow-glow cursor-pointer transition-all shrink-0"
-              >
-                <CheckCircle size={16} />
-                + Mark Attendance
-              </button>
-            )}
           </div>
         </div>
+
+        {/* Attendance Method Switcher Tabs (Admin/Faculty) */}
+        {isAdminOrFaculty && (
+          <div className="flex items-center gap-2 p-1.5 bg-slate-100/90 border border-slate-200/80 rounded-2xl w-fit">
+            <button
+              onClick={() => setAttendanceMode('FACE')}
+              className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer ${
+                attendanceMode === 'FACE'
+                  ? 'bg-gradient-to-r from-[#ff6b00] to-orange-600 text-white shadow-md'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Camera size={16} />
+              Face Recognition Attendance
+            </button>
+            <button
+              onClick={() => setAttendanceMode('QR')}
+              className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer ${
+                attendanceMode === 'QR'
+                  ? 'bg-gradient-to-r from-[#ff6b00] to-orange-600 text-white shadow-md'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <QrCode size={16} />
+              Smart QR Attendance
+            </button>
+            <button
+              onClick={() => setAttendanceMode('MANUAL')}
+              className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all flex items-center gap-2 cursor-pointer ${
+                attendanceMode === 'MANUAL'
+                  ? 'bg-gradient-to-r from-[#ff6b00] to-orange-600 text-white shadow-md'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <CheckCircle size={16} />
+              Manual Registry
+            </button>
+          </div>
+        )}
 
         {/* Top 4 KPI Metric Cards Banner */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -446,12 +491,9 @@ export default function Attendance() {
               <Users size={18} />
             </div>
             <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Average Attendance</p>
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Total Records</p>
               <h4 className="text-xl font-black text-slate-900 tracking-tight">
-                {attendanceList.length > 0
-                  ? `${Math.round(((attendanceList.filter((a: any) => a.status === 'Present' || a.status === 'Late').length) / attendanceList.length) * 100)}%`
-                  : 'No data'
-                }
+                {attendanceList.length}
               </h4>
             </div>
           </div>
@@ -482,389 +524,369 @@ export default function Attendance() {
 
           <div className="p-4 bg-white border border-slate-200/80 rounded-3xl shadow-card flex items-center gap-3">
             <div className="p-3 bg-orange-50 text-[#ff6b00] rounded-2xl border border-orange-100">
-              <Clock size={18} />
+              <Camera size={18} />
             </div>
             <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Late Today</p>
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Face Recognitions</p>
               <h4 className="text-xl font-black text-slate-900 tracking-tight">
-                {attendanceList.filter((a: any) => a.status === 'Late').length}
+                {attendanceList.filter((a: any) => a.attendanceMethod === 'FACE').length}
               </h4>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap py-2">
-          {heatmap.length === 0 ? (
-            <p className="text-xs text-slate-400 italic">No attendance records logged yet for this period.</p>
-          ) : (
-            heatmap.map((item, idx) => {
-              const intensity = item.count > 10 ? 'bg-[#f97316]' : item.count > 5 ? 'bg-orange-400' : 'bg-orange-200';
-              return (
-                <div 
-                  key={idx} 
-                  title={`${item.date}: ${item.count} student entries`}
-                  className={`h-7 w-7 rounded-lg ${intensity} flex items-center justify-center text-[9px] font-bold text-slate-900 shadow-sm cursor-pointer hover:scale-110 transition-transform`}
-                >
-                  {item.count}
-                </div>
-              );
-            })
-          )}
-        </div>
       </div>
 
-      {/* Main Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Left Column: Smart QR System */}
-        <div className="space-y-6 lg:col-span-1">
+      {/* FACE RECOGNITION ATTENDANCE MODULE (Admin / Faculty View) */}
+      {isAdminOrFaculty && attendanceMode === 'FACE' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
           
-          {/* Smart QR System for Teachers (Admin/Faculty) */}
-          {isAdminOrFaculty && (
-            <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card relative overflow-hidden">
-              <div className="flex items-center justify-between mb-4">
+          {/* Panel 1: Face Enrollment & Demo Registration (5 cols) */}
+          <div className="lg:col-span-5 p-6 bg-white border border-slate-200 rounded-3xl shadow-card space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h4 className="font-title font-extrabold text-base text-slate-900 flex items-center gap-2">
+                <ScanFace className="text-[#ff6b00]" size={20} />
+                Biometric Face Enrollment
+              </h4>
+              <span className="px-2.5 py-0.5 bg-orange-50 text-[#ff6b00] text-[10px] font-extrabold rounded-full border border-orange-200">
+                DEMO WORKFLOW
+              </span>
+            </div>
+
+            <p className="text-xs text-slate-500 font-medium">
+              Select a student to inspect or register their 128-dimensional neural face descriptor for live recognition.
+            </p>
+
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Select Student to Register</label>
+              <select
+                value={selectedDemoStudent}
+                onChange={(e) => setSelectedDemoStudent(e.target.value)}
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#ff6b00] rounded-xl text-xs font-bold text-slate-900 focus:outline-none cursor-pointer"
+              >
+                <option value="">-- Choose Student for Face Registration --</option>
+                {students.map(s => (
+                  <option key={s._id || s.id} value={s._id || s.id}>
+                    {s.enrollmentNo} - {s.name} ({s.department}) {s.isFaceRegistered ? '✓ Registered' : '✗ Unregistered'}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {selectedStudentObj ? (
+              <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-3 animate-fadeIn">
+                <div className="flex items-center gap-3">
+                  {selectedStudentObj.avatarUrl ? (
+                    <img src={selectedStudentObj.avatarUrl} alt={selectedStudentObj.name} className="h-12 w-12 rounded-full object-cover border-2 border-slate-200" />
+                  ) : (
+                    <div className="h-12 w-12 rounded-full bg-slate-900 text-white font-extrabold text-sm flex items-center justify-center border-2 border-slate-700">
+                      {selectedStudentObj.name?.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div>
+                    <h5 className="font-title font-extrabold text-sm text-slate-900">{selectedStudentObj.name}</h5>
+                    <p className="text-xs font-mono text-[#ff6b00]">{selectedStudentObj.enrollmentNo}</p>
+                    <p className="text-[10px] text-slate-500 font-semibold">{selectedStudentObj.department} Department</p>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-xs">
+                  <span className="text-slate-500 font-bold">Registration Status:</span>
+                  {selectedStudentObj.isFaceRegistered || (selectedStudentObj.faceDescriptor && selectedStudentObj.faceDescriptor.length > 0) ? (
+                    <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 font-extrabold text-[11px] rounded-full flex items-center gap-1 border border-emerald-200">
+                      <CheckCircle size={13} /> Registered ✓
+                    </span>
+                  ) : (
+                    <span className="px-2.5 py-1 bg-amber-100 text-amber-900 font-extrabold text-[11px] rounded-full flex items-center gap-1 border border-amber-200">
+                      <AlertCircle size={13} /> Not Registered
+                    </span>
+                  )}
+                </div>
+
+                {!selectedStudentObj.isFaceRegistered && (!selectedStudentObj.faceDescriptor || selectedStudentObj.faceDescriptor.length === 0) ? (
+                  <div className="bg-amber-50/80 border border-amber-200 rounded-xl p-3 text-xs text-amber-900 space-y-2">
+                    <p className="font-bold flex items-center gap-1.5">
+                      <HelpCircle size={15} className="text-amber-600 shrink-0" />
+                      No face registered for this student
+                    </p>
+                    <p className="text-[11px] text-amber-800 leading-normal">
+                      Enroll this student's face via camera now to demonstrate live classroom recognition.
+                    </p>
+                    <button
+                      onClick={() => setShowFaceRegistrationModal(true)}
+                      className="w-full py-2.5 bg-[#ff6b00] hover:bg-orange-600 text-white font-extrabold rounded-xl text-xs shadow-glow transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <Camera size={16} />
+                      Register Face for Demo
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2 pt-1">
+                    <button
+                      onClick={() => {
+                        if (courses.length > 0) setFaceCourseId(courses[0]._id || courses[0].id);
+                        setShowLiveFaceScanner(true);
+                      }}
+                      className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <Camera size={16} />
+                      Start Face Attendance Recognition
+                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setShowFaceRegistrationModal(true)}
+                        className="flex-1 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+                      >
+                        Re-register Face
+                      </button>
+                      <button
+                        onClick={handleRemoveFaceRegistration}
+                        className="flex-1 py-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+                      >
+                        Remove Face
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="p-8 border-2 border-dashed border-slate-200 rounded-2xl text-center text-slate-400 space-y-2">
+                <ScanFace size={36} className="mx-auto text-slate-300" />
+                <p className="text-xs font-bold">Select a student from the dropdown to start enrollment.</p>
+              </div>
+            )}
+          </div>
+
+          {/* Panel 2: Live Recognition Classroom Session (7 cols) */}
+          <div className="lg:col-span-7 p-6 bg-white border border-slate-200 rounded-3xl shadow-card flex flex-col justify-between space-y-4">
+            <div>
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
                 <h4 className="font-title font-extrabold text-base text-slate-900 flex items-center gap-2">
-                  <QrCode size={20} className="text-[#f97316]" />
-                  Smart QR Session
+                  <Camera className="text-[#ff6b00]" size={20} />
+                  Classroom Face Recognition Session
                 </h4>
-                <span className="text-[10px] font-bold uppercase px-2 py-0.5 bg-orange-100 text-[#f97316] rounded-full">Scannable QR</span>
+                <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 text-[10px] font-extrabold rounded-full border border-emerald-200">
+                  REAL-TIME AI
+                </span>
               </div>
 
-              {!activeSession ? (
-                <form onSubmit={handleGenerateQR} className="space-y-3">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Course / Subject</label>
-                    <select
-                      value={qrCourseId}
-                      onChange={(e) => setQrCourseId(e.target.value)}
-                      required
-                      className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] rounded-xl text-xs text-slate-900 focus:outline-none cursor-pointer"
-                    >
-                      <option value="">-- Select Subject --</option>
-                      {courses.map(c => (
-                        <option key={c._id || c.id} value={c._id || c.id}>{c.code} - {c.name}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Lecture Title / Topic</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Lecture 12 - Operating Systems"
-                      value={qrLectureTitle}
-                      onChange={(e) => setQrLectureTitle(e.target.value)}
-                      required
-                      className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] rounded-xl text-xs text-slate-900 focus:outline-none"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Valid Time Duration</label>
-                    <select
-                      value={qrDuration}
-                      onChange={(e) => setQrDuration(e.target.value)}
-                      className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] rounded-xl text-xs text-slate-900 focus:outline-none cursor-pointer"
-                    >
-                      <option value="15">15 Minutes</option>
-                      <option value="30">30 Minutes</option>
-                      <option value="45">45 Minutes</option>
-                      <option value="60">60 Minutes (1 Hour)</option>
-                      <option value="90">90 Minutes (1.5 Hours)</option>
-                      <option value="120">120 Minutes (2 Hours)</option>
-                      <option value="custom">Custom Duration...</option>
-                    </select>
-                    {qrDuration === 'custom' && (
-                      <input
-                        type="number"
-                        min="1"
-                        max="480"
-                        placeholder="Validity duration in minutes (e.g. 75)"
-                        value={customDuration}
-                        onChange={(e) => setCustomDuration(e.target.value)}
-                        required
-                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] rounded-xl text-xs text-slate-900 focus:outline-none mt-2"
-                      />
-                    )}
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={qrLoading}
-                    className="w-full mt-2 py-3 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-white font-bold rounded-xl text-xs shadow-md hover:opacity-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Academic Subject</label>
+                  <select
+                    value={faceCourseId}
+                    onChange={(e) => setFaceCourseId(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#ff6b00] rounded-xl text-xs font-bold text-slate-900 focus:outline-none cursor-pointer"
                   >
-                    <QrCode size={16} />
-                    {qrLoading ? 'Generating QR...' : 'Generate Dynamic QR Code'}
-                  </button>
-                </form>
-              ) : (
-                <div className="text-center space-y-4">
-                  {/* Real Scannable Dynamic QR Display */}
-                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 w-full max-w-[260px] mx-auto shadow-inner text-center flex flex-col items-center justify-center">
-                    <div className="bg-white p-2.5 rounded-xl shadow-md border border-slate-200 w-full flex items-center justify-center">
-                      <img 
-                        src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(`${window.location.origin}/attendance?session=${activeSession.sessionId}`)}`} 
-                        alt="Dynamic Scannable QR Code" 
-                        className="w-full max-w-[190px] aspect-square rounded-lg object-contain"
-                      />
-                    </div>
-                    <div className="mt-3 w-full space-y-1.5">
-                      <div className="bg-white p-2 rounded-xl border border-slate-200 flex items-center justify-between gap-1.5 shadow-2xs">
-                        <span className="font-mono text-[10px] font-bold text-slate-800 truncate flex-1 text-left select-all">
-                          {`${window.location.origin}/attendance?session=${activeSession.sessionId}`}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            navigator.clipboard.writeText(`${window.location.origin}/attendance?session=${activeSession.sessionId}`);
-                            toast.success('Session URL copied to clipboard!');
-                          }}
-                          className="px-2 py-1 bg-orange-50 hover:bg-orange-100 text-[#f97316] border border-orange-200 rounded-lg text-[10px] font-bold shrink-0 transition-colors flex items-center gap-1 cursor-pointer"
-                          title="Copy Session Link"
-                        >
-                          <Copy size={12} />
-                          Copy
-                        </button>
-                      </div>
-                      <p className="text-[10px] text-slate-500 font-medium">Scan using Google Lens, iPhone, or Android Camera</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <h5 className="font-bold text-sm text-slate-900">{activeSession.lectureTitle}</h5>
-                    <p className="text-xs text-slate-500 font-medium">{activeSession.courseName}</p>
-                  </div>
-
-                  {/* Live Counter & Timer Badges */}
-                  <div className="grid grid-cols-2 gap-3 pt-1">
-                    <div className="p-2.5 bg-orange-50 border border-orange-200 rounded-xl text-center">
-                      <Clock size={16} className="mx-auto text-[#f97316] mb-0.5 animate-pulse" />
-                      <span className="text-[10px] text-slate-500 font-bold block uppercase">Time Remaining</span>
-                      <span className="text-sm font-extrabold font-mono text-[#f97316]">
-                        {timeLeft !== null && timeLeft > 0 ? formatTimer(timeLeft) : 'EXPIRED'}
-                      </span>
-                    </div>
-
-                    <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
-                      <Users size={16} className="mx-auto text-emerald-600 mb-0.5" />
-                      <span className="text-[10px] text-slate-500 font-bold block uppercase">Live Scan Count</span>
-                      <span className="text-sm font-extrabold font-mono text-emerald-600">
-                        {liveScannedCount} Students
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleGenerateQR()}
-                      disabled={qrLoading}
-                      className="flex-1 py-2.5 bg-orange-50 hover:bg-orange-100 text-[#f97316] border border-orange-200 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
-                    >
-                      <RefreshCw size={14} />
-                      Regenerate QR
-                    </button>
-                    <button
-                      onClick={() => setActiveSession(null)}
-                      className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors cursor-pointer"
-                    >
-                      New Session
-                    </button>
-                  </div>
+                    <option value="">-- Select Subject --</option>
+                    {courses.map(c => (
+                      <option key={c._id || c.id} value={c._id || c.id}>{c.code} - {c.name}</option>
+                    ))}
+                  </select>
                 </div>
-              )}
-            </div>
-          )}
 
-          {/* Student View: Scan & Single-Tap Confirmation */}
-          {(isStudent || studentSessionInput || studentSessionData || window.location.search.includes('session=')) && (
-            <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card relative overflow-hidden">
-              <h4 className="font-title font-extrabold text-base mb-3 text-slate-900 flex items-center gap-2">
-                <Scan size={20} className="text-[#f97316]" />
-                Student Smart QR Confirmation
-              </h4>
-              
-              <p className="text-xs text-slate-500 leading-normal mb-4">
-                Enter your instructor's active classroom QR Session Code to confirm your attendance.
-              </p>
-
-              {error && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 text-[#ef4444] rounded-xl text-xs flex items-center gap-2">
-                  <AlertCircle size={14} className="shrink-0" />
-                  <span>{error}</span>
-                </div>
-              )}
-
-              {success && (
-                <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-xl text-xs flex items-center gap-2">
-                  <CheckCircle size={14} className="shrink-0" />
-                  <span>{success}</span>
-                </div>
-              )}
-
-              {/* Camera Scanner Viewport Modal / Card Section */}
-              {isScannerOpen ? (
-                <div className="space-y-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl text-center animate-fadeIn">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                      <Camera size={16} className="text-[#f97316]" />
-                      Live Camera QR Scanner
-                    </span>
-                    <button
-                      onClick={stopCameraScanner}
-                      className="p-1 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
-                      title="Close Scanner"
-                    >
-                      <X size={16} />
-                    </button>
-                  </div>
-
-                  {cameraError && (
-                    <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs flex items-center gap-2 text-left">
-                      <AlertCircle size={16} className="shrink-0" />
-                      <span>{cameraError}</span>
-                    </div>
-                  )}
-
-                  {availableCameras.length > 1 && (
-                    <select
-                      value={selectedCameraId}
-                      onChange={(e) => startCameraScanner(e.target.value)}
-                      className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none cursor-pointer"
-                    >
-                      {availableCameras.map(cam => (
-                        <option key={cam.id} value={cam.id}>{cam.label || `Camera ${cam.id}`}</option>
-                      ))}
-                    </select>
-                  )}
-
-                  {/* HTML5 Live Video Viewport Element */}
-                  <div id="camera-reader" className="w-full max-w-xs mx-auto rounded-2xl overflow-hidden border-2 border-[#f97316] shadow-md bg-black min-h-[220px]" />
-
-                  <p className="text-[10px] text-slate-500 font-medium">
-                    Point your device camera at the instructor's QR code screen to scan automatically.
-                  </p>
-
-                  <button
-                    onClick={stopCameraScanner}
-                    className="w-full py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-xl text-xs transition-colors cursor-pointer"
-                  >
-                    Cancel & Enter Code Manually
-                  </button>
-                </div>
-              ) : !studentSessionData ? (
-                <div className="space-y-3">
-                  <button
-                    type="button"
-                    onClick={() => startCameraScanner()}
-                    className="w-full py-3.5 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-white font-extrabold rounded-2xl text-xs shadow-md hover:opacity-95 transition-all flex items-center justify-center gap-2 cursor-pointer mb-2"
-                  >
-                    <Camera size={18} />
-                    Scan QR Code via Camera
-                  </button>
-
-                  <div className="relative flex py-1 items-center">
-                    <div className="flex-grow border-t border-slate-200"></div>
-                    <span className="flex-shrink mx-2 text-[10px] text-slate-400 font-bold uppercase tracking-wider">or enter session code</span>
-                    <div className="flex-grow border-t border-slate-200"></div>
-                  </div>
-
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Lecture Topic / Title</label>
                   <input
                     type="text"
-                    placeholder="Enter QR Session Code or URL (e.g. QR_X7Y2Z)"
-                    value={studentSessionInput}
-                    onChange={(e) => setStudentSessionInput(e.target.value.toUpperCase())}
-                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] rounded-xl text-xs font-mono text-slate-900 focus:outline-none"
+                    value={faceLectureTitle}
+                    onChange={(e) => setFaceLectureTitle(e.target.value)}
+                    placeholder="e.g. Lecture 1 - AI Introduction"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#ff6b00] rounded-xl text-xs font-bold text-slate-900 focus:outline-none"
                   />
-                  <button
-                    onClick={() => handleStudentFetchSession()}
-                    disabled={!studentSessionInput.trim() || actionLoading}
-                    className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs border border-slate-200 transition-all cursor-pointer"
-                  >
-                    {actionLoading ? 'Verifying QR Code...' : 'Verify Session Code'}
-                  </button>
                 </div>
-              ) : (
-                <div className="space-y-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
-                  <div className="space-y-2 text-xs text-slate-700">
-                    <div className="flex justify-between border-b border-slate-200 pb-1.5">
-                      <span className="font-bold text-slate-500">Student Name:</span>
-                      <span className="font-semibold text-slate-900">{user?.name}</span>
-                    </div>
-                    <div className="flex justify-between border-b border-slate-200 pb-1.5">
-                      <span className="font-bold text-slate-500">Enrollment ID:</span>
-                      <span className="font-mono font-semibold text-[#f97316]">{user?.studentProfile?.enrollmentNo || 'ENR_STUDENT'}</span>
-                    </div>
-                    <div className="flex justify-between border-b border-slate-200 pb-1.5">
-                      <span className="font-bold text-slate-500">Subject:</span>
-                      <span className="font-semibold text-slate-900">{studentSessionData.courseName}</span>
-                    </div>
-                    <div className="flex justify-between border-b border-slate-200 pb-1.5">
-                      <span className="font-bold text-slate-500">Lecture:</span>
-                      <span className="font-semibold text-slate-900">{studentSessionData.lectureTitle}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-bold text-slate-500">Date:</span>
-                      <span className="font-semibold text-slate-900">{studentSessionData.date}</span>
-                    </div>
-                  </div>
-
-                  {!studentConfirmed ? (
-                    <button
-                      onClick={handleStudentConfirmAttendance}
-                      disabled={actionLoading}
-                      className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                    >
-                      <Check size={18} />
-                      {actionLoading ? 'Recording Attendance...' : 'Confirm My Attendance'}
-                    </button>
-                  ) : (
-                    <div className="p-3 bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-xl text-xs text-center font-bold flex items-center justify-center gap-2">
-                      <ShieldCheck size={18} />
-                      Attendance Confirmed & Recorded!
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Regular Manual Selector for Course */}
-          <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card">
-            <h4 className="font-title font-extrabold text-base mb-3 text-slate-900">Manual Attendance Registry</h4>
-            <div className="space-y-3">
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Select Academic Course</label>
-                <select
-                  value={selectedCourse}
-                  onChange={(e) => setSelectedCourse(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] rounded-xl text-xs text-slate-700 focus:outline-none cursor-pointer"
-                >
-                  <option value="">-- Select Course --</option>
-                  {courses.map(c => (
-                    <option key={c._id || c.id} value={c._id || c.id}>
-                      {c.code} - {c.name}
-                    </option>
-                  ))}
-                </select>
               </div>
 
-              {isAdminOrFaculty && (
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Marking Date</label>
-                  <input
-                    type="date"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] rounded-xl text-xs text-slate-900 focus:outline-none"
-                  />
-                </div>
-              )}
+              <div className="p-4 bg-orange-50/70 border border-orange-200 rounded-2xl text-xs text-orange-950 space-y-1.5">
+                <p className="font-bold flex items-center gap-1.5">
+                  <Sparkles size={16} className="text-[#ff6b00]" />
+                  Live AI Recognition Loop
+                </p>
+                <p className="text-[11px] text-slate-600 leading-normal">
+                  When camera opens, student faces will be detected in real-time with visual bounding boxes. Recognized students receive instant <strong className="text-emerald-700 font-bold">PRESENT</strong> status with duplicate prevention check.
+                </p>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* Directory Student List (Admin/Faculty only) */}
-        {isAdminOrFaculty && (
+            <button
+              onClick={() => {
+                if (!faceCourseId && courses.length > 0) {
+                  setFaceCourseId(courses[0]._id || courses[0].id);
+                }
+                setShowLiveFaceScanner(true);
+              }}
+              className="w-full py-3.5 bg-gradient-to-r from-[#ff6b00] to-orange-600 hover:opacity-95 text-white font-extrabold rounded-2xl text-xs shadow-glow transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Camera size={18} />
+              Launch Live Face Recognition Scanner
+            </button>
+          </div>
+
+        </div>
+      )}
+
+      {/* SMART QR & MANUAL MODES */}
+      {isAdminOrFaculty && (attendanceMode === 'QR' || attendanceMode === 'MANUAL') && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-6">
+          
+          {/* Left Column */}
+          <div className="space-y-6 lg:col-span-1">
+            {attendanceMode === 'QR' && (
+              <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card relative overflow-hidden">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="font-title font-extrabold text-base text-slate-900 flex items-center gap-2">
+                    <QrCode size={20} className="text-[#f97316]" />
+                    Smart QR Session
+                  </h4>
+                  <span className="text-[10px] font-bold uppercase px-2 py-0.5 bg-orange-100 text-[#f97316] rounded-full">Scannable QR</span>
+                </div>
+
+                {!activeSession ? (
+                  <form onSubmit={handleGenerateQR} className="space-y-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Course / Subject</label>
+                      <select
+                        value={qrCourseId}
+                        onChange={(e) => setQrCourseId(e.target.value)}
+                        required
+                        className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] rounded-xl text-xs text-slate-900 focus:outline-none cursor-pointer"
+                      >
+                        <option value="">-- Select Subject --</option>
+                        {courses.map(c => (
+                          <option key={c._id || c.id} value={c._id || c.id}>{c.code} - {c.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Lecture Title / Topic</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Lecture 12 - Operating Systems"
+                        value={qrLectureTitle}
+                        onChange={(e) => setQrLectureTitle(e.target.value)}
+                        required
+                        className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] rounded-xl text-xs text-slate-900 focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Valid Time Duration</label>
+                      <select
+                        value={qrDuration}
+                        onChange={(e) => setQrDuration(e.target.value)}
+                        className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] rounded-xl text-xs text-slate-900 focus:outline-none cursor-pointer"
+                      >
+                        <option value="15">15 Minutes</option>
+                        <option value="30">30 Minutes</option>
+                        <option value="45">45 Minutes</option>
+                        <option value="60">60 Minutes (1 Hour)</option>
+                      </select>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={qrLoading}
+                      className="w-full mt-2 py-3 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-white font-bold rounded-xl text-xs shadow-md hover:opacity-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <QrCode size={16} />
+                      {qrLoading ? 'Generating QR...' : 'Generate Dynamic QR Code'}
+                    </button>
+                  </form>
+                ) : (
+                  <div className="text-center space-y-4">
+                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 w-full max-w-[260px] mx-auto shadow-inner text-center flex flex-col items-center justify-center">
+                      <div className="bg-white p-2.5 rounded-xl shadow-md border border-slate-200 w-full flex items-center justify-center">
+                        <img 
+                          src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(`${window.location.origin}/attendance?session=${activeSession.sessionId}`)}`} 
+                          alt="Dynamic Scannable QR Code" 
+                          className="w-full max-w-[190px] aspect-square rounded-lg object-contain"
+                        />
+                      </div>
+                      <div className="mt-3 w-full space-y-1.5">
+                        <div className="bg-white p-2 rounded-xl border border-slate-200 flex items-center justify-between gap-1.5 shadow-2xs">
+                          <span className="font-mono text-[10px] font-bold text-slate-800 truncate flex-1 text-left select-all">
+                            {`${window.location.origin}/attendance?session=${activeSession.sessionId}`}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(`${window.location.origin}/attendance?session=${activeSession.sessionId}`);
+                              toast.success('Session URL copied to clipboard!');
+                            }}
+                            className="px-2 py-1 bg-orange-50 hover:bg-orange-100 text-[#f97316] border border-orange-200 rounded-lg text-[10px] font-bold shrink-0 transition-colors flex items-center gap-1 cursor-pointer"
+                          >
+                            <Copy size={12} />
+                            Copy
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 pt-1">
+                      <div className="p-2.5 bg-orange-50 border border-orange-200 rounded-xl text-center">
+                        <Clock size={16} className="mx-auto text-[#f97316] mb-0.5 animate-pulse" />
+                        <span className="text-[10px] text-slate-500 font-bold block uppercase">Time Remaining</span>
+                        <span className="text-sm font-extrabold font-mono text-[#f97316]">
+                          {timeLeft !== null && timeLeft > 0 ? formatTimer(timeLeft) : 'EXPIRED'}
+                        </span>
+                      </div>
+
+                      <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-center">
+                        <Users size={16} className="mx-auto text-emerald-600 mb-0.5" />
+                        <span className="text-[10px] text-slate-500 font-bold block uppercase">Live Scan Count</span>
+                        <span className="text-sm font-extrabold font-mono text-emerald-600">
+                          {liveScannedCount} Students
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleGenerateQR()}
+                        disabled={qrLoading}
+                        className="flex-1 py-2.5 bg-orange-50 hover:bg-orange-100 text-[#f97316] border border-orange-200 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <RefreshCw size={14} />
+                        Regenerate QR
+                      </button>
+                      <button
+                        onClick={() => setActiveSession(null)}
+                        className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                      >
+                        New Session
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {attendanceMode === 'MANUAL' && (
+              <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card">
+                <h4 className="font-title font-extrabold text-base mb-3 text-slate-900">Manual Attendance Registry</h4>
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Select Academic Course</label>
+                    <select
+                      value={selectedCourse}
+                      onChange={(e) => setSelectedCourse(e.target.value)}
+                      className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] rounded-xl text-xs text-slate-700 focus:outline-none cursor-pointer"
+                    >
+                      <option value="">-- Select Course --</option>
+                      {courses.map(c => (
+                        <option key={c._id || c.id} value={c._id || c.id}>
+                          {c.code} - {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Directory Student List */}
           <div className="lg:col-span-2 p-6 bg-white border border-slate-200 rounded-3xl shadow-card flex flex-col h-full">
             <div className="flex items-center justify-between mb-4">
               <h4 className="font-title font-extrabold text-base text-slate-900">Enrollment Student Registry</h4>
@@ -874,7 +896,7 @@ export default function Attendance() {
                   disabled={actionLoading}
                   className="px-4 py-2 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-white font-bold rounded-xl text-xs shadow-md hover:opacity-95 transition-all cursor-pointer"
                 >
-                  {actionLoading ? 'Saving...' : 'Save Attendance Entries'}
+                  {actionLoading ? 'Saving...' : 'Save Manual Attendance'}
                 </button>
               )}
             </div>
@@ -882,7 +904,7 @@ export default function Attendance() {
             {!selectedCourse ? (
               <div className="flex flex-col justify-center items-center py-20 text-slate-400 text-center gap-2">
                 <HelpCircle size={36} className="opacity-40 text-slate-400" />
-                <p className="text-xs italic">Please select an academic course from the left menu to load the student registry.</p>
+                <p className="text-xs italic">Please select an academic course to load the student registry.</p>
               </div>
             ) : (
               <div className="overflow-y-auto max-h-[460px] pr-1 space-y-3.5 scrollbar-thin">
@@ -918,7 +940,6 @@ export default function Attendance() {
                           </div>
                         </div>
 
-                        {/* Status Toggle buttons */}
                         <div className="flex gap-1.5 bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
                           <button 
                             onClick={() => handleMarkStatus(studentId, 'Present')}
@@ -946,8 +967,120 @@ export default function Attendance() {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* STUDENT PORTAL VIEW (Read-only Attendance Dashboard) */}
+      {isStudent && (
+        <div className="space-y-6 mt-6">
+          {/* Face Registration Status Card */}
+          <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h4 className="font-title font-extrabold text-base text-slate-900 flex items-center gap-2">
+                <ScanFace size={20} className="text-[#ff6b00]" />
+                Face Biometric Registration Status
+              </h4>
+              <p className="text-xs text-slate-500 mt-1">
+                {user?.studentProfile?.isFaceRegistered
+                  ? 'Your face biometric embedding is registered for classroom face recognition attendance.'
+                  : 'No face biometric registered yet. Please ask an Admin or Faculty to enroll your face.'}
+              </p>
+            </div>
+
+            {user?.studentProfile?.isFaceRegistered ? (
+              <span className="px-3.5 py-1.5 bg-emerald-100 text-emerald-800 font-extrabold text-xs rounded-full flex items-center gap-1.5 border border-emerald-200 shrink-0">
+                <CheckCircle size={15} /> Registered ✓
+              </span>
+            ) : (
+              <span className="px-3.5 py-1.5 bg-amber-100 text-amber-900 font-extrabold text-xs rounded-full flex items-center gap-1.5 border border-amber-200 shrink-0">
+                <AlertCircle size={15} /> Not Registered
+              </span>
+            )}
+          </div>
+
+          {/* Student Attendance History Table */}
+          <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card space-y-4">
+            <h4 className="font-title font-extrabold text-base text-slate-900">My Attendance History</h4>
+
+            {attendanceList.length === 0 ? (
+              <p className="text-xs text-slate-400 italic text-center py-8">No attendance records logged yet for this date.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      <th className="pb-3">Subject / Course</th>
+                      <th className="pb-3">Date</th>
+                      <th className="pb-3">Status</th>
+                      <th className="pb-3">Attendance Method</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {attendanceList.map((log: any) => (
+                      <tr key={log._id || log.id}>
+                        <td className="py-3 font-semibold text-slate-900">
+                          {log.courseId?.name || log.courseId?.code || 'Course Subject'}
+                        </td>
+                        <td className="py-3 font-mono text-slate-500">{log.date}</td>
+                        <td className="py-3 font-bold">
+                          <span className={`px-2.5 py-1 rounded-full text-[10px] ${
+                            log.status === 'Present' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {log.status}
+                          </span>
+                        </td>
+                        <td className="py-3 font-bold">
+                          {log.attendanceMethod === 'FACE' ? (
+                            <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200 inline-flex items-center gap-1">
+                              <Camera size={12} /> Face Recognition
+                            </span>
+                          ) : log.attendanceMethod === 'QR' ? (
+                            <span className="px-2.5 py-1 bg-orange-50 text-[#ff6b00] rounded-full border border-orange-200 inline-flex items-center gap-1">
+                              <QrCode size={12} /> QR Code
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-full border border-slate-200 inline-flex items-center gap-1">
+                              <CheckCircle size={12} /> Manual
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Lazy Suspense Modals */}
+      <Suspense fallback={null}>
+        {showFaceRegistrationModal && selectedStudentObj && (
+          <FaceRegistrationModal
+            student={selectedStudentObj}
+            onClose={() => {
+              setShowFaceRegistrationModal(false);
+              // Refresh students
+              api.get('/students?limit=200').then(res => setStudents(res.data.students || []));
+            }}
+          />
         )}
-      </div>
+
+        {showLiveFaceScanner && (
+          <FaceRecognitionScanner
+            courseId={faceCourseId}
+            courseName={selectedCourseObj?.name || 'Classroom Lecture'}
+            lectureTitle={faceLectureTitle}
+            date={selectedDate}
+            onClose={() => setShowLiveFaceScanner(false)}
+            onAttendanceRecorded={() => {
+              fetchHeatmapData();
+              api.get(`/attendance`, { params: { date: selectedDate } }).then(res => setAttendanceList(res.data.attendance || []));
+            }}
+          />
+        )}
+      </Suspense>
 
     </DashboardShell>
   );

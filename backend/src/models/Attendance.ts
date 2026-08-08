@@ -9,6 +9,14 @@ const AttendanceSchema = new Schema({
     enum: ['Present', 'Absent', 'On Leave', 'Excused'], 
     default: 'Present' 
   },
+  attendanceMethod: {
+    type: String,
+    enum: ['MANUAL', 'QR', 'FACE'],
+    default: 'MANUAL',
+    index: true
+  },
+  recognitionConfidence: { type: Number },
+  lectureTitle: { type: String, default: '' },
   markedBy: { type: Schema.Types.ObjectId, ref: 'User' },
   createdAt: { type: Date, default: Date.now, index: true }
 });

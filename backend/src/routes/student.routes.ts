@@ -45,8 +45,19 @@ router.get(
   StudentController.exportPDF
 );
 
+// GET: /api/students/faces (Protected)
+router.get('/faces', authenticateJWT, StudentController.getStudentFaces);
+
 // GET: /api/students/:id (Protected)
 router.get('/:id', authenticateJWT, StudentController.getStudentById);
+
+// PUT: /api/students/:id/face (Admin only)
+router.put(
+  '/:id/face', 
+  authenticateJWT, 
+  requireRole(['Super Admin', 'Admin']), 
+  StudentController.updateStudentFace
+);
 
 // POST: /api/students (Admin only)
 router.post(

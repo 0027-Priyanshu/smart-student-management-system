@@ -465,11 +465,96 @@ export class RepoService {
     }
   }
 
-  static async markAttendance(attendanceData: { studentId: string; courseId: string; date: string; status: string; markedBy?: string }): Promise<any> {
+  static async registerStudentFace(studentId: string, faceDescriptor: number[]): Promise<any> {
+    const update = {
+      faceDescriptor,
+      isFaceRegistered: true,
+      faceRegisteredAt: new Date().toISOString()
+    };
+    if (isMongoConnected) {
+      return await Student.findByIdAndUpdate(studentId, update, { new: true }).lean();
+    } else {
+      const db = readJsonDb();
+      const index = db.students.findIndex((s: any) => s._id === studentId || s.id === studentId);
+      if (index === -1) return null;
+      db.students[index] = {
+        ...db.students[index],
+        ...update,
+        updatedAt: new Date().toISOString()
+      };
+      writeJsonDb(db);
+      return db.students[index];
+    }
+  }
+
+  static async removeStudentFace(studentId: string): Promise<any> {
+    const update = {
+      faceDescriptor: [],
+      isFaceRegistered: false,
+      faceRegisteredAt: null
+    };
+    if (isMongoConnected) {
+      return await Student.findByIdAndUpdate(studentId, update, { new: true }).lean();
+    } else {
+      const db = readJsonDb();
+      const index = db.students.findIndex((s: any) => s._id === studentId || s.id === studentId);
+      if (index === -1) return null;
+      db.students[index] = {
+        ...db.students[index],
+        ...update,
+        updatedAt: new Date().toISOString()
+      };
+      writeJsonDb(db);
+      return db.students[index];
+    }
+  }
+
+  static async findRegisteredFaceEmbeddings(courseId?: string): Promise<any[]> {
+    if (isMongoConnected) {
+      const query: any = { isFaceRegistered: true, isDeleted: false };
+      if (courseId) {
+        query.enrolledCourses = courseId;
+      }
+      return await Student.find(query)
+        .select('_id name enrollmentNo department faceDescriptor isFaceRegistered faceRegisteredAt')
+        .lean();
+    } else {
+      const db = readJsonDb();
+      let filtered = db.students.filter((s: any) => (s.isFaceRegistered || (s.faceDescriptor && s.faceDescriptor.length > 0)) && !s.isDeleted);
+      if (courseId) {
+        filtered = filtered.filter((s: any) => (s.enrolledCourses || []).includes(courseId));
+      }
+      return filtered.map((s: any) => ({
+        _id: s._id || s.id,
+        id: s._id || s.id,
+        name: s.name,
+        enrollmentNo: s.enrollmentNo,
+        department: s.department,
+        faceDescriptor: s.faceDescriptor,
+        isFaceRegistered: !!s.isFaceRegistered,
+        faceRegisteredAt: s.faceRegisteredAt
+      }));
+    }
+  }
+
+  static async markAttendance(attendanceData: {
+    studentId: string;
+    courseId: string;
+    date: string;
+    status: string;
+    markedBy?: string;
+    attendanceMethod?: 'MANUAL' | 'QR' | 'FACE';
+    recognitionConfidence?: number;
+    lectureTitle?: string;
+  }): Promise<any> {
+    const dataToSave = {
+      ...attendanceData,
+      attendanceMethod: attendanceData.attendanceMethod || 'MANUAL'
+    };
     if (isMongoConnected) {
       return await Attendance.findOneAndUpdate(
         { studentId: attendanceData.studentId, courseId: attendanceData.courseId, date: attendanceData.date },
-        attendanceData,
+        dataToSave,
         { upsert: true, new: true }
       );
     } else {
@@ -483,15 +568,14 @@ export class RepoService {
       if (index !== -1) {
         db.attendance[index] = {
           ...db.attendance[index],
-          status: attendanceData.status,
-          markedBy: attendanceData.markedBy
+          ...dataToSave
         };
         writeJsonDb(db);
         return db.attendance[index];
       } else {
         const newRecord = {
           _id: generateId(),
-          ...attendanceData,
+          ...dataToSave,
           createdAt: new Date().toISOString()
         };
         db.attendance.push(newRecord);

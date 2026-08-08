@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
+    "@vladmandic/face-api": "^1.7.15",
     "axios": "^1.18.1",
     "framer-motion": "^12.42.2",
     "html5-qrcode": "^2.3.8",

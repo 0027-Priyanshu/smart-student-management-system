@@ -443,7 +443,7 @@ export class AIController {
         content: userQuery
       });
 
-      const reply = await adminChatAssistant(userQuery, Array.isArray(history) ? history : [], {
+      const result = await adminChatAssistant(userQuery, Array.isArray(history) ? history : [], {
         currentPage,
         userRole: requester.role,
         selectedEntity,
@@ -454,10 +454,14 @@ export class AIController {
       await RepoService.createChatMessage({
         userId: requester.userId,
         role: 'model',
-        content: reply
+        content: result.reply
       });
 
-      return res.json({ reply });
+      return res.json({ 
+        reply: result.reply,
+        navigateTo: result.navigateTo,
+        proposedAction: result.proposedAction
+      });
     } catch (error) {
       next(error);
     }

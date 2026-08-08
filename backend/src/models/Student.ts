@@ -24,6 +24,9 @@ const StudentSchema = new Schema({
       passingYear: Number
     }
   ],
+  faceDescriptor: { type: [Number], default: [] },
+  isFaceRegistered: { type: Boolean, default: false, index: true },
+  faceRegisteredAt: { type: Date },
   createdAt: { type: Date, default: Date.now, index: true },
   updatedAt: { type: Date, default: Date.now }
 });

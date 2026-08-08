@@ -6,6 +6,7 @@ import { RepoService } from '../services/repo.service';
 import { uploadFile } from '../services/cloudinary.service';
 import { emitLiveUpdate } from '../config/socket';
 import { NotificationService } from '../services/notification.service';
+import Student from '../models/Student';
 
 export class StudentController {
   static async getStudents(req: Request, res: Response, next: NextFunction) {
@@ -503,6 +504,47 @@ export class StudentController {
       });
 
       return res.json({ message: `Password for ${student.name} updated successfully` });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getStudentFaces(req: Request, res: Response, next: NextFunction) {
+    try {
+      const students = await Student.find({ faceDescriptor: { $exists: true, $not: { $size: 0 } }, isDeleted: false })
+        .select('_id name enrollmentNo faceDescriptor');
+      return res.json({ students });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async updateStudentFace(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const { faceDescriptor } = req.body;
+      const requester = (req as any).user;
+
+      if (!faceDescriptor || !Array.isArray(faceDescriptor)) {
+        return res.status(400).json({ error: 'Valid face descriptor array is required' });
+      }
+
+      const student = await RepoService.findStudentById(id);
+      if (!student) {
+        return res.status(404).json({ error: 'Student profile not found' });
+      }
+
+      await RepoService.updateStudent(id, { faceDescriptor });
+
+      await RepoService.createLog({
+        userId: requester.userId,
+        userName: requester.name,
+        role: requester.role,
+        action: 'Student Face Registered',
+        details: `Registered face data for student: ${student.name} (${student.enrollmentNo})`
+      });
+
+      return res.json({ message: `Face registered successfully for ${student.name}` });
     } catch (error) {
       next(error);
     }

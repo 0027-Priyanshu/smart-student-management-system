@@ -48,4 +48,36 @@ router.post(
 // GET: /api/attendance/heatmap (Protected)
 router.get('/heatmap', authenticateJWT, AttendanceController.getHeatmap);
 
+// POST: /api/attendance/face/register (Admin or Faculty only)
+router.post(
+  '/face/register',
+  authenticateJWT,
+  requireRole(['Super Admin', 'Admin', 'Faculty']),
+  AttendanceController.registerFace
+);
+
+// DELETE: /api/attendance/face/register/:studentId (Admin or Faculty only)
+router.delete(
+  '/face/register/:studentId',
+  authenticateJWT,
+  requireRole(['Super Admin', 'Admin', 'Faculty']),
+  AttendanceController.removeFace
+);
+
+// GET: /api/attendance/face/embeddings (Admin or Faculty only)
+router.get(
+  '/face/embeddings',
+  authenticateJWT,
+  requireRole(['Super Admin', 'Admin', 'Faculty']),
+  AttendanceController.getFaceEmbeddings
+);
+
+// POST: /api/attendance/face/mark (Admin or Faculty only)
+router.post(
+  '/face/mark',
+  authenticateJWT,
+  requireRole(['Super Admin', 'Admin', 'Faculty']),
+  AttendanceController.markFaceAttendance
+);
+
 export default router;

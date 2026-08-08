@@ -274,4 +274,154 @@ export class AttendanceController {
       next(error);
     }
   }
+
+  static async registerFace(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { studentId, faceDescriptor } = req.body;
+      if (!studentId || !faceDescriptor || !Array.isArray(faceDescriptor)) {
+        return res.status(400).json({ error: 'Valid Student ID and face descriptor vector are required.' });
+      }
+
+      const student = await RepoService.findStudentById(studentId);
+      if (!student) {
+        return res.status(404).json({ error: 'Student not found.' });
+      }
+
+      const updated = await RepoService.registerStudentFace(studentId, faceDescriptor);
+
+      await RepoService.createLog({
+        userId: (req as any).user.userId,
+        userName: (req as any).user.name,
+        role: (req as any).user.role,
+        action: 'Face Biometric Enrolled',
+        details: `Enrolled face biometric descriptor for student: ${student.name} (${student.enrollmentNo})`
+      });
+
+      return res.json({
+        message: `Face biometric descriptor registered successfully for ${student.name}!`,
+        student: updated
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async removeFace(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { studentId } = req.params;
+      const student = await RepoService.findStudentById(studentId);
+      if (!student) {
+        return res.status(404).json({ error: 'Student not found.' });
+      }
+
+      await RepoService.removeStudentFace(studentId);
+
+      await RepoService.createLog({
+        userId: (req as any).user.userId,
+        userName: (req as any).user.name,
+        role: (req as any).user.role,
+        action: 'Face Biometric Removed',
+        details: `Removed face biometric registration for student: ${student.name} (${student.enrollmentNo})`
+      });
+
+      return res.json({
+        message: `Face registration removed for ${student.name}.`
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getFaceEmbeddings(req: Request, res: Response, next: NextFunction) {
+    try {
+      const courseId = req.query.courseId as string;
+      const registeredFaces = await RepoService.findRegisteredFaceEmbeddings(courseId);
+
+      // Return sanitized embeddings for recognition matching
+      const sanitized = registeredFaces.map(s => ({
+        studentId: s._id || s.id,
+        name: s.name,
+        enrollmentNo: s.enrollmentNo,
+        department: s.department,
+        faceDescriptor: s.faceDescriptor,
+        isFaceRegistered: !!s.isFaceRegistered,
+        faceRegisteredAt: s.faceRegisteredAt
+      }));
+
+      return res.json({ registeredFaces: sanitized });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async markFaceAttendance(req: Request, res: Response, next: NextFunction) {
+    try {
+      const requester = (req as any).user;
+      const { studentId, courseId, date, lectureTitle, recognitionConfidence } = req.body;
+
+      if (!studentId || !courseId || !date) {
+        return res.status(400).json({ error: 'Student ID, Course ID, and Date are required.' });
+      }
+
+      const student = await RepoService.findStudentById(studentId);
+      if (!student) {
+        return res.status(404).json({ error: 'Student not found.' });
+      }
+
+      // Check if attendance already recorded for this lecture / date
+      const existingLogs = await RepoService.findAttendance({ studentId, courseId, date });
+      if (existingLogs && existingLogs.length > 0) {
+        return res.status(409).json({
+          error: `Attendance already recorded for ${student.name} (${student.enrollmentNo}) on ${date}!`,
+          alreadyMarked: true,
+          attendance: existingLogs[0]
+        });
+      }
+
+      const log = await RepoService.markAttendance({
+        studentId,
+        courseId,
+        date,
+        status: 'Present',
+        attendanceMethod: 'FACE',
+        recognitionConfidence: recognitionConfidence || 90,
+        lectureTitle: lectureTitle || 'Face Recognition Lecture',
+        markedBy: requester.userId
+      });
+
+      // Log Activity
+      await RepoService.createLog({
+        userId: requester.userId,
+        userName: requester.name,
+        role: requester.role,
+        action: 'Face Recognition Attendance',
+        details: `Face recognized & marked present: ${student.name} (${student.enrollmentNo}) with ${recognitionConfidence || 90}% confidence on ${date}`
+      });
+
+      // Socket live update
+      emitLiveUpdate('attendance_update', { studentId, courseId, date, status: 'Present', attendanceMethod: 'FACE' });
+
+      // Trigger notification alert
+      if (student.email) {
+        const course = await RepoService.findCourseById(courseId);
+        NotificationService.triggerAttendanceAlert(
+          student.email,
+          student.name,
+          date,
+          course?.name || 'Academic Course',
+          'Present'
+        ).catch(err => console.error(err));
+      }
+
+      return res.status(201).json({
+        message: `Student Recognized ✓ Attendance marked PRESENT for ${student.name} (${student.enrollmentNo})`,
+        studentName: student.name,
+        enrollmentNo: student.enrollmentNo,
+        confidence: recognitionConfidence || 90,
+        attendance: log
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

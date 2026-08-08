@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { 
   Search, 
   UserPlus, 
@@ -8,7 +8,8 @@ import {
   X,
   KeyRound,
   Eye,
-  EyeOff
+  EyeOff,
+  Camera
 } from 'lucide-react';
 
 import DashboardShell from '../components/layout/DashboardShell';
@@ -18,6 +19,8 @@ import type { Student } from '../types';
 import { toast } from '../stores/toastStore';
 import { TableSkeleton } from '../components/Skeleton';
 import { useDebounce } from '../hooks/useDebounce';
+
+const FaceRegistrationModal = lazy(() => import('../components/FaceRegistrationModal'));
 
 export default function Students() {
   const { user } = useAuthStore();
@@ -42,6 +45,8 @@ export default function Students() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showIdCardModal, setShowIdCardModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showFaceModal, setShowFaceModal] = useState(false);
+  const [faceActiveStudent, setFaceActiveStudent] = useState<Student | null>(null);
   const [activeStudent, setActiveStudent] = useState<Student | null>(null);
   const [passwordStudent, setPasswordStudent] = useState<Student | null>(null);
   const [newPassword, setNewPassword] = useState('');
@@ -484,6 +489,17 @@ export default function Students() {
 
                             {isAdmin && (
                               <>
+                                <button
+                                  onClick={() => {
+                                    setFaceActiveStudent(student);
+                                    setShowFaceModal(true);
+                                  }}
+                                  className="p-1.5 text-slate-400 hover:text-[#ff6b00] hover:bg-orange-50 rounded-xl transition-colors cursor-pointer"
+                                  title="Register Face Data"
+                                >
+                                  <Camera size={16} />
+                                </button>
+
                                 <button
                                   onClick={() => openPasswordModal(student)}
                                   className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
@@ -951,6 +967,19 @@ export default function Students() {
             </form>
           </div>
         </div>
+      )}
+
+      {showFaceModal && faceActiveStudent && (
+        <Suspense fallback={null}>
+          <FaceRegistrationModal
+            student={faceActiveStudent}
+            onClose={() => {
+              setShowFaceModal(false);
+              setFaceActiveStudent(null);
+              fetchStudents();
+            }}
+          />
+        </Suspense>
       )}
 
     </DashboardShell>

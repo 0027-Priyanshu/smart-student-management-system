@@ -6,8 +6,28 @@ import { NotificationService } from '../services/notification.service';
 export class CourseController {
   static async getCourses(req: Request, res: Response, next: NextFunction) {
     try {
+      const requester = (req as any).user;
       const showDeleted = req.query.isDeleted === 'true';
-      const courses = await RepoService.findCourses({ isDeleted: showDeleted });
+      let courses = await RepoService.findCourses({ isDeleted: showDeleted });
+
+      if (requester.role === 'Student') {
+        const studentProfile = await RepoService.findStudentByUserId(requester.userId);
+        if (studentProfile) {
+          const enrolledIds = studentProfile.enrolledCourses?.map((c: any) => (c._id || c.id || c).toString()) || [];
+          courses = courses.filter((c: any) => enrolledIds.includes((c._id || c.id).toString()));
+        } else {
+          courses = [];
+        }
+      } else if (requester.role === 'Faculty') {
+        const facultyProfile = await RepoService.findFacultyByUserId(requester.userId);
+        if (facultyProfile) {
+          const assignedIds = facultyProfile.assignedCourses?.map((c: any) => (c._id || c.id || c).toString()) || [];
+          courses = courses.filter((c: any) => assignedIds.includes((c._id || c.id).toString()) || c.facultyId?.toString() === requester.userId);
+        } else {
+          courses = [];
+        }
+      }
+
       return res.json({ courses });
     } catch (error) {
       next(error);
@@ -29,7 +49,7 @@ export class CourseController {
   static async createCourse(req: Request, res: Response, next: NextFunction) {
     try {
       const requester = (req as any).user;
-      const { name, code, description, credits, semester, department, capacity, prerequisites } = req.body;
+      const { name, code, description, credits, semester, department, capacity, prerequisites, facultyId } = req.body;
 
       const cleanCode = code.toUpperCase().trim();
       const existing = await RepoService.findCourseByCode(cleanCode);
@@ -45,7 +65,9 @@ export class CourseController {
         semester: parseInt(semester, 10),
         department,
         capacity: parseInt(capacity, 10) || 40,
-        prerequisites: prerequisites || []
+        prerequisites: prerequisites || [],
+        facultyId: facultyId || null,
+        enrolledStudents: []
       });
 
       // Log Activity
@@ -68,7 +90,7 @@ export class CourseController {
   static async updateCourse(req: Request, res: Response, next: NextFunction) {
     try {
       const requester = (req as any).user;
-      const { name, description, credits, semester, department, capacity, prerequisites } = req.body;
+      const { name, description, credits, semester, department, capacity, prerequisites, facultyId } = req.body;
 
       const course = await RepoService.findCourseById(req.params.id);
       if (!course) {
@@ -82,7 +104,8 @@ export class CourseController {
         semester: parseInt(semester, 10),
         department,
         capacity: parseInt(capacity, 10),
-        prerequisites: prerequisites || []
+        prerequisites: prerequisites || [],
+        ...(facultyId !== undefined && { facultyId: facultyId || null })
       });
 
       // Log Activity
@@ -176,6 +199,11 @@ export class CourseController {
 
       const updatedCourses = [...studentCourses, courseId];
       await RepoService.updateStudent(studentId, { enrolledCourses: updatedCourses });
+
+      const courseStudents: string[] = course.enrolledStudents?.map((s: any) => s._id?.toString() || s.id?.toString()) || [];
+      if (!courseStudents.includes(studentId)) {
+        await RepoService.updateCourse(courseId, { enrolledStudents: [...courseStudents, studentId] });
+      }
 
       // Send course assignment email notification
       NotificationService.sendCourseAssignmentNotification(

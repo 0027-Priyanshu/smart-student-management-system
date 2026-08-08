@@ -78,7 +78,7 @@ export class RepoService {
 
   // ==================== STUDENT OPERATIONS ====================
 
-  static async findStudents(query: { search?: string; department?: string; courseId?: string; status?: string; isDeleted?: boolean }, page = 1, limit = 10): Promise<{ students: any[]; totalItems: number; totalPages: number }> {
+  static async findStudents(query: { search?: string; department?: string; courseId?: string; courseIds?: string[]; status?: string; isDeleted?: boolean }, page = 1, limit = 10): Promise<{ students: any[]; totalItems: number; totalPages: number }> {
     const isDeleted = query.isDeleted !== undefined ? query.isDeleted : false;
 
     if (isMongoConnected) {
@@ -98,6 +98,10 @@ export class RepoService {
       
       if (query.courseId) {
         dbQuery.enrolledCourses = query.courseId;
+      }
+
+      if (query.courseIds && query.courseIds.length > 0) {
+        dbQuery.enrolledCourses = { $in: query.courseIds };
       }
 
       const totalItems = await Student.countDocuments(dbQuery);
@@ -129,6 +133,12 @@ export class RepoService {
 
       if (query.courseId) {
         filtered = filtered.filter((s: any) => s.enrolledCourses?.includes(query.courseId));
+      }
+
+      if (query.courseIds && query.courseIds.length > 0) {
+        filtered = filtered.filter((s: any) => 
+          s.enrolledCourses?.some((cId: string) => query.courseIds?.includes(cId))
+        );
       }
 
       // Populate courses manually

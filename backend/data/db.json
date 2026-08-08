@@ -7,8 +7,8 @@
       "password": "$2a$10$vN6ByH2.jApb.wo1AfTkW.nXeg9gbt8vGJyB3SGUXMdZo/hFzoJLm",
       "role": "Admin",
       "createdAt": "2026-06-01T10:00:00.000Z",
-      "updatedAt": "2026-08-08T07:58:27.253Z",
-      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NTRjMWE1ZjRmODllZjEyMzQ1Njc4OTAiLCJpYXQiOjE3ODYxNzU5MDcsImV4cCI6MTc4Njc4MDcwN30.F3ccje8QMSm5Ko6p7C6RboYwDSAdz9jJqFzBlph0Z-E"
+      "updatedAt": "2026-08-08T08:55:27.919Z",
+      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NTRjMWE1ZjRmODllZjEyMzQ1Njc4OTAiLCJpYXQiOjE3ODYxNzkzMjcsImV4cCI6MTc4Njc4NDEyN30.g3qGV-qcrA0vMV5ZVlKJ97CD-KoliWOofw3UG5MNTFs"
     },
     {
       "_id": "6a75e45e8c52fd90e31eeed0",
@@ -38,8 +38,8 @@
       "role": "Faculty",
       "isVerified": true,
       "createdAt": "2026-06-01T10:00:00.000Z",
-      "updatedAt": "2026-08-07T14:24:27.205Z",
-      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NTRjMWE1ZjRmODllZjEyMzQ1Njc4OTEiLCJpYXQiOjE3ODYxMTI2NjYsImV4cCI6MTc4NjcxNzQ2Nn0.6pj0MRQo3mhpnaN0yXzh1Uak7XjAfAusvx_EzkYtJ-E"
+      "updatedAt": "2026-08-08T10:20:11.493Z",
+      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NTRjMWE1ZjRmODllZjEyMzQ1Njc4OTEiLCJpYXQiOjE3ODYxODQ0MTEsImV4cCI6MTc4Njc4OTIxMX0.sv6DsysHMmrzpGRujA1wiBpfYdTytgMLduOQ-1RwSgE"
     },
     {
       "_id": "654c1a5f4f89ef1234567892",
@@ -49,8 +49,8 @@
       "role": "Student",
       "isVerified": true,
       "createdAt": "2026-06-01T10:00:00.000Z",
-      "updatedAt": "2026-08-07T14:24:28.785Z",
-      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NTRjMWE1ZjRmODllZjEyMzQ1Njc4OTIiLCJpYXQiOjE3ODYxMTI2NjgsImV4cCI6MTc4NjcxNzQ2OH0.KEYcscrSUBHrDcs9yNYWW4wo-IF8YpzuryBha6pcPrk"
+      "updatedAt": "2026-08-08T10:16:48.776Z",
+      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NTRjMWE1ZjRmODllZjEyMzQ1Njc4OTIiLCJpYXQiOjE3ODYxODQyMDgsImV4cCI6MTc4Njc4OTAwOH0.yxpFkqSvetQkUKoyPETvpaPaNLnddsuQCwRLtSsw-GU"
     },
     {
       "_id": "6a75e4dc5c4e53c89f42c774",

@@ -61,8 +61,8 @@ export default function DashboardShell({ children }: DashboardShellProps) {
 
   const coreNavItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: ['Super Admin', 'Admin', 'Faculty', 'Student'] },
-    { name: 'Students', path: '/students', icon: Users, roles: ['Super Admin', 'Admin', 'Faculty', 'Student'] },
-    { name: 'Faculty', path: '/faculty', icon: GraduationCap, roles: ['Super Admin', 'Admin', 'Faculty'] },
+    { name: 'Students', path: '/students', icon: Users, roles: ['Super Admin', 'Admin', 'Faculty'] },
+    { name: 'Faculty', path: '/faculty', icon: GraduationCap, roles: ['Super Admin', 'Admin'] },
     { name: 'Courses', path: '/courses', icon: BookOpen, roles: ['Super Admin', 'Admin', 'Faculty', 'Student'] },
     { name: 'Attendance', path: '/attendance', icon: CalendarCheck, roles: ['Super Admin', 'Admin', 'Faculty', 'Student'] },
     { name: 'Grade Book', path: '/marks', icon: FileSpreadsheet, roles: ['Super Admin', 'Admin', 'Faculty', 'Student'] },
@@ -147,6 +147,7 @@ export default function DashboardShell({ children }: DashboardShellProps) {
           </div>
 
           {/* AI & Insights Group with Expandable Sub-Menu */}
+          {user && ['Super Admin', 'Admin', 'Faculty'].includes(user.role) && (
           <div className="space-y-1">
             {isSidebarOpen && (
               <span className="px-3 text-[10px] font-extrabold tracking-wider text-slate-400 uppercase flex items-center gap-1">
@@ -209,6 +210,7 @@ export default function DashboardShell({ children }: DashboardShellProps) {
               </AnimatePresence>
             </div>
           </div>
+          )}
 
         </nav>
 

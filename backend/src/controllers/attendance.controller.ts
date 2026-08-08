@@ -6,9 +6,27 @@ import { NotificationService } from '../services/notification.service';
 export class AttendanceController {
   static async getAttendance(req: Request, res: Response, next: NextFunction) {
     try {
-      const studentId = req.query.studentId as string;
+      const requester = (req as any).user;
+      let studentId = req.query.studentId as string;
       const courseId = req.query.courseId as string;
       const date = req.query.date as string;
+
+      if (requester.role === 'Student') {
+        const studentProfile = await RepoService.findStudentByUserId(requester.userId);
+        if (!studentProfile) return res.status(404).json({ error: 'Student profile not found.' });
+        // Force the query to only fetch this student's records
+        studentId = studentProfile._id || studentProfile.id;
+      }
+
+      if (requester.role === 'Faculty') {
+        const facultyProfile = await RepoService.findFacultyByUserId(requester.userId);
+        if (!facultyProfile) return res.status(404).json({ error: 'Faculty profile not found.' });
+        const facultyCourses = facultyProfile.assignedCourses?.map((c: any) => (c._id || c.id || c).toString()) || [];
+        
+        if (courseId && !facultyCourses.includes(courseId)) {
+           return res.status(403).json({ error: 'Access denied: You are not assigned to this course.' });
+        }
+      }
 
       const query: any = {};
       if (studentId) query.studentId = studentId;

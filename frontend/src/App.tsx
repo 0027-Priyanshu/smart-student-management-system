@@ -65,7 +65,7 @@ export default function App() {
           <Route 
             path="/students" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['Super Admin', 'Admin', 'Faculty']}>
                 <Students />
               </ProtectedRoute>
             } 
@@ -73,7 +73,7 @@ export default function App() {
           <Route 
             path="/faculty" 
             element={
-              <ProtectedRoute allowedRoles={['Super Admin', 'Admin', 'Faculty']}>
+              <ProtectedRoute allowedRoles={['Super Admin', 'Admin']}>
                 <Faculty />
               </ProtectedRoute>
             } 
@@ -105,7 +105,7 @@ export default function App() {
           <Route 
             path="/academic-intelligence" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['Super Admin', 'Admin', 'Faculty']}>
                 <AcademicIntelligence />
               </ProtectedRoute>
             } 
@@ -115,7 +115,7 @@ export default function App() {
               key={sub}
               path={`/academic-intelligence/${sub}`} 
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['Super Admin', 'Admin', 'Faculty']}>
                   <AcademicIntelligence />
                 </ProtectedRoute>
               } 
@@ -124,7 +124,7 @@ export default function App() {
           <Route 
             path="/ai-assistant" 
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={['Super Admin', 'Admin', 'Faculty']}>
                 <AcademicIntelligence />
               </ProtectedRoute>
             } 

@@ -9,6 +9,8 @@ const CourseSchema = new Schema({
   department: { type: String, required: true },
   capacity: { type: Number, required: true, default: 40 },
   prerequisites: [{ type: String }], // Array of Course Codes or IDs
+  facultyId: { type: Schema.Types.ObjectId, ref: 'User' }, // Reference to Faculty member
+  enrolledStudents: [{ type: Schema.Types.ObjectId, ref: 'Student' }], // Enrolled Students
   isDeleted: { type: Boolean, default: false, index: true },
   createdAt: { type: Date, default: Date.now, index: true }
 });

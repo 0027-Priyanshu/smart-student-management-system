@@ -5,7 +5,21 @@ import { NotificationService } from '../services/notification.service';
 export class ResultController {
   static async getResults(req: Request, res: Response, next: NextFunction) {
     try {
-      const results = await RepoService.findResults(req.params.studentId);
+      const requester = (req as any).user;
+      let targetStudentId = req.params.studentId;
+
+      if (requester.role === 'Student') {
+        const studentProfile = await RepoService.findStudentByUserId(requester.userId);
+        if (!studentProfile) return res.status(404).json({ error: 'Student profile not found.' });
+        
+        // Ensure student can only query their own results
+        if (targetStudentId && targetStudentId !== (studentProfile._id || studentProfile.id).toString()) {
+          return res.status(403).json({ error: 'Access denied: You can only view your own grades.' });
+        }
+        targetStudentId = studentProfile._id || studentProfile.id;
+      }
+
+      const results = await RepoService.findResults(targetStudentId);
       
       let totalGradePoints = 0;
       let totalCredits = 0;
@@ -37,6 +51,16 @@ export class ResultController {
       const extVal = parseFloat(external) || 0;
       const assignVal = parseFloat(assignment) || 0;
       const pracVal = parseFloat(practical) || 0;
+
+      if (requester.role === 'Faculty') {
+        const facultyProfile = await RepoService.findFacultyByUserId(requester.userId);
+        if (!facultyProfile) return res.status(404).json({ error: 'Faculty profile not found.' });
+        const facultyCourses = facultyProfile.assignedCourses?.map((c: any) => (c._id || c.id || c).toString()) || [];
+        
+        if (!facultyCourses.includes(courseId)) {
+           return res.status(403).json({ error: 'Access denied: You can only grade courses you teach.' });
+        }
+      }
 
       const total = intVal + extVal + assignVal + pracVal;
 

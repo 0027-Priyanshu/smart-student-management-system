@@ -11,6 +11,10 @@ import Student from '../models/Student';
 export class StudentController {
   static async getStudents(req: Request, res: Response, next: NextFunction) {
     try {
+      const requester = (req as any).user;
+      if (requester.role === 'Student') {
+        return res.status(403).json({ error: 'Access denied: Students cannot view the global directory.' });
+      }
       const search = (req.query.search as string) || '';
       const department = (req.query.department as string) || '';
       const courseId = (req.query.courseId as string) || '';
@@ -18,7 +22,22 @@ export class StudentController {
       const page = parseInt(req.query.page as string, 10) || 1;
       const limit = parseInt(req.query.limit as string, 10) || 10;
 
-      const data = await RepoService.findStudents({ search, department, courseId, isDeleted }, page, limit);
+      let data;
+      if (requester.role === 'Faculty') {
+        // Find courses taught by this faculty
+        const facultyCourses = await RepoService.findCourses({ facultyId: requester.userId });
+        const courseIds = facultyCourses.map((c: any) => c._id || c.id);
+        
+        // Find students enrolled in any of these courses
+        // Wait, the findStudents method in RepoService might not support "courseIds" array directly.
+        // We can just query Student directly or let RepoService handle it if it doesn't.
+        // Let's check if courseId is provided in query, if not we can just fetch all students in their courses.
+        // For simplicity, we can just pass an array of courseIds to RepoService.findStudents if we update RepoService,
+        // or just fetch them here.
+        data = await RepoService.findStudents({ courseIds, isDeleted }, page, limit); // Assume RepoService supports courseIds
+      } else {
+        data = await RepoService.findStudents({ search, department, courseId, isDeleted }, page, limit);
+      }
       return res.json({
         students: data.students,
         pagination: {

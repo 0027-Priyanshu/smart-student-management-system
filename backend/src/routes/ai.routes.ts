@@ -12,6 +12,9 @@ const chatRateLimiter = rateLimit({
   message: { error: 'Chat request limit exceeded. Please wait a moment before asking another question.' }
 });
 
+// GET: /api/ai/health (Public/Protected - AI Provider Health Check)
+router.get('/health', AIController.getHealth);
+
 // GET: /api/ai/student-summary/:studentId (Protected)
 router.get('/student-summary/:studentId', authenticateJWT, AIController.getStudentSummary);
 

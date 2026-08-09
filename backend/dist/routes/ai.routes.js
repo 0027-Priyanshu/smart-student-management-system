@@ -14,6 +14,8 @@ const chatRateLimiter = (0, express_rate_limit_1.default)({
     max: 30,
     message: { error: 'Chat request limit exceeded. Please wait a moment before asking another question.' }
 });
+// GET: /api/ai/health (Public/Protected - AI Provider Health Check)
+router.get('/health', ai_controller_1.AIController.getHealth);
 // GET: /api/ai/student-summary/:studentId (Protected)
 router.get('/student-summary/:studentId', auth_middleware_1.authenticateJWT, ai_controller_1.AIController.getStudentSummary);
 // GET: /api/ai/student-recommendations/:studentId (Protected)

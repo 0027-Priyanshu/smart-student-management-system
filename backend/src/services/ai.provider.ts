@@ -19,6 +19,7 @@ export interface AIChatMessage {
 
 export interface AIProvider {
   chat(input: { systemInstruction?: string; messages: AIChatMessage[]; tools?: ToolDeclaration[] }): Promise<AIChatMessage>;
+  healthCheck(): Promise<{ available: boolean; provider: string; model?: string; reason?: string }>;
 }
 
 export class OllamaProvider implements AIProvider {
@@ -28,6 +29,16 @@ export class OllamaProvider implements AIProvider {
   constructor(baseUrl: string, model: string) {
     this.baseUrl = baseUrl;
     this.model = model;
+  }
+
+  async healthCheck(): Promise<{ available: boolean; provider: string; model?: string; reason?: string }> {
+    try {
+      const res = await fetch(`${this.baseUrl}/api/tags`, { method: 'GET' });
+      if (!res.ok) return { available: false, provider: 'ollama', reason: `SERVER_ERROR_${res.status}` };
+      return { available: true, provider: 'ollama', model: this.model };
+    } catch (e: any) {
+      return { available: false, provider: 'ollama', reason: 'SERVER_UNREACHABLE' };
+    }
   }
 
   async chat(input: { systemInstruction?: string; messages: AIChatMessage[]; tools?: ToolDeclaration[] }): Promise<AIChatMessage> {
@@ -90,6 +101,22 @@ export class GeminiProvider implements AIProvider {
     this.ai = new GoogleGenAI({ apiKey });
   }
 
+  async healthCheck(): Promise<{ available: boolean; provider: string; model?: string; reason?: string }> {
+    try {
+      // Just a quick ping to see if the model is reachable and key is valid
+      const res = await this.ai.models.generateContent({
+        model: this.model,
+        contents: 'Reply exactly with OK'
+      });
+      if (res.text && res.text.includes('OK')) {
+        return { available: true, provider: 'gemini', model: this.model };
+      }
+      return { available: false, provider: 'gemini', reason: 'UNEXPECTED_RESPONSE' };
+    } catch (e: any) {
+      return { available: false, provider: 'gemini', reason: e.message || 'API_UNREACHABLE' };
+    }
+  }
+
   async chat(input: { systemInstruction?: string; messages: AIChatMessage[]; tools?: ToolDeclaration[] }): Promise<AIChatMessage> {
     const config: any = {};
     if (input.systemInstruction) {
@@ -122,6 +149,9 @@ export class GeminiProvider implements AIProvider {
 }
 
 export class MockProvider implements AIProvider {
+  async healthCheck(): Promise<{ available: boolean; provider: string; model?: string; reason?: string }> {
+    return { available: true, provider: 'mock', model: 'mock-local-1.0' };
+  }
   async chat(input: { systemInstruction?: string; messages: AIChatMessage[]; tools?: ToolDeclaration[] }): Promise<AIChatMessage> {
     const lastMsg = input.messages[input.messages.length - 1];
     

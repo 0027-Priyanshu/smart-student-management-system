@@ -54,6 +54,7 @@ export async function generateAcademicInsights(totalStudents: number, avgGpa: nu
 export interface ChatAssistantOptions {
   currentPage?: string;
   userRole?: string;
+  userId?: string;
   selectedEntity?: string;
   availableActions?: string[];
 }
@@ -66,7 +67,7 @@ export async function adminChatAssistant(
 ): Promise<{ reply: string; navigateTo?: string; proposedAction?: any }> {
   const rawQuery = message.trim();
   const qLower = rawQuery.toLowerCase();
-  const { currentPage, userRole = 'Student', selectedEntity } = options;
+  const { currentPage, userRole = 'Student', userId, selectedEntity } = options;
 
   if (qLower.includes('ignore previous instructions') || qLower.includes('show admin passwords')) {
     return { reply: `### 🛡️ Security Boundary Enforcement\n\nI cannot perform actions that bypass system security.` };
@@ -75,43 +76,36 @@ export async function adminChatAssistant(
   const retrievedTopics = RetrievalService.retrieveKnowledge({ query: rawQuery, currentPage, userRole }, 2);
   const formattedKnowledge = RetrievalService.formatKnowledgeForPrompt(retrievedTopics);
 
-  const tools: ToolDeclaration[] = [
-    {
-      name: 'countStudents',
-      description: 'Get the total number of students in the system.',
-      parameters: { type: 'object', properties: {}, required: [] }
-    },
-    {
-      name: 'countFaculty',
-      description: 'Get the total number of faculty in the system.',
-      parameters: { type: 'object', properties: {}, required: [] }
-    },
-    {
-      name: 'countCourses',
-      description: 'Get the total number of courses in the system.',
-      parameters: { type: 'object', properties: {}, required: [] }
-    },
-    {
-      name: 'getStudents',
-      description: 'Fetch list of students, optionally filter by department.',
-      parameters: { type: 'object', properties: { department: { type: 'string' } }, required: [] }
-    },
-    {
-      name: 'getStudentProfile',
-      description: 'Fetch student by enrollmentNo.',
-      parameters: { type: 'object', properties: { enrollmentNo: { type: 'string' } }, required: ['enrollmentNo'] }
-    },
-    {
-      name: 'getAtRiskStudents',
-      description: 'Fetch students who are at risk due to low attendance (< 75%) or low GPA (< 2.5).',
-      parameters: { type: 'object', properties: {}, required: [] }
-    },
-    {
-      name: 'navigate',
-      description: 'Navigate the user to a page.',
-      parameters: { type: 'object', properties: { page: { type: 'string' } }, required: ['page'] }
-    }
+  const allTools: ToolDeclaration[] = [
+    { name: 'countStudents', description: 'Get the total number of students in the system.', parameters: { type: 'object', properties: {}, required: [] } },
+    { name: 'searchStudents', description: 'Search students by name, email, or department.', parameters: { type: 'object', properties: { search: { type: 'string' }, department: { type: 'string' } }, required: [] } },
+    { name: 'getStudentProfile', description: 'Fetch student by enrollmentNo.', parameters: { type: 'object', properties: { enrollmentNo: { type: 'string' } }, required: ['enrollmentNo'] } },
+    { name: 'getStudentsByCourse', description: 'Get students enrolled in a specific course.', parameters: { type: 'object', properties: { courseId: { type: 'string' } }, required: ['courseId'] } },
+    
+    { name: 'countFaculty', description: 'Get the total number of faculty in the system.', parameters: { type: 'object', properties: {}, required: [] } },
+    { name: 'getFaculty', description: 'Get list of faculty.', parameters: { type: 'object', properties: {}, required: [] } },
+    
+    { name: 'countCourses', description: 'Get the total number of courses.', parameters: { type: 'object', properties: {}, required: [] } },
+    { name: 'getCourse', description: 'Get course details by code.', parameters: { type: 'object', properties: { code: { type: 'string' } }, required: ['code'] } },
+    
+    { name: 'getStudentAttendance', description: 'Get attendance records for a student.', parameters: { type: 'object', properties: { studentId: { type: 'string' } }, required: ['studentId'] } },
+    { name: 'getLowAttendanceStudents', description: 'Get students with attendance below a threshold.', parameters: { type: 'object', properties: {}, required: [] } },
+    
+    { name: 'getStudentGrades', description: 'Get academic results/grades for a student.', parameters: { type: 'object', properties: { studentId: { type: 'string' } }, required: ['studentId'] } },
+    
+    { name: 'getDashboardMetrics', description: 'Get high-level system analytics.', parameters: { type: 'object', properties: {}, required: [] } },
+    { name: 'getAtRiskStudents', description: 'Fetch students who are at risk due to low attendance or low grades.', parameters: { type: 'object', properties: {}, required: [] } },
+    
+    { name: 'navigate', description: 'Navigate the user to a page.', parameters: { type: 'object', properties: { page: { type: 'string' } }, required: ['page'] } }
   ];
+
+  // Role-based tool scope reduction
+  let tools = allTools;
+  if (userRole === 'Student') {
+    tools = allTools.filter(t => ['getStudentProfile', 'getStudentAttendance', 'getStudentGrades', 'navigate'].includes(t.name));
+  } else if (userRole === 'Faculty') {
+    tools = allTools.filter(t => t.name !== 'countFaculty' && t.name !== 'getFaculty' && t.name !== 'getDashboardMetrics');
+  }
 
   const systemInstruction = `You are EduManager Copilot. You answer queries using tools.
 Current Route: ${currentPage}
@@ -158,31 +152,86 @@ RULES:
         let args = {};
         try { args = JSON.parse(call.function.arguments); } catch (e) {}
         
-        let functionResult: any = { error: 'Unknown tool' };
+        let functionResult: any = { error: 'Unknown tool or execution failed' };
 
-        if (name === 'navigate') {
-          navigateTo = (args as any).page;
-          functionResult = { success: true, navigatedTo: navigateTo };
-        } else if (name === 'countStudents') {
-          const { students } = await RepoService.findStudents({}, 1, 1000);
-          functionResult = { totalStudents: students.length };
-        } else if (name === 'countFaculty') {
-          const facs = await RepoService.findFaculties();
-          functionResult = { totalFaculty: facs.length };
-        } else if (name === 'countCourses') {
-          const courses = await RepoService.findCourses();
-          functionResult = { totalCourses: courses.length };
-        } else if (name === 'getStudents') {
-          const { students } = await RepoService.findStudents({ department: (args as any).department }, 1, 100);
-          functionResult = { students: students.map((s: any) => ({ name: s.name, enrollmentNo: s.enrollmentNo })) };
-        } else if (name === 'getStudentProfile') {
-          const s = await RepoService.findStudentByEnrollmentNo((args as any).enrollmentNo);
-          if (s) functionResult = { name: s.name, enrollmentNo: s.enrollmentNo, department: s.department, gpa: s.cgpa, attendance: s.attendanceRate };
-          else functionResult = { error: 'Not found' };
-        } else if (name === 'getAtRiskStudents') {
-          const { students } = await RepoService.findStudents({}, 1, 1000);
-          const lowAtt = students.filter((s: any) => (s.attendanceRate && s.attendanceRate < 75) || (s.cgpa && s.cgpa < 2.5));
-          functionResult = { atRiskCount: lowAtt.length, students: lowAtt.map((s: any) => ({ name: s.name, enrollmentNo: s.enrollmentNo, gpa: s.cgpa, attendance: s.attendanceRate })) };
+        // Authorization checks
+        const requireAdmin = () => { if (userRole !== 'Super Admin' && userRole !== 'Admin') throw new Error('UNAUTHORIZED: Admin access required'); };
+        const requireAdminOrFaculty = () => { if (userRole === 'Student') throw new Error('UNAUTHORIZED: Faculty or Admin access required'); };
+
+        try {
+          if (name === 'navigate') {
+            navigateTo = (args as any).page;
+            functionResult = { success: true, navigatedTo: navigateTo };
+          } 
+          // ---------------- STUDENTS ----------------
+          else if (name === 'countStudents') {
+            requireAdminOrFaculty();
+            const { students } = await RepoService.findStudents({}, 1, 1);
+            functionResult = { totalStudents: students.length }; // Or totalItems from Repo
+          } else if (name === 'searchStudents') {
+            requireAdminOrFaculty();
+            const { students } = await RepoService.findStudents({ search: (args as any).search, department: (args as any).department }, 1, 50);
+            functionResult = { students: students.map((s: any) => ({ name: s.name, enrollmentNo: s.enrollmentNo, department: s.department })) };
+          } else if (name === 'getStudentProfile') {
+            const s = await RepoService.findStudentByEnrollmentNo((args as any).enrollmentNo);
+            if (!s) { functionResult = { error: 'Not found' }; }
+            else if (userRole === 'Student' && userId !== s.userId) { throw new Error('UNAUTHORIZED: You can only view your own profile'); }
+            else { functionResult = { name: s.name, enrollmentNo: s.enrollmentNo, department: s.department, gpa: s.cgpa, attendance: s.attendanceRate }; }
+          } else if (name === 'getStudentsByCourse') {
+            requireAdminOrFaculty();
+            const { students } = await RepoService.findStudents({ courseId: (args as any).courseId }, 1, 50);
+            functionResult = { students: students.map((s: any) => ({ name: s.name, enrollmentNo: s.enrollmentNo })) };
+          }
+          // ---------------- FACULTY ----------------
+          else if (name === 'countFaculty') {
+            requireAdmin();
+            const facs = await RepoService.findFaculties();
+            functionResult = { totalFaculty: facs.length };
+          } else if (name === 'getFaculty') {
+            requireAdmin();
+            const facs = await RepoService.findFaculties();
+            functionResult = { faculty: facs.map((f: any) => ({ name: f.name, department: f.department })) };
+          }
+          // ---------------- COURSES ----------------
+          else if (name === 'countCourses') {
+            const courses = await RepoService.findCourses();
+            functionResult = { totalCourses: courses.length };
+          } else if (name === 'getCourse') {
+            const c = await RepoService.findCourseByCode((args as any).code);
+            functionResult = c ? { name: c.name, code: c.code, credits: c.credits } : { error: 'Not found' };
+          }
+          // ---------------- ATTENDANCE & GRADES ----------------
+          else if (name === 'getStudentAttendance') {
+            const s = await RepoService.findStudentByEnrollmentNo((args as any).studentId);
+            if (!s) { functionResult = { error: 'Student not found' }; }
+            else if (userRole === 'Student' && userId !== s.userId) { throw new Error('UNAUTHORIZED: You can only view your own attendance'); }
+            else { functionResult = { attendanceRate: s.attendanceRate }; }
+          } else if (name === 'getLowAttendanceStudents') {
+            requireAdminOrFaculty();
+            const { students } = await RepoService.findStudents({}, 1, 1000);
+            const lowAtt = students.filter((s: any) => (s.attendanceRate && s.attendanceRate < 75));
+            functionResult = { count: lowAtt.length, students: lowAtt.map((s: any) => ({ name: s.name, enrollmentNo: s.enrollmentNo, attendance: s.attendanceRate })) };
+          } else if (name === 'getStudentGrades') {
+            const s = await RepoService.findStudentByEnrollmentNo((args as any).studentId);
+            if (!s) { functionResult = { error: 'Student not found' }; }
+            else if (userRole === 'Student' && userId !== s.userId) { throw new Error('UNAUTHORIZED: You can only view your own grades'); }
+            else { functionResult = { gpa: s.cgpa }; } // Expanded via RepoService.findResults in a real prod app
+          }
+          // ---------------- ANALYTICS ----------------
+          else if (name === 'getAtRiskStudents') {
+            requireAdminOrFaculty();
+            const { students } = await RepoService.findStudents({}, 1, 1000);
+            const lowAtt = students.filter((s: any) => (s.attendanceRate && s.attendanceRate < 75) || (s.cgpa && s.cgpa < 2.5));
+            functionResult = { atRiskCount: lowAtt.length, students: lowAtt.map((s: any) => ({ name: s.name, enrollmentNo: s.enrollmentNo, gpa: s.cgpa, attendance: s.attendanceRate })) };
+          } else if (name === 'getDashboardMetrics') {
+            requireAdmin();
+            const { totalItems: ts } = await RepoService.findStudents({}, 1, 1);
+            const tf = await RepoService.findFaculties();
+            const tc = await RepoService.findCourses();
+            functionResult = { students: ts, faculty: tf.length, courses: tc.length };
+          }
+        } catch (authError: any) {
+          functionResult = { error: authError.message };
         }
 
         chatMessages.push({
@@ -196,13 +245,14 @@ RULES:
     }
     return { reply: 'I exceeded the maximum number of tool calls while trying to resolve your request.', navigateTo };
   } catch (err: any) {
-    console.error('Copilot loop error:', err);
-    // Fallback logic
-    if (rawQuery.toLowerCase().includes('how many students')) {
-      const { students } = await RepoService.findStudents({}, 1, 1000);
-      return { reply: `There are ${students.length} students.` };
-    }
-    return { reply: `An error occurred: ${err.message}` };
+    console.error('[EduManager AI] Provider execution failed:', {
+      errorName: err.name,
+      message: err.message,
+      status: err.status
+    });
+    
+    // Throwing error up to the controller to handle and map to 500 or UI
+    throw err;
   }
 }
 

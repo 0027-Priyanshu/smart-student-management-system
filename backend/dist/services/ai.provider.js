@@ -15,6 +15,17 @@ class OllamaProvider {
         this.baseUrl = baseUrl;
         this.model = model;
     }
+    async healthCheck() {
+        try {
+            const res = await fetch(`${this.baseUrl}/api/tags`, { method: 'GET' });
+            if (!res.ok)
+                return { available: false, provider: 'ollama', reason: `SERVER_ERROR_${res.status}` };
+            return { available: true, provider: 'ollama', model: this.model };
+        }
+        catch (e) {
+            return { available: false, provider: 'ollama', reason: 'SERVER_UNREACHABLE' };
+        }
+    }
     async chat(input) {
         const formattedMessages = [];
         if (input.systemInstruction) {
@@ -71,6 +82,22 @@ class GeminiProvider {
     constructor(apiKey) {
         this.ai = new genai_1.GoogleGenAI({ apiKey });
     }
+    async healthCheck() {
+        try {
+            // Just a quick ping to see if the model is reachable and key is valid
+            const res = await this.ai.models.generateContent({
+                model: this.model,
+                contents: 'Reply exactly with OK'
+            });
+            if (res.text && res.text.includes('OK')) {
+                return { available: true, provider: 'gemini', model: this.model };
+            }
+            return { available: false, provider: 'gemini', reason: 'UNEXPECTED_RESPONSE' };
+        }
+        catch (e) {
+            return { available: false, provider: 'gemini', reason: e.message || 'API_UNREACHABLE' };
+        }
+    }
     async chat(input) {
         const config = {};
         if (input.systemInstruction) {
@@ -102,6 +129,9 @@ class GeminiProvider {
 }
 exports.GeminiProvider = GeminiProvider;
 class MockProvider {
+    async healthCheck() {
+        return { available: true, provider: 'mock', model: 'mock-local-1.0' };
+    }
     async chat(input) {
         const lastMsg = input.messages[input.messages.length - 1];
         // If we just received a tool result, formulate a human response

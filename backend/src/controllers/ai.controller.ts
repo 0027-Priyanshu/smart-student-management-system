@@ -11,8 +11,19 @@ import {
   translateNlSearch,
   generateParentEmail
 } from '../services/ai.service';
+import { getAIProvider } from '../services/ai.provider';
 
 export class AIController {
+  static async getHealth(req: Request, res: Response) {
+    try {
+      const provider = getAIProvider();
+      const status = await provider.healthCheck();
+      res.status(200).json(status);
+    } catch (err) {
+      res.status(500).json({ available: false, provider: 'unknown', reason: 'INTERNAL_ERROR' });
+    }
+  }
+
   static async getStudentSummary(req: Request, res: Response, next: NextFunction) {
     try {
       const student = await RepoService.findStudentById(req.params.studentId);
@@ -446,6 +457,7 @@ export class AIController {
       const result = await adminChatAssistant(userQuery, Array.isArray(history) ? history : [], {
         currentPage,
         userRole: requester.role,
+        userId: requester.userId,
         selectedEntity,
         availableActions
       });

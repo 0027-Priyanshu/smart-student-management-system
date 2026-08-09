@@ -8,7 +8,18 @@ const pdfkit_1 = __importDefault(require("pdfkit"));
 const repo_service_1 = require("../services/repo.service");
 const retrieval_service_1 = require("../services/retrieval.service");
 const ai_service_1 = require("../services/ai.service");
+const ai_provider_1 = require("../services/ai.provider");
 class AIController {
+    static async getHealth(req, res) {
+        try {
+            const provider = (0, ai_provider_1.getAIProvider)();
+            const status = await provider.healthCheck();
+            res.status(200).json(status);
+        }
+        catch (err) {
+            res.status(500).json({ available: false, provider: 'unknown', reason: 'INTERNAL_ERROR' });
+        }
+    }
     static async getStudentSummary(req, res, next) {
         try {
             const student = await repo_service_1.RepoService.findStudentById(req.params.studentId);
@@ -389,6 +400,7 @@ class AIController {
             const result = await (0, ai_service_1.adminChatAssistant)(userQuery, Array.isArray(history) ? history : [], {
                 currentPage,
                 userRole: requester.role,
+                userId: requester.userId,
                 selectedEntity,
                 availableActions
             });

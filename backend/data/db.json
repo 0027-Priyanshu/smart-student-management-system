@@ -49,8 +49,8 @@
       "role": "Student",
       "isVerified": true,
       "createdAt": "2026-06-01T10:00:00.000Z",
-      "updatedAt": "2026-08-09T06:48:03.489Z",
-      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NTRjMWE1ZjRmODllZjEyMzQ1Njc4OTIiLCJpYXQiOjE3ODYyNTgwODMsImV4cCI6MTc4Njg2Mjg4M30.FeUP1THsLC1tVW5WKuH8xKPAWpntYBuy1MgHa46IW0k"
+      "updatedAt": "2026-08-09T08:19:47.729Z",
+      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NTRjMWE1ZjRmODllZjEyMzQ1Njc4OTIiLCJpYXQiOjE3ODYyNjM1ODcsImV4cCI6MTc4Njg2ODM4N30.3V5PqQu7b4FK-Jt929IPhsarL1wqKESCY_IPsJM5LnQ"
     },
     {
       "_id": "6a75e4dc5c4e53c89f42c774",
@@ -550,7 +550,50 @@
   "chat_history": [],
   "activities": [],
   "logs": [],
-  "chatHistory": [],
+  "chatHistory": [
+    {
+      "_id": "6a7837fb3192e7749ff4cfee",
+      "userId": "654c1a5f4f89ef1234567890",
+      "role": "user",
+      "content": "students",
+      "createdAt": "2026-08-09T08:19:07.463Z"
+    },
+    {
+      "_id": "6a7837fb3192e7749ff4cfef",
+      "userId": "654c1a5f4f89ef1234567890",
+      "role": "assistant",
+      "content": "Here is the requested information: {\"totalStudents\":1}",
+      "createdAt": "2026-08-09T08:19:07.464Z"
+    },
+    {
+      "_id": "6a7838063192e7749ff4cff0",
+      "userId": "654c1a5f4f89ef1234567890",
+      "role": "user",
+      "content": "find ENR27037739",
+      "createdAt": "2026-08-09T08:19:18.392Z"
+    },
+    {
+      "_id": "6a7838063192e7749ff4cff1",
+      "userId": "654c1a5f4f89ef1234567890",
+      "role": "assistant",
+      "content": "Here is the requested information: {\"error\":\"Not found\"}",
+      "createdAt": "2026-08-09T08:19:18.393Z"
+    },
+    {
+      "_id": "6a7838373192e7749ff4cff4",
+      "userId": "654c1a5f4f89ef1234567892",
+      "role": "user",
+      "content": "students",
+      "createdAt": "2026-08-09T08:20:07.470Z"
+    },
+    {
+      "_id": "6a7838373192e7749ff4cff5",
+      "userId": "654c1a5f4f89ef1234567892",
+      "role": "assistant",
+      "content": "Here is the requested information: {\"error\":\"UNAUTHORIZED: Faculty or Admin access required\"}",
+      "createdAt": "2026-08-09T08:20:07.472Z"
+    }
+  ],
   "qrSessions": [
     {
       "_id": "6a76dc8a137b2ed5a70d601a",

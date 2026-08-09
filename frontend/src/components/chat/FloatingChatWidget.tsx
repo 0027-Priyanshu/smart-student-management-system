@@ -46,6 +46,7 @@ export default function FloatingChatWidget() {
   const [isSpeaking, setIsSpeaking] = useState(true);
   const [isListening, setIsListening] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'online' | 'offline'>('connecting');
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
@@ -57,6 +58,25 @@ export default function FloatingChatWidget() {
   useEffect(() => {
     if (isOpen) scrollToBottom();
   }, [messages, isOpen]);
+
+  // Poll AI Health Status
+  useEffect(() => {
+    const checkHealth = async () => {
+      try {
+        const res = await api.get('/ai/health');
+        if (res.data && res.data.available) {
+          setConnectionStatus('online');
+        } else {
+          setConnectionStatus('offline');
+        }
+      } catch (err) {
+        setConnectionStatus('offline');
+      }
+    };
+    checkHealth(); // Initial check
+    const interval = setInterval(checkHealth, 10000); // Poll every 10 seconds
+    return () => clearInterval(interval);
+  }, []);
 
   // Load page-aware suggested prompts whenever active route changes
   useEffect(() => {
@@ -418,7 +438,9 @@ export default function FloatingChatWidget() {
               <div>
                 <h3 className="font-title font-extrabold text-xs text-slate-900 flex items-center gap-1.5">
                   AI Assistant
-                  <span className="px-1.5 py-0.5 rounded-full text-[9px] bg-emerald-50 text-emerald-600 font-extrabold border border-emerald-200">Online</span>
+                  {connectionStatus === 'online' && <span className="px-1.5 py-0.5 rounded-full text-[9px] bg-emerald-50 text-emerald-600 font-extrabold border border-emerald-200">Online</span>}
+                  {connectionStatus === 'connecting' && <span className="px-1.5 py-0.5 rounded-full text-[9px] bg-amber-50 text-amber-600 font-extrabold border border-amber-200">Connecting</span>}
+                  {connectionStatus === 'offline' && <span className="px-1.5 py-0.5 rounded-full text-[9px] bg-rose-50 text-rose-600 font-extrabold border border-rose-200">Offline</span>}
                 </h3>
                 <p className="text-[10px] text-slate-400 font-bold">Context: <span className="font-mono text-[#ff6b00]">{location.pathname}</span></p>
               </div>

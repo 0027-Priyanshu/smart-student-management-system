@@ -251,7 +251,7 @@ export default function Login() {
               <p className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 mb-3 text-center">
                 Instant Demo Access — Select Role
               </p>
-              <div className="grid grid-cols-1 gap-2.5">
+              <div className="grid grid-cols-3 gap-2.5">
                 <button
                   type="button"
                   onClick={() => handleDemoLogin('admin@sms.com', 'admin123')}
@@ -263,6 +263,32 @@ export default function Login() {
                   </div>
                   <span className="text-xs font-title font-black tracking-wide text-slate-800">Admin</span>
                   <span className="text-[9px] text-slate-500 font-medium mt-0.5">System Access</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleDemoLogin('faculty@sms.com', 'faculty123')}
+                  className="group relative flex flex-col items-center justify-center p-3 bg-white border border-slate-200 hover:border-purple-400/50 rounded-2xl shadow-sm hover:shadow-md transform hover:-translate-y-1 hover:scale-[1.02] active:translate-y-0 active:scale-100 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  aria-label="Demo Faculty Login"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-1.5 group-hover:bg-purple-100 group-hover:scale-110 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                  </div>
+                  <span className="text-xs font-title font-black tracking-wide text-slate-800">Faculty</span>
+                  <span className="text-[9px] text-slate-500 font-medium mt-0.5">Course Instructor</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleDemoLogin('student@sms.com', 'student123')}
+                  className="group relative flex flex-col items-center justify-center p-3 bg-white border border-slate-200 hover:border-emerald-400/50 rounded-2xl shadow-sm hover:shadow-md transform hover:-translate-y-1 hover:scale-[1.02] active:translate-y-0 active:scale-100 transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  aria-label="Demo Student Login"
+                >
+                  <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-1.5 group-hover:bg-emerald-100 group-hover:scale-110 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  </div>
+                  <span className="text-xs font-title font-black tracking-wide text-slate-800">Student</span>
+                  <span className="text-[9px] text-slate-500 font-medium mt-0.5">Learner Portal</span>
                 </button>
               </div>
             </div>

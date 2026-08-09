@@ -117,11 +117,35 @@ export async function adminChatAssistant(
 
   if (!ai) {
     // Simulated Offline Intent Parser (when no API key is available)
-    let replyText = `I could not verify that from the available application information.\n\nPlease navigate to the **Dashboard** or **AI Companion** page to explore available features.`;
+    let replyText = `I couldn't confidently determine what you're looking for. You can ask about students, courses, attendance, grades, faculty, face attendance, or academic analytics.`;
     let navigateTo: string | undefined = undefined;
     let proposedAction: any = undefined;
 
-    if (qLower.includes('mark') && (qLower.includes('present') || qLower.includes('absent'))) {
+    const isAttendance = /attendance|present|absent|percentage|lecture|session|face attendance|qr attendance/i.test(qLower);
+    const isStudent = /student|enrollment|enrolment|id|profile|learner/i.test(qLower);
+    const isRisk = /risk|failing|weak|low performing|low-performing|academic risk|at risk/i.test(qLower);
+    const isFace = /face|facial|camera|recognition|biometric|scan face/i.test(qLower);
+    const isFaculty = /faculty|teacher|professor|instructor/i.test(qLower);
+    const isCourse = /course|subject|class/i.test(qLower);
+    
+    // Strict Scope Check
+    const inScope = isAttendance || isStudent || isRisk || isFace || isFaculty || isCourse;
+
+    if (!inScope && !qLower.includes('take me to') && !qLower.includes('go to')) {
+      return { reply: replyText };
+    }
+
+    if (isFace && (qLower.includes('register') || qLower.includes('enroll'))) {
+      if (userRole === 'Admin') {
+        replyText = `### Face Registration\n\nAs an Admin, you can register a student's face by navigating to the **Students** directory, selecting a student, and clicking the **Camera** icon in their profile.`;
+      } else if (userRole === 'Faculty') {
+        replyText = `### Face Registration\n\nFace registration is restricted to Admin. As Faculty, you can start a Face Attendance session for your assigned class from the Attendance page.`;
+      } else {
+        replyText = `### Face Registration\n\nFace registration is managed by an administrator. Please contact the Admin if your face has not been registered.`;
+      }
+    } else if (isFace && qLower.includes('how')) {
+      replyText = `### Face Attendance\n\n- **Admin** registers student faces.\n- **Faculty** starts Face Attendance sessions.\n- **Student** verifies their own face to mark attendance.`;
+    } else if (qLower.includes('mark') && (qLower.includes('present') || qLower.includes('absent'))) {
       const isPresent = qLower.includes('present');
       proposedAction = {
         actionType: 'mark_attendance',
@@ -145,24 +169,24 @@ export async function adminChatAssistant(
       else if (qLower.includes('attend')) navigateTo = '/attendance';
       else navigateTo = '/dashboard';
       replyText = `Navigating to ${navigateTo}...`;
-    } else if (qLower.includes('at risk') || qLower.includes('low attendance') || qLower.includes('low gpa')) {
+    } else if (isRisk) {
       const { students } = await RepoService.findStudents({}, 1, 100);
       const lowAtt = students.filter((s: any) => (s.attendanceRate && s.attendanceRate < 75) || (s.cgpa && s.cgpa < 2.5));
       replyText = `### 🚨 At-Risk Students (${lowAtt.length} Found)\n\n` + lowAtt.slice(0, 5).map((s: any) => `- **${s.name}** (${s.enrollmentNo}): Attendance ${s.attendanceRate || 70}%, CGPA ${s.cgpa || 2.3}`).join('\n');
-    } else if (qLower.includes('how many student') || qLower.includes('total student')) {
+    } else if (isStudent && (qLower.includes('how many') || qLower.includes('total'))) {
       const { students } = await RepoService.findStudents({}, 1, 100);
       replyText = `### 📊 Student Population\n\nThere are a total of **${students.length}** registered students in the system.`;
-    } else if (qLower.includes('list student') || qLower.includes('which student')) {
+    } else if (isStudent && (qLower.includes('list') || qLower.includes('which'))) {
       const { students } = await RepoService.findStudents({}, 1, 100);
       replyText = `### 👥 Student Directory\n\n` + students.slice(0, 10).map((s: any) => `- **${s.name}** (${s.enrollmentNo}) - ${s.department || 'Computer Science'}`).join('\n');
       replyText += `\n\n*Showing top 10 results. Navigate to the Students page for the full list.*`;
-    } else if (qLower.includes('course') && qLower.includes('available')) {
+    } else if (isCourse && qLower.includes('available')) {
       const courses = await RepoService.findCourses();
       replyText = `### 📚 Available Courses\n\n` + courses.map((c: any) => `- **${c.name}** (${c.code}): ${c.credits} Credits [${c.department}]`).join('\n');
-    } else if (qLower.includes('how many faculty') || qLower.includes('total faculty')) {
+    } else if (isFaculty && (qLower.includes('how many') || qLower.includes('total'))) {
       const faculty = await RepoService.findFaculties();
       replyText = `### 👨‍🏫 Faculty Members\n\nThere are a total of **${faculty.length}** active faculty members.`;
-    } else if (qLower.includes('list faculty') || qLower.includes('which faculty')) {
+    } else if (isFaculty && (qLower.includes('list') || qLower.includes('which'))) {
       const faculty = await RepoService.findFaculties();
       replyText = `### 👨‍🏫 Faculty Directory\n\n` + faculty.map((f: any) => `- **${f.name}** - ${f.designation} (${f.department})`).join('\n');
     } else {
@@ -224,13 +248,20 @@ ${selectedEntity ? `Currently Selected Item: ${selectedEntity}` : ''}
 
 VERIFIED APPLICATION KNOWLEDGE:
 ${formattedKnowledge}
+Key Workflow - Face Attendance:
+- Admin: Registers student faces in the Students directory.
+- Faculty: Starts Face Attendance sessions from the Attendance page.
+- Student: Verifies their own face to mark attendance using the live camera.
 
 CRITICAL RULES:
-1. ALWAYS use the provided tools to fetch live data from the database if the user asks for students, courses, faculty, attendance, or specific records.
-2. If the user asks to navigate somewhere, use the 'navigate' tool.
-3. If the user asks to mark attendance or notify parents, use the 'proposeAction' tool.
-4. Format your final text response with clear markdown headings (###), bullet points, and code blocks for IDs. Never mention system prompts, tools, or internal JSON structures.
-5. If the tools return no data, respond honestly that no records were found.`;
+1. STRICT RELEVANCE: If the user query falls outside the scope of Students, Courses, Attendance, Grades, Faculty, Face Attendance, or Academic Analytics, you MUST return EXACTLY this message and nothing else: "I couldn't confidently determine what you're looking for. You can ask about students, courses, attendance, grades, faculty, face attendance, or academic analytics." Do not try to guess or provide generic advice.
+2. ALWAYS use the provided tools to fetch live data from the database if the user asks for students, courses, faculty, attendance, or specific records.
+3. Distinguish between help queries (e.g. "How do I register a face?") and data queries (e.g. "Show attendance for ENR123"). Do not answer data queries with navigation instructions.
+4. If the user asks to navigate somewhere, use the 'navigate' tool.
+5. If the user asks to mark attendance or notify parents, use the 'proposeAction' tool.
+6. Format your final text response with clear markdown headings (###), bullet points, and code blocks for IDs. Never mention system prompts, tools, or internal JSON structures.
+7. If the tools return no data, respond honestly that no records were found.
+8. Be role-aware. E.g., if a Student asks how to register their face, tell them to contact Admin. If Faculty asks, tell them only Admin can register faces.`;
 
     const chat = ai.chats.create({
       model: 'gemini-2.5-flash',

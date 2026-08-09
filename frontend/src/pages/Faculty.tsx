@@ -96,8 +96,9 @@ export default function Faculty() {
 
     setActionLoading(true);
     try {
-      const res = await api.put(`/courses/${selectedCourseId}`, {
-        facultyId: activeFaculty?._id || activeFaculty?.id
+      const res = await api.post('/faculty/assign-course', {
+        facultyId: activeFaculty?._id || activeFaculty?.id,
+        courseId: selectedCourseId
       });
 
       toast.success(res.data.message || 'Assigned course successfully!');
@@ -265,7 +266,7 @@ export default function Faculty() {
                 const fId = typeof c.facultyId === 'object' ? c.facultyId?._id || c.facultyId?.id : c.facultyId;
                 return fId === (fac._id || fac.id);
               });
-              const isActive = idx % 5 !== 4;
+              const isActive = true; // Temporary active status until backend adds one.
 
               return (
                 <div key={fac._id || fac.id} className="p-5 bg-white border border-slate-200/80 rounded-3xl shadow-card hover:border-orange-200 transition-all flex flex-col justify-between space-y-4 group">
@@ -282,8 +283,8 @@ export default function Faculty() {
                       </div>
                     </div>
 
-                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${isActive ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-red-50 text-red-600 border-red-200'}`}>
-                      {isActive ? 'Active' : 'Inactive'}
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border bg-emerald-50 text-emerald-600 border-emerald-200">
+                      Active
                     </span>
                   </div>
 
@@ -361,13 +362,28 @@ export default function Faculty() {
                     <option value="" disabled={courses.length === 0}>
                       {courses.length === 0 ? 'No courses available to assign' : 'Select a course to assign...'}
                     </option>
-                    {courses.map((c) => (
-                      <option key={c._id || c.id} value={c._id || c.id}>
-                        {c.code} - {c.name} ({c.department})
-                      </option>
-                    ))}
+                    {courses.map((c) => {
+                      const fId = typeof c.facultyId === 'object' ? c.facultyId?._id || c.facultyId?.id : c.facultyId;
+                      const isAssignedToOther = fId && fId !== (activeFaculty?._id || activeFaculty?.id);
+                      return (
+                        <option key={c._id || c.id} value={c._id || c.id}>
+                          {c.code} - {c.name} {isAssignedToOther ? '(Already Assigned)' : ''}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
+
+                {(() => {
+                  const selectedCourse = courses.find((c) => (c._id || c.id) === selectedCourseId);
+                  const sfId = typeof selectedCourse?.facultyId === 'object' ? selectedCourse.facultyId?._id || selectedCourse.facultyId?.id : selectedCourse?.facultyId;
+                  const isAssignedToOther = sfId && sfId !== (activeFaculty?._id || activeFaculty?.id);
+                  return isAssignedToOther ? (
+                    <div className="p-3 bg-orange-50 border border-orange-200 rounded-xl text-[11px] text-orange-800 font-medium">
+                      ⚠️ This course is currently assigned to another faculty member. Continuing will <strong className="font-bold">Reassign</strong> it.
+                    </div>
+                  ) : null;
+                })()}
 
                 <div className="flex justify-end gap-2 pt-2">
                   <button
@@ -382,7 +398,13 @@ export default function Faculty() {
                     disabled={actionLoading}
                     className="px-4 py-2.5 bg-[#ff6b00] hover:bg-orange-600 text-white text-xs font-bold rounded-2xl transition-all cursor-pointer"
                   >
-                    {actionLoading ? 'Assigning...' : 'Confirm Assignment'}
+                    {actionLoading ? 'Assigning...' : (() => {
+                      const selCourse = courses.find((c) => (c._id || c.id) === selectedCourseId);
+                      const fId = typeof selCourse?.facultyId === 'object' ? selCourse.facultyId?._id || selCourse.facultyId?.id : selCourse?.facultyId;
+                      return fId && fId !== (activeFaculty?._id || activeFaculty?.id) 
+                        ? 'Confirm Reassignment' 
+                        : 'Confirm Assignment'
+                    })()}
                   </button>
                 </div>
               </form>

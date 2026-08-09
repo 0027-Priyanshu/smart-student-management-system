@@ -293,6 +293,52 @@ class RepoService {
             return db.faculties[index];
         }
     }
+    static async assignCourseToFaculty(facultyId, courseId) {
+        if (db_1.isMongoConnected) {
+            // 1. Find course
+            const course = await Course_1.default.findById(courseId);
+            if (!course)
+                throw new Error('Course not found');
+            // 2. Remove from previous faculty if assigned
+            if (course.facultyId && course.facultyId.toString() !== facultyId) {
+                await Faculty_1.default.findByIdAndUpdate(course.facultyId, {
+                    $pull: { assignedCourses: courseId }
+                });
+            }
+            // 3. Add to new faculty
+            await Faculty_1.default.findByIdAndUpdate(facultyId, {
+                $addToSet: { assignedCourses: courseId }
+            });
+            // 4. Set course facultyId
+            await Course_1.default.findByIdAndUpdate(courseId, { facultyId });
+        }
+        else {
+            const db = (0, db_1.readJsonDb)();
+            const courseIndex = db.courses.findIndex((c) => (c._id || c.id) === courseId);
+            const newFacultyIndex = db.faculties.findIndex((f) => (f._id || f.id) === facultyId);
+            if (courseIndex === -1)
+                throw new Error('Course not found');
+            if (newFacultyIndex === -1)
+                throw new Error('Faculty not found');
+            const course = db.courses[courseIndex];
+            // Remove from previous faculty
+            if (course.facultyId && course.facultyId !== facultyId) {
+                const prevFacIndex = db.faculties.findIndex((f) => (f._id || f.id) === course.facultyId);
+                if (prevFacIndex !== -1) {
+                    db.faculties[prevFacIndex].assignedCourses = (db.faculties[prevFacIndex].assignedCourses || []).filter((id) => id !== courseId);
+                }
+            }
+            // Add to new faculty
+            const assigned = db.faculties[newFacultyIndex].assignedCourses || [];
+            if (!assigned.includes(courseId)) {
+                assigned.push(courseId);
+            }
+            db.faculties[newFacultyIndex].assignedCourses = assigned;
+            // Update course
+            db.courses[courseIndex].facultyId = facultyId;
+            (0, db_1.writeJsonDb)(db);
+        }
+    }
     static async deleteFaculty(id) {
         if (db_1.isMongoConnected) {
             const res = await Faculty_1.default.findByIdAndUpdate(id, { isDeleted: true });
@@ -877,7 +923,7 @@ class RepoService {
         }
         // Determine Active Session
         let session = null;
-        if (params.sessionId) {
+        if (params.sessionId && params.sessionId !== 'self-directed') {
             session = db.faceSessions?.find((s) => s.sessionId === params.sessionId);
         }
         else {

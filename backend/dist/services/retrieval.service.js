@@ -85,53 +85,31 @@ class RetrievalService {
      */
     static getSuggestedQuestions(currentPage, userRole) {
         const role = userRole || 'Student';
-        const path = currentPage || '/dashboard';
-        if (path === '/students') {
+        if (role === 'Admin') {
             return [
-                "Summarize the selected student",
-                "Find students with low attendance",
-                "Show recently added students",
-                "Which students are at academic risk?"
+                "How do I register a student's face?",
+                "Show students at academic risk.",
+                "How does QR attendance work?",
+                "How do I import students from Excel?",
+                "Explain the Strategic Insight Report."
             ];
         }
-        if (path === '/attendance') {
+        if (role === 'Faculty') {
             return [
-                "Who is absent today?",
-                "Show students below 75% attendance",
-                "Explain the attendance trend",
-                "How to launch live QR attendance?"
+                "How do I start Face Attendance?",
+                "Show attendance for my class.",
+                "Which students have low attendance?",
+                "How do I start QR Attendance?",
+                "Show students at academic risk."
             ];
         }
-        if (path === '/marks') {
-            return [
-                "Find low-performing students",
-                "Compare semester performance",
-                "Explain this GPA trend",
-                "How is CGPA calculated?"
-            ];
-        }
-        if (path === '/courses') {
-            return [
-                "Show courses with weak performance",
-                "Summarize course enrollment",
-                "Identify difficult subjects",
-                "How do course credits work?"
-            ];
-        }
-        if (path === '/faculty') {
-            return [
-                "Summarize faculty workload",
-                "Show assigned courses",
-                "Find scheduling conflicts",
-                "How do I add a new faculty member?"
-            ];
-        }
-        // Default / Dashboard / Academic Intelligence
+        // Student (default fallback)
         return [
-            "Summarize today's academic activity",
-            "Show urgent issues",
-            "Which students need attention?",
-            "Open detailed academic intelligence"
+            "How do I mark Face Attendance?",
+            "Show my attendance.",
+            "What is my attendance percentage?",
+            "Show my courses.",
+            "Why is my face verification failing?"
         ];
     }
 }

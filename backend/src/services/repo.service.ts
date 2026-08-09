@@ -326,6 +326,58 @@ export class RepoService {
     }
   }
 
+  static async assignCourseToFaculty(facultyId: string, courseId: string): Promise<void> {
+    if (isMongoConnected) {
+      // 1. Find course
+      const course = await Course.findById(courseId);
+      if (!course) throw new Error('Course not found');
+
+      // 2. Remove from previous faculty if assigned
+      if (course.facultyId && course.facultyId.toString() !== facultyId) {
+        await Faculty.findByIdAndUpdate(course.facultyId, {
+          $pull: { assignedCourses: courseId }
+        });
+      }
+
+      // 3. Add to new faculty
+      await Faculty.findByIdAndUpdate(facultyId, {
+        $addToSet: { assignedCourses: courseId }
+      });
+
+      // 4. Set course facultyId
+      await Course.findByIdAndUpdate(courseId, { facultyId });
+    } else {
+      const db = readJsonDb();
+      const courseIndex = db.courses.findIndex((c: any) => (c._id || c.id) === courseId);
+      const newFacultyIndex = db.faculties.findIndex((f: any) => (f._id || f.id) === facultyId);
+
+      if (courseIndex === -1) throw new Error('Course not found');
+      if (newFacultyIndex === -1) throw new Error('Faculty not found');
+
+      const course = db.courses[courseIndex];
+
+      // Remove from previous faculty
+      if (course.facultyId && course.facultyId !== facultyId) {
+        const prevFacIndex = db.faculties.findIndex((f: any) => (f._id || f.id) === course.facultyId);
+        if (prevFacIndex !== -1) {
+          db.faculties[prevFacIndex].assignedCourses = (db.faculties[prevFacIndex].assignedCourses || []).filter((id: string) => id !== courseId);
+        }
+      }
+
+      // Add to new faculty
+      const assigned = db.faculties[newFacultyIndex].assignedCourses || [];
+      if (!assigned.includes(courseId)) {
+        assigned.push(courseId);
+      }
+      db.faculties[newFacultyIndex].assignedCourses = assigned;
+
+      // Update course
+      db.courses[courseIndex].facultyId = facultyId;
+
+      writeJsonDb(db);
+    }
+  }
+
   static async deleteFaculty(id: string): Promise<boolean> {
     if (isMongoConnected) {
       const res = await Faculty.findByIdAndUpdate(id, { isDeleted: true });

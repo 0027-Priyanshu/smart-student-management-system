@@ -19,9 +19,17 @@ class CourseController {
             }
             else if (requester.role === 'Faculty') {
                 const facultyProfile = await repo_service_1.RepoService.findFacultyByUserId(requester.userId);
-                if (facultyProfile && facultyProfile.assignedCourses && facultyProfile.assignedCourses.length > 0) {
-                    const assignedIds = facultyProfile.assignedCourses.map((c) => (c._id || c.id || c).toString());
-                    courses = courses.filter((c) => assignedIds.includes((c._id || c.id).toString()) || c.facultyId?.toString() === requester.userId);
+                if (facultyProfile) {
+                    const profileId = (facultyProfile._id || facultyProfile.id).toString();
+                    const assignedIds = (facultyProfile.assignedCourses || []).map((c) => (c._id || c.id || c).toString());
+                    courses = courses.filter((c) => {
+                        const isAssignedList = assignedIds.includes((c._id || c.id).toString());
+                        const isAssignedDirectly = c.facultyId?.toString() === profileId;
+                        return isAssignedList || isAssignedDirectly;
+                    });
+                }
+                else {
+                    courses = []; // No faculty profile found, return nothing
                 }
             }
             return res.json({ courses });
@@ -87,13 +95,13 @@ class CourseController {
                 return res.status(404).json({ error: 'Course not found' });
             }
             const updated = await repo_service_1.RepoService.updateCourse(req.params.id, {
-                name,
-                description,
-                credits: parseInt(credits, 10),
-                semester: parseInt(semester, 10),
-                department,
-                capacity: parseInt(capacity, 10),
-                prerequisites: prerequisites || [],
+                name: name !== undefined ? name : course.name,
+                description: description !== undefined ? description : course.description,
+                credits: credits !== undefined ? parseInt(credits, 10) : course.credits,
+                semester: semester !== undefined ? parseInt(semester, 10) : course.semester,
+                department: department !== undefined ? department : course.department,
+                capacity: capacity !== undefined ? parseInt(capacity, 10) : course.capacity,
+                prerequisites: prerequisites !== undefined ? prerequisites : course.prerequisites,
                 ...(facultyId !== undefined && { facultyId: facultyId || null })
             });
             // Log Activity

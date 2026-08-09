@@ -510,7 +510,7 @@ export default function FloatingChatWidget() {
                 </div>
 
                 <div className={`max-w-[82%] space-y-2 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                  <div className={`p-3.5 rounded-2xl text-xs shadow-2xs ${msg.role === 'user' ? 'bg-slate-900 text-white rounded-tr-none' : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none'}`}>
+                  <div className={`p-3.5 rounded-2xl text-xs shadow-2xs ${msg.role === 'user' ? 'bg-orange-50 border border-orange-200 text-slate-900 rounded-tr-none' : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none'}`}>
                     <ReactMarkdown remarkPlugins={[remarkGfm]} components={customMarkdownComponents}>
                       {msg.content}
                     </ReactMarkdown>

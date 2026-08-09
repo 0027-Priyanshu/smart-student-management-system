@@ -25,12 +25,7 @@ class FacultyController {
             if (!course) {
                 return res.status(404).json({ error: 'Course not found' });
             }
-            const assigned = faculty.assignedCourses?.map((c) => c._id?.toString() || c.id?.toString()) || [];
-            if (assigned.includes(courseId)) {
-                return res.status(400).json({ error: 'Course is already assigned to this faculty' });
-            }
-            const updatedCourses = [...assigned, courseId];
-            await repo_service_1.RepoService.updateFaculty(facultyId, { assignedCourses: updatedCourses });
+            await repo_service_1.RepoService.assignCourseToFaculty(facultyId, courseId);
             // Log Activity
             await repo_service_1.RepoService.createLog({
                 userId: requester.userId,

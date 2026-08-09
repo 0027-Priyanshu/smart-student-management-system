@@ -7,8 +7,8 @@
       "password": "$2a$10$vN6ByH2.jApb.wo1AfTkW.nXeg9gbt8vGJyB3SGUXMdZo/hFzoJLm",
       "role": "Admin",
       "createdAt": "2026-06-01T10:00:00.000Z",
-      "updatedAt": "2026-08-09T06:44:25.897Z",
-      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NTRjMWE1ZjRmODllZjEyMzQ1Njc4OTAiLCJpYXQiOjE3ODYyNTc4NjUsImV4cCI6MTc4Njg2MjY2NX0.iofxH4EMQXl2Q7fBra7hgcSXc0VFOp23pnsAiXG9cYk"
+      "updatedAt": "2026-08-09T07:53:09.105Z",
+      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NTRjMWE1ZjRmODllZjEyMzQ1Njc4OTAiLCJpYXQiOjE3ODYyNjE5ODksImV4cCI6MTc4Njg2Njc4OX0.7yMl3-HfV7niJj6JCPQWKjWH0lCtftTZQNQ4VoCjE3I"
     },
     {
       "_id": "6a75e45e8c52fd90e31eeed0",
@@ -91,6 +91,18 @@
       "isVerified": true,
       "createdAt": "2026-08-07T14:24:33.370Z",
       "updatedAt": "2026-08-07T14:24:36.123Z"
+    },
+    {
+      "_id": "6a7832377391e6210e835ab7",
+      "name": "Dr. New Faculty",
+      "email": "new.faculty@sms.com",
+      "password": "$2a$10$WeCsN8Gm0SFxy4zPn4gjdOwAX3ZomlRvkql0.FpnU7Rxehxo2E6h6",
+      "role": "Faculty",
+      "isVerified": true,
+      "verificationToken": null,
+      "createdAt": "2026-08-09T07:54:31.894Z",
+      "updatedAt": "2026-08-09T07:54:31.915Z",
+      "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2YTc4MzIzNzczOTFlNjIxMGU4MzVhYjciLCJpYXQiOjE3ODYyNjIwNzEsImV4cCI6MTc4Njg2Njg3MX0.L70UYOMo9kWJxjS1DiLM_OgCvJv47TyoB0vJWAZxwbk"
     }
   ],
   "students": [
@@ -386,6 +398,17 @@
       "isDeleted": false,
       "createdAt": "2026-06-01T10:00:00.000Z",
       "updatedAt": "2026-06-01T10:00:00.000Z"
+    },
+    {
+      "_id": "6a7832377391e6210e835ab8",
+      "userId": "6a7832377391e6210e835ab7",
+      "name": "Dr. New Faculty",
+      "email": "new.faculty@sms.com",
+      "department": "General Sciences",
+      "designation": "Assistant Professor",
+      "assignedCourses": [],
+      "isDeleted": false,
+      "createdAt": "2026-08-09T07:54:31.897Z"
     }
   ],
   "courses": [
@@ -411,7 +434,8 @@
       "capacity": 40,
       "prerequisites": [],
       "isDeleted": false,
-      "createdAt": "2026-08-07T14:00:51.548Z"
+      "createdAt": "2026-08-07T14:00:51.548Z",
+      "facultyId": "654c1a5f4f89ef1234567991"
     },
     {
       "_id": "6a75eaa878298daa577bd74b",
@@ -428,7 +452,7 @@
     {
       "_id": "6a772d68d4376794ad6c5719",
       "name": "Machine Learning",
-    "code": "CS501",
+      "code": "CS501",
       "description": "Standard academic course curriculum.",
       "credits": 3,
       "semester": 1,
@@ -946,6 +970,34 @@
       "role": "model",
       "content": "I couldn't confidently determine what you're looking for. You can ask about students, courses, attendance, grades, faculty, face attendance, or academic analytics.",
       "createdAt": "2026-08-09T06:14:37.921Z"
+    },
+    {
+      "_id": "6a7832637391e6210e835ab9",
+      "userId": "654c1a5f4f89ef1234567890",
+      "role": "user",
+      "content": "Who are the students in CSE?",
+      "createdAt": "2026-08-09T07:55:15.906Z"
+    },
+    {
+      "_id": "6a7832637391e6210e835aba",
+      "userId": "654c1a5f4f89ef1234567890",
+      "role": "model",
+      "content": "AI service is currently unavailable. Application data and standard management features remain accessible.",
+      "createdAt": "2026-08-09T07:55:15.909Z"
+    },
+    {
+      "_id": "6a7832747391e6210e835abb",
+      "userId": "654c1a5f4f89ef1234567890",
+      "role": "user",
+      "content": "Who won the superbowl?",
+      "createdAt": "2026-08-09T07:55:32.457Z"
+    },
+    {
+      "_id": "6a7832747391e6210e835abc",
+      "userId": "654c1a5f4f89ef1234567890",
+      "role": "model",
+      "content": "AI service is currently unavailable. Application data and standard management features remain accessible.",
+      "createdAt": "2026-08-09T07:55:32.459Z"
     }
   ],
   "qrSessions": [

@@ -34,23 +34,9 @@ import StudentDashboard from '../components/dashboard/StudentDashboard';
 import FacultyDashboard from '../components/dashboard/FacultyDashboard';
 import { toast } from '../stores/toastStore';
 
-// Sample Trend Data for Recharts Sparklines & Area Chart
-const GPA_TREND_DATA = [
-  { name: 'Sem 1', gpa: 2.10 },
-  { name: 'Sem 2', gpa: 2.65 },
-  { name: 'Sem 3', gpa: 2.50 },
-  { name: 'Sem 4', gpa: 3.12 },
-  { name: 'Sem 5', gpa: 2.95 },
-  { name: 'Sem 6', gpa: 3.24 },
-];
+import { motion } from 'framer-motion';
 
-const RADAR_SNAPSHOT_DATA = [
-  { subject: 'Attendance', A: 89, fullMark: 100 },
-  { subject: 'GPA', A: 81, fullMark: 100 },
-  { subject: 'Consistency', A: 75, fullMark: 100 },
-  { subject: 'Assignments', A: 92, fullMark: 100 },
-  { subject: 'Engagement', A: 84, fullMark: 100 },
-];
+// Removed fake GPA_TREND_DATA and RADAR_SNAPSHOT_DATA constants
 
 export default function Dashboard() {
   const { user } = useAuthStore();
@@ -136,7 +122,12 @@ export default function Dashboard() {
 
   return (
     <DashboardShell title="Dashboard Overview">
-      <div className="space-y-6 animate-fadeIn">
+      <motion.div 
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="space-y-6"
+      >
 
         {/* ---------------------------------------------------- */}
         {/* ROW 1: 4 Real-time Bento KPI Stat Cards (No Fake Data) */}
@@ -258,7 +249,7 @@ export default function Dashboard() {
             {/* Recharts Area Chart */}
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={GPA_TREND_DATA} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <AreaChart data={[]} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="gpaGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.35}/>
@@ -268,31 +259,18 @@ export default function Dashboard() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                   <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
                   <YAxis domain={[1.0, 4.0]} stroke="#94a3b8" fontSize={11} tickLine={false} />
-                  <Tooltip 
-                    content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        return (
-                          <div className="p-3 bg-slate-900 text-white rounded-2xl shadow-xl text-xs space-y-0.5 border border-slate-700">
-                            <p className="font-bold text-slate-300">{payload[0].payload.name}</p>
-                            <p className="font-extrabold text-[#ff6b00]">GPA: {Number(payload[0].value || 0).toFixed(2)}</p>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
+                  <Tooltip />
                   <Area 
                     type="monotone" 
                     dataKey="gpa" 
                     stroke="#8b5cf6" 
-                    strokeWidth={3} 
-                    fillOpacity={1} 
                     fill="url(#gpaGradient)" 
-                    dot={{ fill: '#8b5cf6', r: 5, strokeWidth: 2, stroke: '#fff' }}
-                    activeDot={{ fill: '#ff6b00', r: 7, stroke: '#fff', strokeWidth: 3 }}
                   />
                 </AreaChart>
               </ResponsiveContainer>
+              <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-[1px] rounded-2xl">
+                <p className="text-sm font-bold text-slate-500">No historical trend data available</p>
+              </div>
             </div>
           </div>
 
@@ -351,13 +329,17 @@ export default function Dashboard() {
             
             <div className="h-44">
               <ResponsiveContainer width="100%" height="100%">
-                <RadarChart outerRadius="70%" data={RADAR_SNAPSHOT_DATA}>
-                  <PolarGrid stroke="#e2e8f0" />
-                  <PolarAngleAxis dataKey="subject" stroke="#64748b" fontSize={10} />
-                  <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#cbd5e1" fontSize={8} />
-                  <Radar name="Performance" dataKey="A" stroke="#ff6b00" fill="#ff6b00" fillOpacity={0.25} />
+                <RadarChart outerRadius="70%" data={[]}>
+                  <PolarGrid stroke="#f1f5f9" />
+                  <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} />
+                  <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                  <Radar name="Student Demo" dataKey="A" stroke="#ff6b00" fill="#ff6b00" fillOpacity={0.4} />
+                  <Tooltip />
                 </RadarChart>
               </ResponsiveContainer>
+              <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-[1px] rounded-2xl">
+                <p className="text-sm font-bold text-slate-500">No snapshot data available</p>
+              </div>
             </div>
 
             <div className="space-y-2 text-xs pt-2 border-t border-slate-100">
@@ -505,7 +487,7 @@ export default function Dashboard() {
 
         </div>
 
-      </div>
+      </motion.div>
     </DashboardShell>
   );
 }

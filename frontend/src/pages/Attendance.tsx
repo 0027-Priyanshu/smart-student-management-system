@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
-import { Calendar, CheckCircle, AlertCircle, QrCode, Clock, Users, ShieldCheck, RefreshCw, Copy, Camera, ScanFace, Sparkles, Bell, Play, StopCircle, ArrowRight, UserCheck } from 'lucide-react';
+import { Calendar, CheckCircle, AlertCircle, QrCode, Clock, Users, ShieldCheck, RefreshCw, Copy, Camera, ScanFace, Sparkles, Bell, Play, StopCircle, ArrowRight, UserCheck, PieChart } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
 import DashboardShell from '../components/layout/DashboardShell';
 import api from '../utils/api';
@@ -519,7 +519,7 @@ export default function Attendance() {
                   className="w-full py-3 bg-slate-900 hover:bg-black text-white font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md mt-4"
                 >
                   <Camera size={16} />
-                  Open Master Live Classroom Scanner (Oversight)
+                  Open Master Live Scanner (Diagnostic/Oversight Tool)
                 </button>
               </div>
             </div>
@@ -692,6 +692,36 @@ export default function Attendance() {
         {/* ==================== STUDENT VIEW: NOTIFICATION BANNER & 1-TO-1 SELF VERIFICATION ==================== */}
         {isStudent && (
           <div className="space-y-6">
+            {/* Student Attendance Overview */}
+            <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="col-span-2 md:col-span-4 mb-2">
+                <h4 className="font-title font-extrabold text-base text-slate-900 flex items-center gap-2">
+                  <PieChart size={20} className="text-[#0ea5e9]" />
+                  Attendance Overview
+                </h4>
+              </div>
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col items-center justify-center">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Total Records</span>
+                <span className="text-2xl font-black text-slate-800">{attendanceList.length}</span>
+              </div>
+              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl flex flex-col items-center justify-center">
+                <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-1">Present</span>
+                <span className="text-2xl font-black text-emerald-700">{attendanceList.filter((a: any) => a.status === 'Present').length}</span>
+              </div>
+              <div className="p-4 bg-red-50 border border-red-200 rounded-2xl flex flex-col items-center justify-center">
+                <span className="text-[10px] font-bold text-red-600 uppercase tracking-wider mb-1">Absent</span>
+                <span className="text-2xl font-black text-red-700">{attendanceList.filter((a: any) => a.status === 'Absent').length}</span>
+              </div>
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-2xl flex flex-col items-center justify-center">
+                <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-1">Attendance %</span>
+                <span className="text-2xl font-black text-blue-700">
+                  {attendanceList.length > 0 
+                    ? Math.round((attendanceList.filter((a: any) => a.status === 'Present').length / attendanceList.length) * 100)
+                    : 0}%
+                </span>
+              </div>
+            </div>
+
             {/* Active Class Attendance Notification Banner */}
             {activeStudentSession && (
               <div className="p-5 bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-400 rounded-3xl shadow-lg flex flex-col md:flex-row items-center justify-between gap-4 animate-bounceOnce">

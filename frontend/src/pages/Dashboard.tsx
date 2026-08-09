@@ -43,10 +43,12 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [apiError, setApiError] = useState<string | null>(null);
   const { socket } = useSocketStore();
   const [selectedSemesterFilter, setSelectedSemesterFilter] = useState('All Semesters');
 
   const fetchDashboardData = useCallback(async () => {
+    setApiError(null);
     try {
       const res = await api.get('/dashboard');
       setData(res.data);
@@ -60,8 +62,9 @@ export default function Dashboard() {
           console.error('Failed to fetch at risk students:', aiErr);
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching dashboard stats:', err);
+      setApiError(err.response?.data?.error || err.message || 'Unable to connect to analytics service.');
     } finally {
       setLoading(false);
     }
@@ -85,6 +88,7 @@ export default function Dashboard() {
       }
     };
   }, [socket, fetchDashboardData]);
+
   if (loading) {
     return (
       <DashboardShell title="Dashboard Overview">
@@ -120,6 +124,10 @@ export default function Dashboard() {
   const studentsAtRisk = metrics.studentsAtRisk ?? 0;
   const averageGpa = metrics.averageGpa;
 
+  // Derive chart data safely
+  const gpaTrendData = data?.gpaTrend || [];
+  const snapshotData = data?.departmentWiseData?.map((d: any) => ({ subject: d.name, A: d.value })) || [];
+
   return (
     <DashboardShell title="Dashboard Overview">
       <motion.div 
@@ -128,6 +136,21 @@ export default function Dashboard() {
         transition={{ duration: 0.3 }}
         className="space-y-6"
       >
+        {/* API Error Alert Banner (if analytics data fetch fails) */}
+        {apiError && (
+          <div className="p-4 bg-amber-50 border border-amber-200/80 rounded-2xl flex items-center justify-between text-xs font-bold text-amber-800 shadow-2xs">
+            <span className="flex items-center gap-2">
+              <AlertTriangle size={16} className="text-amber-600" />
+              {apiError} — Showing available metrics.
+            </span>
+            <button 
+              onClick={fetchDashboardData} 
+              className="px-3 py-1 bg-amber-600 text-white rounded-xl text-[11px] font-extrabold hover:bg-amber-700 transition-colors cursor-pointer"
+            >
+              Retry
+            </button>
+          </div>
+        )}
 
         {/* ---------------------------------------------------- */}
         {/* ROW 1: 4 Real-time Bento KPI Stat Cards (No Fake Data) */}
@@ -247,30 +270,35 @@ export default function Dashboard() {
             </div>
 
             {/* Recharts Area Chart */}
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={[]} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="gpaGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.35}/>
-                      <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
-                  <YAxis domain={[1.0, 4.0]} stroke="#94a3b8" fontSize={11} tickLine={false} />
-                  <Tooltip />
-                  <Area 
-                    type="monotone" 
-                    dataKey="gpa" 
-                    stroke="#8b5cf6" 
-                    fill="url(#gpaGradient)" 
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-              <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-[1px] rounded-2xl">
-                <p className="text-sm font-bold text-slate-500">No historical trend data available</p>
-              </div>
+            <div className="h-72 relative">
+              {gpaTrendData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={gpaTrendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="gpaGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.35}/>
+                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                    <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
+                    <YAxis domain={[1.0, 4.0]} stroke="#94a3b8" fontSize={11} tickLine={false} />
+                    <Tooltip />
+                    <Area 
+                      type="monotone" 
+                      dataKey="gpa" 
+                      stroke="#8b5cf6" 
+                      fill="url(#gpaGradient)" 
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center bg-slate-50/50 border border-dashed border-slate-200 rounded-2xl p-4">
+                  <TrendingUp size={24} className="text-slate-300 mb-1.5" />
+                  <p className="text-xs font-extrabold text-slate-500">No historical GPA trend data recorded</p>
+                  <p className="text-[11px] font-medium text-slate-400 mt-0.5 text-center">Trend metrics will populate automatically as semester grades are published.</p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -327,19 +355,24 @@ export default function Dashboard() {
           <div className="p-6 bg-white border border-slate-200/80 rounded-3xl shadow-card space-y-4">
             <h3 className="font-title font-black text-base text-slate-900">Academic Snapshot</h3>
             
-            <div className="h-44">
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart outerRadius="70%" data={[]}>
-                  <PolarGrid stroke="#f1f5f9" />
-                  <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} />
-                  <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
-                  <Radar name="Student Demo" dataKey="A" stroke="#ff6b00" fill="#ff6b00" fillOpacity={0.4} />
-                  <Tooltip />
-                </RadarChart>
-              </ResponsiveContainer>
-              <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-[1px] rounded-2xl">
-                <p className="text-sm font-bold text-slate-500">No snapshot data available</p>
-              </div>
+            <div className="h-44 relative">
+              {snapshotData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart outerRadius="70%" data={snapshotData}>
+                    <PolarGrid stroke="#f1f5f9" />
+                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 700 }} />
+                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={false} axisLine={false} />
+                    <Radar name="Student Demo" dataKey="A" stroke="#ff6b00" fill="#ff6b00" fillOpacity={0.4} />
+                    <Tooltip />
+                  </RadarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center bg-slate-50/50 border border-dashed border-slate-200 rounded-2xl p-4">
+                  <Sparkles size={22} className="text-slate-300 mb-1.5" />
+                  <p className="text-xs font-extrabold text-slate-500">No academic snapshot data available</p>
+                  <p className="text-[11px] font-medium text-slate-400 mt-0.5 text-center">Department analytics will appear here as course enrollments increase.</p>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2 text-xs pt-2 border-t border-slate-100">

@@ -18,9 +18,16 @@ export class CourseController {
         }
       } else if (requester.role === 'Faculty') {
         const facultyProfile = await RepoService.findFacultyByUserId(requester.userId);
-        if (facultyProfile && facultyProfile.assignedCourses && facultyProfile.assignedCourses.length > 0) {
-          const assignedIds = facultyProfile.assignedCourses.map((c: any) => (c._id || c.id || c).toString());
-          courses = courses.filter((c: any) => assignedIds.includes((c._id || c.id).toString()) || c.facultyId?.toString() === requester.userId);
+        if (facultyProfile) {
+          const profileId = (facultyProfile._id || facultyProfile.id).toString();
+          const assignedIds = (facultyProfile.assignedCourses || []).map((c: any) => (c._id || c.id || c).toString());
+          courses = courses.filter((c: any) => {
+            const isAssignedList = assignedIds.includes((c._id || c.id).toString());
+            const isAssignedDirectly = c.facultyId?.toString() === profileId;
+            return isAssignedList || isAssignedDirectly;
+          });
+        } else {
+          courses = []; // No faculty profile found, return nothing
         }
       }
 

@@ -290,7 +290,7 @@ export default function Faculty() {
                   {/* Department & Assigned Courses */}
                   <div className="space-y-1.5 text-xs text-slate-500 font-medium">
                     <p className="text-slate-700 font-bold">{fac.department || 'CSE Department'}</p>
-                    <p className="text-slate-400 text-[11px]">{assigned.length > 0 ? `${assigned.length} Courses` : '4 Courses'}</p>
+                    <p className="text-slate-400 text-[11px]">{assigned.length} Courses</p>
                   </div>
 
                   {/* Action Buttons */}

@@ -54,56 +54,10 @@ export async function connectDB() {
           password: adminHash,
           role: "Admin",
           isVerified: true
-        },
-        {
-          name: "Dr. Faculty",
-          email: "faculty@sms.com",
-          password: bcrypt.hashSync('faculty123', salt),
-          role: "Faculty",
-          isVerified: true
-        },
-        {
-          name: "Demo Student",
-          email: "student@sms.com",
-          password: bcrypt.hashSync('student123', salt),
-          role: "Student",
-          isVerified: true
         }
       ]);
 
-      const studentUser = await User.findOne({ email: 'student@sms.com' });
-      const facultyUser = await User.findOne({ email: 'faculty@sms.com' });
-
-      if (studentUser) {
-        await Student.create({
-          userId: studentUser._id,
-          name: "Demo Student",
-          email: "student@sms.com",
-          enrollmentNo: "ENR12345678",
-          age: 20,
-          gender: "Male",
-          grade: "Junior",
-          department: "Computer Science",
-          semester: 5,
-          parentName: "John Doe",
-          parentPhone: "9999999999",
-          address: "Demo City",
-          isDeleted: false
-        });
-      }
-
-      if (facultyUser) {
-        await Faculty.create({
-          userId: facultyUser._id,
-          name: "Dr. Faculty",
-          email: "faculty@sms.com",
-          department: "Computer Science",
-          designation: "Professor",
-          isDeleted: false
-        });
-      }
-
-      console.log('🌱 MongoDB initialized with Admin, Faculty, and Student demo accounts!');
+      console.log('🌱 MongoDB initialized with Admin account!');
     }
   } catch (error) {
     isMongoConnected = false;
@@ -141,61 +95,10 @@ function initJsonDb() {
           isVerified: true,
           createdAt: new Date('2026-06-01T10:00:00Z').toISOString(),
           updatedAt: new Date('2026-06-01T10:00:00Z').toISOString()
-        },
-        {
-          _id: "654c1a5f4f89ef1234567891",
-          name: "Dr. Faculty",
-          email: "faculty@sms.com",
-          password: facultyHash,
-          role: "Faculty",
-          isVerified: true,
-          createdAt: new Date('2026-06-01T10:00:00Z').toISOString(),
-          updatedAt: new Date('2026-06-01T10:00:00Z').toISOString()
-        },
-        {
-          _id: "654c1a5f4f89ef1234567892",
-          name: "Demo Student",
-          email: "student@sms.com",
-          password: studentHash,
-          role: "Student",
-          isVerified: true,
-          createdAt: new Date('2026-06-01T10:00:00Z').toISOString(),
-          updatedAt: new Date('2026-06-01T10:00:00Z').toISOString()
         }
       ],
-      students: [
-        {
-          _id: "654c1a5f4f89ef1234567992",
-          userId: "654c1a5f4f89ef1234567892",
-          name: "Demo Student",
-          email: "student@sms.com",
-          enrollmentNo: "ENR12345678",
-          age: 20,
-          gender: "Male",
-          grade: "Junior",
-          department: "Computer Science",
-          semester: 5,
-          parentName: "John Doe",
-          parentPhone: "9999999999",
-          address: "Demo City",
-          isDeleted: false,
-          createdAt: new Date('2026-06-01T10:00:00Z').toISOString(),
-          updatedAt: new Date('2026-06-01T10:00:00Z').toISOString()
-        }
-      ],
-      faculties: [
-        {
-          _id: "654c1a5f4f89ef1234567991",
-          userId: "654c1a5f4f89ef1234567891",
-          name: "Dr. Faculty",
-          email: "faculty@sms.com",
-          department: "Computer Science",
-          designation: "Professor",
-          isDeleted: false,
-          createdAt: new Date('2026-06-01T10:00:00Z').toISOString(),
-          updatedAt: new Date('2026-06-01T10:00:00Z').toISOString()
-        }
-      ],
+      students: [],
+      faculties: [],
       courses: [],
       attendance: [],
       results: [],

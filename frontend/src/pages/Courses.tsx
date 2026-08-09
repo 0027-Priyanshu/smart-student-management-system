@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, UserPlus, X, BookOpen, Search } from 'lucide-react';
+import { Plus, UserPlus, X, BookOpen, Search, Trash2, AlertTriangle } from 'lucide-react';
 import DashboardShell from '../components/layout/DashboardShell';
 import api from '../utils/api';
 import { useAuthStore } from '../stores/authStore';
@@ -23,7 +23,9 @@ export default function Courses() {
   // Modals
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [activeCourse, setActiveCourse] = useState<Course | null>(null);
+  const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
   
   // Form states
   const [selectedStudentId, setSelectedStudentId] = useState('');
@@ -116,6 +118,23 @@ export default function Courses() {
       loadData();
     } catch (err: any) {
       toast.error(err.response?.data?.error || 'Failed to enroll student');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteCourse = async () => {
+    if (!courseToDelete) return;
+    setActionLoading(true);
+    try {
+      const cId = courseToDelete._id || courseToDelete.id;
+      const res = await api.delete(`/courses/${cId}`);
+      toast.success(res.data.message || 'Course deleted successfully!');
+      setShowDeleteModal(false);
+      setCourseToDelete(null);
+      loadData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Failed to delete course');
     } finally {
       setActionLoading(false);
     }
@@ -254,18 +273,30 @@ export default function Courses() {
                     </div>
                   </div>
 
-                  {/* Admin Enroll Button */}
+                  {/* Admin Action Buttons */}
                   {isAdmin && (
-                    <button
-                      onClick={() => {
-                        setActiveCourse(c);
-                        setShowAssignModal(true);
-                      }}
-                      className="w-full py-2.5 bg-slate-900 hover:bg-[#ff6b00] text-white text-xs font-extrabold rounded-2xl transition-all cursor-pointer shadow-2xs flex items-center justify-center gap-1.5"
-                    >
-                      <UserPlus size={14} />
-                      <span>Enroll Student</span>
-                    </button>
+                    <div className="flex items-center gap-2 pt-1">
+                      <button
+                        onClick={() => {
+                          setActiveCourse(c);
+                          setShowAssignModal(true);
+                        }}
+                        className="flex-1 py-2.5 bg-slate-900 hover:bg-[#ff6b00] text-white text-xs font-extrabold rounded-2xl transition-all cursor-pointer shadow-2xs flex items-center justify-center gap-1.5"
+                      >
+                        <UserPlus size={14} />
+                        <span>Enroll Student</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setCourseToDelete(c);
+                          setShowDeleteModal(true);
+                        }}
+                        className="p-2.5 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200/80 text-xs font-extrabold rounded-2xl transition-all cursor-pointer shadow-2xs flex items-center justify-center shrink-0"
+                        title="Delete Course"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   )}
 
                 </div>
@@ -433,6 +464,51 @@ export default function Courses() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteModal && courseToDelete && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white border border-slate-200 rounded-3xl shadow-card max-w-md w-full p-6 space-y-4 animate-scaleUp">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 className="font-title font-extrabold text-sm text-red-600 flex items-center gap-2">
+                  <AlertTriangle size={18} />
+                  Confirm Delete Course
+                </h3>
+                <button onClick={() => setShowDeleteModal(false)} className="text-slate-400 hover:text-slate-900 cursor-pointer">
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                  Are you sure you want to delete course <strong className="text-slate-900 font-bold">{courseToDelete.name}</strong> ({courseToDelete.code})?
+                </p>
+                <p className="text-[11px] text-red-500 font-bold bg-red-50 p-2.5 rounded-xl border border-red-100">
+                  ⚠️ This will soft-delete the course and remove it from active curriculum listings.
+                </p>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteModal(false)}
+                  className="px-4 py-2.5 bg-slate-100 text-slate-700 text-xs font-bold rounded-2xl hover:bg-slate-200 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={actionLoading}
+                  onClick={handleDeleteCourse}
+                  className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-2xl transition-all cursor-pointer shadow-subtle flex items-center gap-1.5"
+                >
+                  <Trash2 size={14} />
+                  <span>{actionLoading ? 'Deleting...' : 'Delete Course'}</span>
+                </button>
+              </div>
             </div>
           </div>
         )}

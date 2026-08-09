@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, X, Search, BookOpen, GraduationCap, Building } from 'lucide-react';
+import { Plus, X, Search, BookOpen, GraduationCap, Building, Trash2, AlertTriangle } from 'lucide-react';
 import DashboardShell from '../components/layout/DashboardShell';
 import api from '../utils/api';
 import { useAuthStore } from '../stores/authStore';
@@ -24,7 +24,9 @@ export default function Faculty() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [activeFaculty, setActiveFaculty] = useState<FacultyType | null>(null);
+  const [facultyToDelete, setFacultyToDelete] = useState<FacultyType | null>(null);
   const [selectedCourseId, setSelectedCourseId] = useState('');
   const [editDepartment, setEditDepartment] = useState('');
   const [editDesignation, setEditDesignation] = useState('');
@@ -126,6 +128,23 @@ export default function Faculty() {
       loadData();
     } catch (err: any) {
       toast.error(err.response?.data?.error || 'Failed to update faculty profile');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteFaculty = async () => {
+    if (!facultyToDelete) return;
+    setActionLoading(true);
+    try {
+      const fId = facultyToDelete._id || facultyToDelete.id;
+      const res = await api.delete(`/faculty/${fId}`);
+      toast.success(res.data.message || 'Faculty member deleted successfully!');
+      setShowDeleteModal(false);
+      setFacultyToDelete(null);
+      loadData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Failed to delete faculty member');
     } finally {
       setActionLoading(false);
     }
@@ -295,18 +314,33 @@ export default function Faculty() {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-                    <button
-                      onClick={() => {
-                        setActiveFaculty(fac);
-                        setEditDepartment(fac.department || '');
-                        setEditDesignation(fac.designation || '');
-                        setShowEditModal(true);
-                      }}
-                      className="text-xs font-bold text-slate-600 hover:text-[#ff6b00] transition-colors cursor-pointer"
-                    >
-                      Edit Profile
-                    </button>
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <button
+                        onClick={() => {
+                          setActiveFaculty(fac);
+                          setEditDepartment(fac.department || '');
+                          setEditDesignation(fac.designation || '');
+                          setShowEditModal(true);
+                        }}
+                        className="text-xs font-bold text-slate-600 hover:text-[#ff6b00] transition-colors cursor-pointer"
+                      >
+                        Edit Profile
+                      </button>
+                      {isAdmin && (
+                        <button
+                          onClick={() => {
+                            setFacultyToDelete(fac);
+                            setShowDeleteModal(true);
+                          }}
+                          className="text-xs font-bold text-red-600 hover:text-red-700 flex items-center gap-1 cursor-pointer transition-colors"
+                          title="Delete Faculty Member"
+                        >
+                          <Trash2 size={13} />
+                          <span>Delete</span>
+                        </button>
+                      )}
+                    </div>
                     {isAdmin && (
                       <button
                         onClick={() => {
@@ -568,6 +602,51 @@ export default function Faculty() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteModal && facultyToDelete && (
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white border border-slate-200 rounded-3xl shadow-card max-w-md w-full p-6 space-y-4 animate-scaleUp">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 className="font-title font-extrabold text-sm text-red-600 flex items-center gap-2">
+                  <AlertTriangle size={18} />
+                  Confirm Delete Faculty Member
+                </h3>
+                <button onClick={() => setShowDeleteModal(false)} className="text-slate-400 hover:text-slate-900 cursor-pointer">
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                  Are you sure you want to delete <strong className="text-slate-900 font-bold">{facultyToDelete.name}</strong> ({facultyToDelete.email})?
+                </p>
+                <p className="text-[11px] text-red-500 font-bold bg-red-50 p-2.5 rounded-xl border border-red-100">
+                  ⚠️ This will soft-delete the faculty member's profile and revoke access to assigned courses.
+                </p>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteModal(false)}
+                  className="px-4 py-2.5 bg-slate-100 text-slate-700 text-xs font-bold rounded-2xl hover:bg-slate-200 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={actionLoading}
+                  onClick={handleDeleteFaculty}
+                  className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-2xl transition-all cursor-pointer shadow-subtle flex items-center gap-1.5"
+                >
+                  <Trash2 size={14} />
+                  <span>{actionLoading ? 'Deleting...' : 'Delete Faculty'}</span>
+                </button>
+              </div>
             </div>
           </div>
         )}

@@ -974,7 +974,7 @@ export class RepoService {
 
     // Determine Active Session
     let session: any = null;
-    if (params.sessionId) {
+    if (params.sessionId && params.sessionId !== 'self-directed') {
       session = db.faceSessions?.find((s: any) => s.sessionId === params.sessionId);
     } else {
       session = db.faceSessions?.find((s: any) => {

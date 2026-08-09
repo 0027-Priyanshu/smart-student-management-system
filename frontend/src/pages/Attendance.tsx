@@ -373,9 +373,10 @@ export default function Attendance() {
           </div>
         )}
 
-        {/* KPI Metric Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 bg-white border border-slate-200/80 rounded-3xl shadow-card flex items-center gap-3">
+        {/* ==================== GLOBAL STATS DASHBOARD ==================== */}
+        {!isStudent && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-2 mb-6">
+            <div className="p-4 bg-white border border-slate-200/80 rounded-3xl shadow-card flex items-center gap-3">
             <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100">
               <Users size={18} />
             </div>
@@ -420,7 +421,8 @@ export default function Attendance() {
               </h4>
             </div>
           </div>
-        </div>
+          </div>
+        )}
 
         {/* ==================== ADMIN VIEW: EXCLUSIVE FACE ENROLLMENT ==================== */}
         {isAdmin && attendanceMode === 'FACE' && (
@@ -799,9 +801,20 @@ export default function Attendance() {
               </div>
 
               {user?.studentProfile?.isFaceRegistered ? (
-                <span className="px-3.5 py-1.5 bg-emerald-100 text-emerald-800 font-extrabold text-xs rounded-full flex items-center gap-1.5 border border-emerald-200 shrink-0">
-                  <CheckCircle size={15} /> Registered ✓
-                </span>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => {
+                      setTargetStudentSessionId(activeStudentSession?.sessionId || 'self-directed');
+                      setShowStudentVerificationModal(true);
+                    }}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl flex items-center gap-2 transition-all shadow-md cursor-pointer shrink-0"
+                  >
+                    <UserCheck size={15} /> Mark Attendance
+                  </button>
+                  <span className="px-3.5 py-1.5 bg-emerald-100 text-emerald-800 font-extrabold text-xs rounded-full flex items-center gap-1.5 border border-emerald-200 shrink-0">
+                    <CheckCircle size={15} /> Registered ✓
+                  </span>
+                </div>
               ) : (
                 <span className="px-3.5 py-1.5 bg-amber-100 text-amber-900 font-extrabold text-xs rounded-full flex items-center gap-1.5 border border-amber-200 shrink-0">
                   <AlertCircle size={15} /> Not Registered

@@ -19,7 +19,7 @@ async function generateStudentSummary(studentName, grade, gpa, attendanceRate, c
   Mention their current standing, focus areas, and a brief positive outlook. Keep it realistic and objective.`;
     try {
         const provider = (0, ai_provider_1.getAIProvider)();
-        const res = await provider.chat([{ role: 'user', content: prompt }]);
+        const res = await provider.chat({ messages: [{ role: 'user', content: prompt }] });
         if (res.content)
             return res.content.trim();
     }
@@ -116,9 +116,11 @@ RULES:
 2. Only answer questions related to the system (Students, Courses, Attendance, Grades, Faculty).
 3. If out of scope, reply exactly: "I couldn't confidently determine what you're looking for. You can ask about students, courses, attendance, grades, faculty, face attendance, or academic analytics."`;
     const provider = (0, ai_provider_1.getAIProvider)();
+    // 5. NORMALIZE MESSAGE ROLES & CLEAN EXISTING HISTORY
+    // Filter out any legacy 'system' messages from history, keeping only user/model/assistant
+    const cleanHistory = history.filter(h => h.role !== 'system');
     const chatMessages = [
-        { role: 'system', content: systemInstruction },
-        ...history.map(h => ({ role: h.role === 'model' ? 'assistant' : 'user', content: h.parts[0] })),
+        ...cleanHistory.map(h => ({ role: (h.role === 'model' || h.role === 'assistant') ? 'assistant' : 'user', content: h.parts[0] })),
         { role: 'user', content: rawQuery }
     ];
     let maxIterations = 5;
@@ -126,7 +128,11 @@ RULES:
     let navigateTo;
     try {
         while (iteration < maxIterations) {
-            const response = await provider.chat(chatMessages, tools);
+            const response = await provider.chat({
+                systemInstruction,
+                messages: chatMessages,
+                tools
+            });
             chatMessages.push(response);
             if (!response.tool_calls || response.tool_calls.length === 0) {
                 return { reply: response.content || 'No response generated.', navigateTo };

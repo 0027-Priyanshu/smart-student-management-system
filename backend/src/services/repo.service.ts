@@ -732,7 +732,7 @@ export class RepoService {
     }
   }
 
-  static async createChatMessage(chatData: { userId: string; role: 'user' | 'model'; content: string }): Promise<any> {
+  static async createChatMessage(chatData: { userId: string; role: 'user' | 'assistant'; content: string }): Promise<any> {
     if (isMongoConnected) {
       return await ChatHistory.create(chatData);
     } else {

@@ -12,7 +12,7 @@ export async function generateStudentSummary(studentName: string, grade: string,
 
   try {
     const provider = getAIProvider();
-    const res = await provider.chat([{ role: 'user', content: prompt }]);
+    const res = await provider.chat({ messages: [{ role: 'user', content: prompt }] });
     if (res.content) return res.content.trim();
   } catch (err) {
     console.error('AI error:', err);
@@ -61,7 +61,7 @@ export interface ChatAssistantOptions {
 // 4. Provider-Independent Copilot Iterative Tool Loop
 export async function adminChatAssistant(
   message: string, 
-  history: { role: 'user' | 'model'; parts: string[] }[] = [],
+  history: { role: 'user' | 'model' | 'assistant'; parts: string[] }[] = [],
   options: ChatAssistantOptions = {}
 ): Promise<{ reply: string; navigateTo?: string; proposedAction?: any }> {
   const rawQuery = message.trim();
@@ -126,9 +126,13 @@ RULES:
 3. If out of scope, reply exactly: "I couldn't confidently determine what you're looking for. You can ask about students, courses, attendance, grades, faculty, face attendance, or academic analytics."`;
 
   const provider = getAIProvider();
+  
+  // 5. NORMALIZE MESSAGE ROLES & CLEAN EXISTING HISTORY
+  // Filter out any legacy 'system' messages from history, keeping only user/model/assistant
+  const cleanHistory = history.filter(h => h.role !== 'system' as any);
+  
   const chatMessages: AIChatMessage[] = [
-    { role: 'system', content: systemInstruction },
-    ...history.map(h => ({ role: h.role === 'model' ? 'assistant' : 'user', content: h.parts[0] } as AIChatMessage)),
+    ...cleanHistory.map(h => ({ role: (h.role === 'model' || h.role === 'assistant') ? 'assistant' : 'user', content: h.parts[0] } as AIChatMessage)),
     { role: 'user', content: rawQuery }
   ];
 
@@ -138,7 +142,11 @@ RULES:
 
   try {
     while (iteration < maxIterations) {
-      const response = await provider.chat(chatMessages, tools);
+      const response = await provider.chat({
+        systemInstruction,
+        messages: chatMessages,
+        tools
+      });
       chatMessages.push(response);
 
       if (!response.tool_calls || response.tool_calls.length === 0) {

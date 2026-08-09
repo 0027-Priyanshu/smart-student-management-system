@@ -453,7 +453,7 @@ export class AIController {
       // Save AI Response
       await RepoService.createChatMessage({
         userId: requester.userId,
-        role: 'model',
+        role: 'assistant',
         content: result.reply
       });
 
@@ -462,8 +462,15 @@ export class AIController {
         navigateTo: result.navigateTo,
         proposedAction: result.proposedAction
       });
-    } catch (error) {
-      next(error);
+    } catch (error: any) {
+      console.error('[AI Provider Error]:', error);
+      let cleanError = 'EduManager AI is temporarily unavailable. Please try again.';
+      if (error.message?.includes('400') || error.message?.includes('INVALID_ARGUMENT') || error.message?.includes('rejected')) {
+        cleanError = "I couldn't process that request because the AI service rejected the conversation format. Please try again.";
+      } else if (error.message?.includes('permission') || error.message?.includes('Auth')) {
+        cleanError = "You don't have permission to access that information.";
+      }
+      return res.status(500).json({ error: cleanError });
     }
   }
 

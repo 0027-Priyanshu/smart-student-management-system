@@ -17,7 +17,7 @@ interface ProposedAction {
 
 interface ChatMessage {
   id: string;
-  role: 'user' | 'model';
+  role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: string;
   feedback?: 'helpful' | 'unhelpful';
@@ -162,7 +162,7 @@ export default function FloatingChatWidget() {
 
       const botMsg: ChatMessage = {
         id: `bot-${Date.now()}`,
-        role: 'model',
+        role: 'assistant',
         content: replyText,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         proposedAction: res.data.proposedAction
@@ -173,7 +173,7 @@ export default function FloatingChatWidget() {
     } catch (err: any) {
       const errorMsg: ChatMessage = {
         id: `err-${Date.now()}`,
-        role: 'model',
+        role: 'assistant',
         content: err.response?.data?.error || 'Failed to process request. Please verify connection and try again.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
@@ -223,7 +223,7 @@ export default function FloatingChatWidget() {
       setMessages([
         {
           id: 'welcome-reset',
-          role: 'model',
+          role: 'assistant',
           content: 'Chat history cleared. How can I assist you with EduManager?',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }

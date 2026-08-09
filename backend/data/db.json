@@ -427,7 +427,8 @@
     },
     {
       "_id": "6a772d68d4376794ad6c5719",
-      "code": "CS501",
+      "name": "Machine Learning",
+    "code": "CS501",
       "description": "Standard academic course curriculum.",
       "credits": 3,
       "semester": 1,

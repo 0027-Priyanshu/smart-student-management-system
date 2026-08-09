@@ -101,13 +101,13 @@ export class CourseController {
       }
 
       const updated = await RepoService.updateCourse(req.params.id, {
-        name,
-        description,
-        credits: parseInt(credits, 10),
-        semester: parseInt(semester, 10),
-        department,
-        capacity: parseInt(capacity, 10),
-        prerequisites: prerequisites || [],
+        name: name !== undefined ? name : course.name,
+        description: description !== undefined ? description : course.description,
+        credits: credits !== undefined ? parseInt(credits, 10) : course.credits,
+        semester: semester !== undefined ? parseInt(semester, 10) : course.semester,
+        department: department !== undefined ? department : course.department,
+        capacity: capacity !== undefined ? parseInt(capacity, 10) : course.capacity,
+        prerequisites: prerequisites !== undefined ? prerequisites : course.prerequisites,
         ...(facultyId !== undefined && { facultyId: facultyId || null })
       });
 

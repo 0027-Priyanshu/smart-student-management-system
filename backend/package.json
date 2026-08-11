@@ -7,7 +7,8 @@
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "db:clean": "npx ts-node src/scripts/cleanup_demo_data.ts"
+    "db:clean": "npx ts-node-dev src/scripts/cleanup_demo_data.ts",
+    "seed:demo": "npx ts-node-dev src/scripts/seed_demo_data.ts"
   },
   "dependencies": {
     "@google/genai": "^2.10.0",

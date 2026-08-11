@@ -298,7 +298,7 @@ export function getAIProvider(): AIProvider {
   
   if (provider.toLowerCase() === 'freellmapi') {
     return new FreeLLMProvider(
-      process.env.FREELLM_BASE_URL || 'http://localhost:3001/v1',
+      process.env.FREELLM_BASE_URL || 'https://edumanager-ai.duckdns.org/v1',
       process.env.FREELLM_API_KEY || 'free_local_key',
       process.env.FREELLM_MODEL || 'auto'
     );
@@ -311,7 +311,8 @@ export function getAIProvider(): AIProvider {
     );
   }
   
-  if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim() !== '') {
+  if (provider.toLowerCase() === 'gemini') {
+    if (!process.env.GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is required when AI_PROVIDER=gemini");
     return new GeminiProvider(process.env.GEMINI_API_KEY);
   }
   

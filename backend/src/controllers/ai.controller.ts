@@ -15,6 +15,7 @@ import { getAIProvider } from '../services/ai.provider';
 
 export class AIController {
   static async getHealth(req: Request, res: Response) {
+    let safeConfig: any = {};
     try {
       const fs = require('fs');
       let secretFiles = [];
@@ -22,7 +23,7 @@ export class AIController {
       let rootFiles = [];
       try { rootFiles = fs.readdirSync(process.cwd()); } catch (e) {}
 
-      const safeConfig = {
+      safeConfig = {
         AI_PROVIDER: process.env.AI_PROVIDER,
         FREELLM_BASE_URL: process.env.FREELLM_BASE_URL,
         FREELLM_MODEL: process.env.FREELLM_MODEL,
@@ -35,7 +36,7 @@ export class AIController {
       const status = await provider.healthCheck();
       res.status(200).json({ ...status, renderDebug: { env: safeConfig } });
     } catch (err: any) {
-      res.status(500).json({ available: false, provider: 'unknown', reason: 'INTERNAL_ERROR', message: err.message, debug: 'Checking secrets...' });
+      res.status(500).json({ available: false, provider: 'unknown', reason: 'INTERNAL_ERROR', message: err.message, renderDebug: { env: safeConfig } });
     }
   }
 

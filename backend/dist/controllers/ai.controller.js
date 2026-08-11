@@ -11,6 +11,7 @@ const ai_service_1 = require("../services/ai.service");
 const ai_provider_1 = require("../services/ai.provider");
 class AIController {
     static async getHealth(req, res) {
+        let safeConfig = {};
         try {
             const fs = require('fs');
             let secretFiles = [];
@@ -23,7 +24,7 @@ class AIController {
                 rootFiles = fs.readdirSync(process.cwd());
             }
             catch (e) { }
-            const safeConfig = {
+            safeConfig = {
                 AI_PROVIDER: process.env.AI_PROVIDER,
                 FREELLM_BASE_URL: process.env.FREELLM_BASE_URL,
                 FREELLM_MODEL: process.env.FREELLM_MODEL,
@@ -36,7 +37,7 @@ class AIController {
             res.status(200).json({ ...status, renderDebug: { env: safeConfig } });
         }
         catch (err) {
-            res.status(500).json({ available: false, provider: 'unknown', reason: 'INTERNAL_ERROR', message: err.message, debug: 'Checking secrets...' });
+            res.status(500).json({ available: false, provider: 'unknown', reason: 'INTERNAL_ERROR', message: err.message, renderDebug: { env: safeConfig } });
         }
     }
     static async getStudentSummary(req, res, next) {

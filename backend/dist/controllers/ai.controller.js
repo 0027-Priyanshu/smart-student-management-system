@@ -16,7 +16,8 @@ class AIController {
                 AI_PROVIDER: process.env.AI_PROVIDER,
                 FREELLM_BASE_URL: process.env.FREELLM_BASE_URL,
                 FREELLM_MODEL: process.env.FREELLM_MODEL,
-                FREELLM_API_KEY_CONFIGURED: !!process.env.FREELLM_API_KEY
+                FREELLM_API_KEY_CONFIGURED: !!process.env.FREELLM_API_KEY,
+                ENV_KEYS: Object.keys(process.env)
             };
             console.log("[AI Health Check] Environment:", safeConfig);
             // --- RENDER DEBUG ---
@@ -53,8 +54,7 @@ class AIController {
             res.status(200).json({ ...status, renderDebug: { modelsStatus: renderModelsStatus, chatStatus: renderChatStatus, env: safeConfig } });
         }
         catch (err) {
-            console.error("[AI Health Check Error]:", err.message);
-            res.status(500).json({ available: false, provider: 'unknown', reason: 'INTERNAL_ERROR', message: err.message });
+            res.status(500).json({ available: false, provider: 'unknown', reason: 'INTERNAL_ERROR', message: err.message, env: Object.keys(process.env) });
         }
     }
     static async getStudentSummary(req, res, next) {

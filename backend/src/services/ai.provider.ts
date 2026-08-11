@@ -163,30 +163,37 @@ export class MockProvider implements AIProvider {
   async chat(input: { systemInstruction?: string; messages: AIChatMessage[]; tools?: ToolDeclaration[] }): Promise<AIChatMessage> {
     const lastMsg = input.messages[input.messages.length - 1];
     
-    // If we just received a tool result, formulate a human response
+    // If we just received a tool result, force an error to trigger the deterministic fallback formatter
     if (lastMsg.role === 'tool') {
-      const toolData = lastMsg.content;
-      try {
-        const parsed = JSON.parse(toolData);
-        if (parsed.count !== undefined) return { role: 'assistant', content: `There are ${parsed.count} records matching your query.` };
-        if (Array.isArray(parsed)) return { role: 'assistant', content: `I found ${parsed.length} results. Here is the data: ${JSON.stringify(parsed.slice(0, 3))}...` };
-        return { role: 'assistant', content: `Here is the requested information: ${toolData}` };
-      } catch (e) {
-        return { role: 'assistant', content: `Here is the data: ${toolData}` };
-      }
+      throw new Error("MockProvider cannot synthesize tool results. Falling back to deterministic formatter.");
     }
     
     const query = lastMsg.content.toLowerCase();
     
     // Parse tool calls based on user intent
-    if (query.includes('how many students') || query === 'students') {
+    if (query.includes('how many students') || query === 'students' || query.includes('total students')) {
       return { role: 'assistant', content: '', tool_calls: [{ function: { name: 'countStudents', arguments: '{}' } }] };
     }
-    if (query.includes('students in mlis') || query === 'show students') {
-      return { role: 'assistant', content: '', tool_calls: [{ function: { name: 'getStudents', arguments: '{"department":"MLIS"}' } }] };
+    if (query.includes('show all students') || query.includes('search students')) {
+      return { role: 'assistant', content: '', tool_calls: [{ function: { name: 'searchStudents', arguments: '{}' } }] };
+    }
+    if (query.includes('how many courses')) {
+      return { role: 'assistant', content: '', tool_calls: [{ function: { name: 'countCourses', arguments: '{}' } }] };
+    }
+    if (query.includes('who teaches')) {
+      return { role: 'assistant', content: '', tool_calls: [{ function: { name: 'getFaculty', arguments: '{}' } }] };
+    }
+    if (query.includes('students enrolled in') || query.includes('students in mlis') || query === 'show students') {
+      return { role: 'assistant', content: '', tool_calls: [{ function: { name: 'getStudentsByCourse', arguments: '{"courseId":"MLIS"}' } }] };
     }
     if (query.includes('attendance below 75') || query.includes('low attendance')) {
-      return { role: 'assistant', content: '', tool_calls: [{ function: { name: 'getAtRiskStudents', arguments: '{}' } }] };
+      return { role: 'assistant', content: '', tool_calls: [{ function: { name: 'getLowAttendanceStudents', arguments: '{}' } }] };
+    }
+    if (query.includes('show their grades') || query.includes('show grades')) {
+      return { role: 'assistant', content: '', tool_calls: [{ function: { name: 'getStudentGrades', arguments: '{"studentId":"ENR27037739"}' } }] };
+    }
+    if (query.includes('attendance of')) {
+      return { role: 'assistant', content: '', tool_calls: [{ function: { name: 'getStudentAttendance', arguments: '{"studentId":"ENR27037739"}' } }] };
     }
     if (query.includes('find enr')) {
       const match = query.match(/enr\d+/i);

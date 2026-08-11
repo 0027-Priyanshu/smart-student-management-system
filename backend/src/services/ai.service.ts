@@ -139,13 +139,31 @@ RULES:
   let lastToolResult: any = null;
   let lastToolName: string = '';
 
+  let currentProvider = provider;
+
   try {
     while (iteration < maxIterations) {
-      const response = await provider.chat({
-        systemInstruction,
-        messages: chatMessages,
-        tools
-      });
+      let response;
+      try {
+        response = await currentProvider.chat({
+          systemInstruction,
+          messages: chatMessages,
+          tools
+        });
+      } catch (err: any) {
+        if (iteration === 0 && currentProvider.constructor.name === 'FreeLLMProvider') {
+          console.warn('[EduManager AI] FreeLLMAPI failed on initial query. Falling back to MockProvider for intent extraction.');
+          const { MockProvider } = require('./ai.provider');
+          currentProvider = new MockProvider();
+          response = await currentProvider.chat({
+            systemInstruction,
+            messages: chatMessages,
+            tools
+          });
+        } else {
+          throw err;
+        }
+      }
       chatMessages.push(response);
 
       if (!response.tool_calls || response.tool_calls.length === 0) {

@@ -299,7 +299,7 @@ export function getAIProvider(): AIProvider {
   if (provider.toLowerCase() === 'freellmapi') {
     return new FreeLLMProvider(
       process.env.FREELLM_BASE_URL || 'https://edumanager-ai.duckdns.org/v1',
-      process.env.FREELLM_API_KEY || 'free_local_key',
+      process.env.FREELLM_API_KEY || 'freellmapi-32b3a4ac86050c8d3cc340c7c85c9d0ed44ad8aabd31ba01',
       process.env.FREELLM_MODEL || 'auto'
     );
   }

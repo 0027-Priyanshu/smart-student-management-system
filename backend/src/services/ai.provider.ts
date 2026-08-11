@@ -228,7 +228,10 @@ export class FreeLLMProvider implements AIProvider {
     try {
       const res = await fetch(`${this.baseUrl}/models`, {
         method: 'GET',
-        headers: { 'Authorization': `Bearer ${this.apiKey}` }
+        headers: { 
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json'
+        }
       });
       if (!res.ok) return { available: false, provider: 'freellmapi', reason: `SERVER_ERROR_${res.status}` };
       return { available: true, provider: 'freellmapi', model: this.model };

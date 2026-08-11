@@ -29,7 +29,7 @@ class AIController {
                 FREELLM_BASE_URL: process.env.FREELLM_BASE_URL,
                 FREELLM_MODEL: process.env.FREELLM_MODEL,
                 FREELLM_API_KEY_CONFIGURED: !!process.env.FREELLM_API_KEY,
-                GEMINI_API_KEY_PREFIX: process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.substring(0, 10) : null,
+                argv: process.argv,
                 secretFiles,
                 rootFiles
             };

@@ -294,7 +294,7 @@ export class FreeLLMProvider implements AIProvider {
 }
 
 export function getAIProvider(): AIProvider {
-  const provider = process.env.AI_PROVIDER || 'mock';
+  const provider = process.env.AI_PROVIDER || 'freellmapi';
   
   if (provider.toLowerCase() === 'freellmapi') {
     return new FreeLLMProvider(

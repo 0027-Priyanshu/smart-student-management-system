@@ -117,7 +117,9 @@ Knowledge: ${formattedKnowledge}
 RULES:
 1. Always use tools to fetch real data before answering data queries (e.g. "how many students").
 2. Only answer questions related to the system (Students, Courses, Attendance, Grades, Faculty).
-3. If out of scope, reply exactly: "I couldn't confidently determine what you're looking for. You can ask about students, courses, attendance, grades, faculty, face attendance, or academic analytics."`;
+3. If out of scope, reply exactly: "I couldn't confidently determine what you're looking for. You can ask about students, courses, attendance, grades, faculty, face attendance, or academic analytics."
+4. Format the final output as a helpful, conversational natural language response. NEVER output raw JSON to the user.
+5. Synthesize the data you receive from tools into a readable summary (e.g. "There is 1 student", instead of {"totalStudents":1}).`;
 
   const provider = getAIProvider();
   
@@ -134,6 +136,9 @@ RULES:
   let iteration = 0;
   let navigateTo: string | undefined;
 
+  let lastToolResult: any = null;
+  let lastToolName: string = '';
+
   try {
     while (iteration < maxIterations) {
       const response = await provider.chat({
@@ -144,7 +149,16 @@ RULES:
       chatMessages.push(response);
 
       if (!response.tool_calls || response.tool_calls.length === 0) {
-        return { reply: response.content || 'No response generated.', navigateTo };
+        let finalReply = response.content || 'No response generated.';
+        try {
+          if (finalReply.trim().startsWith('{') || finalReply.trim().startsWith('[')) {
+            const parsed = JSON.parse(finalReply);
+            if (typeof parsed === 'object' && lastToolName) {
+              finalReply = formatDeterministicFallback(lastToolName, parsed);
+            }
+          }
+        } catch (e) {}
+        return { reply: finalReply, navigateTo };
       }
 
       for (const call of response.tool_calls) {
@@ -240,11 +254,17 @@ RULES:
           tool_call_id: call.id || name,
           content: JSON.stringify(functionResult)
         });
+        lastToolName = name;
+        lastToolResult = functionResult;
       }
       iteration++;
     }
     return { reply: 'I exceeded the maximum number of tool calls while trying to resolve your request.', navigateTo };
   } catch (err: any) {
+    if (iteration > 0 && lastToolResult && lastToolName) {
+      console.warn('[EduManager AI] Provider execution failed during synthesis. Falling back to deterministic formatter.');
+      return { reply: formatDeterministicFallback(lastToolName, lastToolResult), navigateTo };
+    }
     console.error('[EduManager AI] Provider execution failed:', {
       errorName: err.name,
       message: err.message,
@@ -253,6 +273,46 @@ RULES:
     
     // Throwing error up to the controller to handle and map to 500 or UI
     throw err;
+  }
+}
+
+function formatDeterministicFallback(toolName: string, data: any): string {
+  if (data?.error) return `I encountered an error retrieving the data: ${data.error}`;
+  
+  switch (toolName) {
+    case 'countStudents':
+      return `There are currently ${data.totalStudents || 0} students registered in the system.`;
+    case 'searchStudents':
+    case 'getStudentsByCourse':
+      if (!data.students || data.students.length === 0) return 'No students found matching your criteria.';
+      return `I found ${data.students.length} student(s):\n` + data.students.map((s: any, i: number) => `${i + 1}. ${s.name} (ID: ${s.enrollmentNo || 'N/A'})${s.department ? ` - ${s.department}` : ''}`).join('\n');
+    case 'getStudentProfile':
+      return `Student Profile: ${data.name} (ID: ${data.enrollmentNo}). Department: ${data.department}. GPA: ${data.gpa || 'N/A'}. Attendance: ${data.attendance || 'N/A'}%.`;
+    case 'countFaculty':
+      return `There are currently ${data.totalFaculty || 0} faculty members registered in the system.`;
+    case 'getFaculty':
+      if (!data.faculty || data.faculty.length === 0) return 'No faculty members found.';
+      return `I found ${data.faculty.length} faculty member(s):\n` + data.faculty.map((f: any, i: number) => `${i + 1}. ${f.name} (Dept: ${f.department || 'N/A'})`).join('\n');
+    case 'countCourses':
+      return `There are currently ${data.totalCourses || 0} courses registered in the system.`;
+    case 'getCourse':
+      return `Course Details: ${data.name} (Code: ${data.code}). Credits: ${data.credits}.`;
+    case 'getStudentAttendance':
+      return `The student's current attendance rate is ${data.attendanceRate}%.`;
+    case 'getLowAttendanceStudents':
+      if (!data.count || data.count === 0) return 'No students are currently below the attendance threshold.';
+      return `There are ${data.count} student(s) with low attendance:\n` + data.students.map((s: any, i: number) => `${i + 1}. ${s.name} (ID: ${s.enrollmentNo}) - ${s.attendance}%`).join('\n');
+    case 'getStudentGrades':
+      return `The student's current GPA is ${data.gpa}.`;
+    case 'getAtRiskStudents':
+      if (!data.atRiskCount || data.atRiskCount === 0) return 'No students are currently marked as at-risk.';
+      return `There are ${data.atRiskCount} at-risk student(s):\n` + data.students.map((s: any, i: number) => `${i + 1}. ${s.name} (ID: ${s.enrollmentNo}) - GPA: ${s.gpa || 'N/A'}, Attendance: ${s.attendance || 'N/A'}%`).join('\n');
+    case 'getDashboardMetrics':
+      return `System Overview:\n- Students: ${data.students || 0}\n- Faculty: ${data.faculty || 0}\n- Courses: ${data.courses || 0}`;
+    case 'navigate':
+      return `Navigating to ${data.navigatedTo}...`;
+    default:
+      return `Here is the requested information:\n${JSON.stringify(data, null, 2)}`;
   }
 }
 

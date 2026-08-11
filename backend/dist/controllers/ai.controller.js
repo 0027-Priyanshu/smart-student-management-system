@@ -419,11 +419,13 @@ class AIController {
         catch (error) {
             console.error('[AI Provider Error]:', error);
             let cleanError = 'EduManager AI is temporarily unavailable. Please try again.';
-            if (error.message?.includes('400') || error.message?.includes('INVALID_ARGUMENT') || error.message?.includes('rejected')) {
-                cleanError = "I couldn't process that request because the AI service rejected the conversation format. Please try again.";
+            const errMsg = error?.message || '';
+            const errLower = errMsg.toLowerCase();
+            if (errLower.includes('api key') || errLower.includes('unauthorized') || errLower.includes('401') || errLower.includes('permission')) {
+                cleanError = "The AI service is unauthorized or has an invalid API key. Please check your provider configurations.";
             }
-            else if (error.message?.includes('permission') || error.message?.includes('Auth')) {
-                cleanError = "You don't have permission to access that information.";
+            else if (errLower.includes('400') || errLower.includes('invalid_argument') || errLower.includes('rejected')) {
+                cleanError = "I couldn't process that request because the AI service rejected the conversation format. Please try again.";
             }
             return res.status(500).json({ error: cleanError });
         }

@@ -37,7 +37,7 @@ exports.ChatHistory = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const chatHistorySchema = new mongoose_1.Schema({
     userId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-    role: { type: String, enum: ['user', 'model'], required: true },
+    role: { type: String, enum: ['user', 'assistant', 'system', 'tool'], required: true },
     content: { type: String, required: true },
     createdAt: { type: Date, default: Date.now, index: true }
 });

@@ -106,10 +106,18 @@ class GeminiProvider {
         // Note: Gemini SDK formatting is slightly different, adapting minimally
         const formattedMessages = input.messages
             .filter(m => m.role !== 'system') // Ensure no stray system messages
-            .map(m => ({
-            role: m.role === 'assistant' ? 'model' : m.role === 'tool' ? 'function' : m.role,
-            parts: m.tool_calls ? [] : [{ text: m.content || ' ' }]
-        }));
+            .map(m => {
+            if (m.role === 'tool') {
+                return {
+                    role: 'function',
+                    parts: [{ functionResponse: { name: m.name || m.tool_call_id || 'unknown_tool', response: { result: m.content } } }]
+                };
+            }
+            return {
+                role: m.role === 'assistant' ? 'model' : m.role,
+                parts: m.tool_calls ? [] : [{ text: m.content || ' ' }]
+            };
+        });
         try {
             const res = await this.ai.models.generateContent({
                 model: this.model,
@@ -134,31 +142,35 @@ class MockProvider {
     }
     async chat(input) {
         const lastMsg = input.messages[input.messages.length - 1];
-        // If we just received a tool result, formulate a human response
+        // If we just received a tool result, force an error to trigger the deterministic fallback formatter
         if (lastMsg.role === 'tool') {
-            const toolData = lastMsg.content;
-            try {
-                const parsed = JSON.parse(toolData);
-                if (parsed.count !== undefined)
-                    return { role: 'assistant', content: `There are ${parsed.count} records matching your query.` };
-                if (Array.isArray(parsed))
-                    return { role: 'assistant', content: `I found ${parsed.length} results. Here is the data: ${JSON.stringify(parsed.slice(0, 3))}...` };
-                return { role: 'assistant', content: `Here is the requested information: ${toolData}` };
-            }
-            catch (e) {
-                return { role: 'assistant', content: `Here is the data: ${toolData}` };
-            }
+            throw new Error("MockProvider cannot synthesize tool results. Falling back to deterministic formatter.");
         }
         const query = lastMsg.content.toLowerCase();
         // Parse tool calls based on user intent
-        if (query.includes('how many students') || query === 'students') {
+        if (query.includes('how many students') || query === 'students' || query.includes('total students')) {
             return { role: 'assistant', content: '', tool_calls: [{ function: { name: 'countStudents', arguments: '{}' } }] };
         }
-        if (query.includes('students in mlis') || query === 'show students') {
-            return { role: 'assistant', content: '', tool_calls: [{ function: { name: 'getStudents', arguments: '{"department":"MLIS"}' } }] };
+        if (query.includes('show all students') || query.includes('search students')) {
+            return { role: 'assistant', content: '', tool_calls: [{ function: { name: 'searchStudents', arguments: '{}' } }] };
+        }
+        if (query.includes('how many courses')) {
+            return { role: 'assistant', content: '', tool_calls: [{ function: { name: 'countCourses', arguments: '{}' } }] };
+        }
+        if (query.includes('who teaches')) {
+            return { role: 'assistant', content: '', tool_calls: [{ function: { name: 'getFaculty', arguments: '{}' } }] };
+        }
+        if (query.includes('students enrolled in') || query.includes('students in mlis') || query === 'show students') {
+            return { role: 'assistant', content: '', tool_calls: [{ function: { name: 'getStudentsByCourse', arguments: '{"courseId":"MLIS"}' } }] };
         }
         if (query.includes('attendance below 75') || query.includes('low attendance')) {
-            return { role: 'assistant', content: '', tool_calls: [{ function: { name: 'getAtRiskStudents', arguments: '{}' } }] };
+            return { role: 'assistant', content: '', tool_calls: [{ function: { name: 'getLowAttendanceStudents', arguments: '{}' } }] };
+        }
+        if (query.includes('show their grades') || query.includes('show grades')) {
+            return { role: 'assistant', content: '', tool_calls: [{ function: { name: 'getStudentGrades', arguments: '{"studentId":"ENR27037739"}' } }] };
+        }
+        if (query.includes('attendance of')) {
+            return { role: 'assistant', content: '', tool_calls: [{ function: { name: 'getStudentAttendance', arguments: '{"studentId":"ENR27037739"}' } }] };
         }
         if (query.includes('find enr')) {
             const match = query.match(/enr\d+/i);
@@ -206,12 +218,16 @@ class FreeLLMProvider {
         }
         formattedMessages.push(...input.messages.map(m => {
             const msg = { role: m.role, content: m.content || '' };
-            if (m.tool_calls)
-                msg.tool_calls = m.tool_calls;
-            if (m.tool_call_id)
-                msg.tool_call_id = m.tool_call_id;
-            if (m.name)
-                msg.name = m.name;
+            if (m.role === 'tool') {
+                msg.tool_call_id = m.tool_call_id || m.name || 'unknown';
+                // DO NOT send name inside tool message for strictly typed providers, tool_call_id is enough, but name is allowed by some.
+                // OpenAI says tool message MUST have `tool_call_id` and `content`.
+            }
+            else {
+                if (m.tool_calls && m.tool_calls.length > 0) {
+                    msg.tool_calls = m.tool_calls;
+                }
+            }
             return msg;
         }));
         const payload = {
@@ -256,14 +272,16 @@ class FreeLLMProvider {
 }
 exports.FreeLLMProvider = FreeLLMProvider;
 function getAIProvider() {
-    const provider = process.env.AI_PROVIDER || 'mock';
+    const provider = process.env.AI_PROVIDER || 'freellmapi';
     if (provider.toLowerCase() === 'freellmapi') {
-        return new FreeLLMProvider(process.env.FREELLM_BASE_URL || 'http://localhost:3001/v1', process.env.FREELLM_API_KEY || 'free_local_key', process.env.FREELLM_MODEL || 'auto');
+        return new FreeLLMProvider(process.env.FREELLM_BASE_URL || 'https://edumanager-ai.duckdns.org/v1', process.env.FREELLM_API_KEY || 'freellmapi-32b3a4ac86050c8d3cc340c7c85c9d0ed44ad8aabd31ba01', process.env.FREELLM_MODEL || 'auto');
     }
     if (provider.toLowerCase() === 'ollama') {
         return new OllamaProvider(process.env.OLLAMA_BASE_URL || 'http://localhost:11434', process.env.OLLAMA_MODEL || 'qwen2.5:7b');
     }
-    if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim() !== '') {
+    if (provider.toLowerCase() === 'gemini') {
+        if (!process.env.GEMINI_API_KEY)
+            throw new Error("GEMINI_API_KEY is required when AI_PROVIDER=gemini");
         return new GeminiProvider(process.env.GEMINI_API_KEY);
     }
     return new MockProvider();

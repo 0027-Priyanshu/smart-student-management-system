@@ -232,6 +232,16 @@ class RepoService {
             });
         }
     }
+    static async countFaculties(query = { isDeleted: false }) {
+        const isDeleted = query.isDeleted !== undefined ? query.isDeleted : false;
+        if (db_1.isMongoConnected) {
+            return await Faculty_1.default.countDocuments({ isDeleted });
+        }
+        else {
+            const db = (0, db_1.readJsonDb)();
+            return db.faculties.filter((f) => (f.isDeleted || false) === isDeleted).length;
+        }
+    }
     static async findFacultyById(id) {
         if (db_1.isMongoConnected) {
             return await Faculty_1.default.findById(id).populate('assignedCourses').lean();
@@ -386,6 +396,24 @@ class RepoService {
                 filtered = filtered.filter((c) => c.facultyId === query.facultyId);
             }
             return [...filtered].sort((a, b) => a.code.localeCompare(b.code));
+        }
+    }
+    static async countCourses(query = { isDeleted: false }) {
+        const isDeleted = query.isDeleted !== undefined ? query.isDeleted : false;
+        const mongoQuery = { isDeleted };
+        if (query.facultyId) {
+            mongoQuery.facultyId = query.facultyId;
+        }
+        if (db_1.isMongoConnected) {
+            return await Course_1.default.countDocuments(mongoQuery);
+        }
+        else {
+            const db = (0, db_1.readJsonDb)();
+            let filtered = db.courses.filter((c) => (c.isDeleted || false) === isDeleted);
+            if (query.facultyId) {
+                filtered = filtered.filter((c) => c.facultyId === query.facultyId);
+            }
+            return filtered.length;
         }
     }
     static async findCourseById(id) {
@@ -660,14 +688,26 @@ class RepoService {
     // ==================== CHAT HISTORY OPERATIONS ====================
     static async findChatHistory(userId, limit = 50) {
         if (db_1.isMongoConnected) {
-            return await ChatHistory_1.ChatHistory.find({ userId }).sort({ createdAt: 1 }).limit(limit).lean();
+            const history = await ChatHistory_1.ChatHistory.find({ userId }).sort({ createdAt: 1 }).limit(limit).lean();
+            return history.map((msg) => {
+                if (msg.role === 'model' || msg.role === 'bot' || msg.role === 'ai') {
+                    msg.role = 'assistant';
+                }
+                return msg;
+            });
         }
         else {
             const db = (0, db_1.readJsonDb)();
             if (!db.chatHistory)
                 db.chatHistory = [];
-            const history = db.chatHistory.filter((c) => c.userId === userId);
-            return history.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()).slice(-limit);
+            let history = db.chatHistory.filter((c) => c.userId === userId);
+            history = history.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()).slice(-limit);
+            return history.map((msg) => {
+                if (msg.role === 'model' || msg.role === 'bot' || msg.role === 'ai') {
+                    msg.role = 'assistant';
+                }
+                return msg;
+            });
         }
     }
     static async createChatMessage(chatData) {

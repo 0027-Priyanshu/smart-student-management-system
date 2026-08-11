@@ -68,19 +68,19 @@ async function adminChatAssistant(message, history = [], options = {}) {
     const retrievedTopics = retrieval_service_1.RetrievalService.retrieveKnowledge({ query: rawQuery, currentPage, userRole }, 2);
     const formattedKnowledge = retrieval_service_1.RetrievalService.formatKnowledgeForPrompt(retrievedTopics);
     const allTools = [
-        { name: 'countStudents', description: 'Get the total number of students in the system.', parameters: { type: 'object', properties: {}, required: [] } },
+        { name: 'countStudents', description: 'Get the total number of students in the system.', parameters: { type: 'object', properties: {} } },
         { name: 'searchStudents', description: 'Search students by name, email, or department.', parameters: { type: 'object', properties: { search: { type: 'string' }, department: { type: 'string' } }, required: [] } },
         { name: 'getStudentProfile', description: 'Fetch student by enrollmentNo.', parameters: { type: 'object', properties: { enrollmentNo: { type: 'string' } }, required: ['enrollmentNo'] } },
         { name: 'getStudentsByCourse', description: 'Get students enrolled in a specific course.', parameters: { type: 'object', properties: { courseId: { type: 'string' } }, required: ['courseId'] } },
-        { name: 'countFaculty', description: 'Get the total number of faculty in the system.', parameters: { type: 'object', properties: {}, required: [] } },
-        { name: 'getFaculty', description: 'Get list of faculty.', parameters: { type: 'object', properties: {}, required: [] } },
-        { name: 'countCourses', description: 'Get the total number of courses.', parameters: { type: 'object', properties: {}, required: [] } },
+        { name: 'countFaculty', description: 'Get the total number of faculty in the system.', parameters: { type: 'object', properties: {} } },
+        { name: 'getFaculty', description: 'Get list of faculty.', parameters: { type: 'object', properties: {} } },
+        { name: 'countCourses', description: 'Get the total number of courses.', parameters: { type: 'object', properties: {} } },
         { name: 'getCourse', description: 'Get course details by code.', parameters: { type: 'object', properties: { code: { type: 'string' } }, required: ['code'] } },
         { name: 'getStudentAttendance', description: 'Get attendance records for a student.', parameters: { type: 'object', properties: { studentId: { type: 'string' } }, required: ['studentId'] } },
-        { name: 'getLowAttendanceStudents', description: 'Get students with attendance below a threshold.', parameters: { type: 'object', properties: {}, required: [] } },
+        { name: 'getLowAttendanceStudents', description: 'Get students with attendance below a threshold.', parameters: { type: 'object', properties: {} } },
         { name: 'getStudentGrades', description: 'Get academic results/grades for a student.', parameters: { type: 'object', properties: { studentId: { type: 'string' } }, required: ['studentId'] } },
-        { name: 'getDashboardMetrics', description: 'Get high-level system analytics.', parameters: { type: 'object', properties: {}, required: [] } },
-        { name: 'getAtRiskStudents', description: 'Fetch students who are at risk due to low attendance or low grades.', parameters: { type: 'object', properties: {}, required: [] } },
+        { name: 'getDashboardMetrics', description: 'Get high-level system analytics.', parameters: { type: 'object', properties: {} } },
+        { name: 'getAtRiskStudents', description: 'Fetch students who are at risk due to low attendance or low grades.', parameters: { type: 'object', properties: {} } },
         { name: 'navigate', description: 'Navigate the user to a page.', parameters: { type: 'object', properties: { page: { type: 'string' } }, required: ['page'] } }
     ];
     // Role-based tool scope reduction
@@ -101,7 +101,9 @@ Knowledge: ${formattedKnowledge}
 RULES:
 1. Always use tools to fetch real data before answering data queries (e.g. "how many students").
 2. Only answer questions related to the system (Students, Courses, Attendance, Grades, Faculty).
-3. If out of scope, reply exactly: "I couldn't confidently determine what you're looking for. You can ask about students, courses, attendance, grades, faculty, face attendance, or academic analytics."`;
+3. If out of scope, reply exactly: "I couldn't confidently determine what you're looking for. You can ask about students, courses, attendance, grades, faculty, face attendance, or academic analytics."
+4. Format the final output as a helpful, conversational natural language response. NEVER output raw JSON to the user.
+5. Synthesize the data you receive from tools into a readable summary (e.g. "There is 1 student", instead of {"totalStudents":1}).`;
     const provider = (0, ai_provider_1.getAIProvider)();
     // 5. NORMALIZE MESSAGE ROLES & CLEAN EXISTING HISTORY
     // Filter out any legacy 'system' messages from history, keeping only user/model/assistant
@@ -113,16 +115,47 @@ RULES:
     let maxIterations = 5;
     let iteration = 0;
     let navigateTo;
+    let lastToolResult = null;
+    let lastToolName = '';
+    let currentProvider = provider;
     try {
         while (iteration < maxIterations) {
-            const response = await provider.chat({
-                systemInstruction,
-                messages: chatMessages,
-                tools
-            });
+            let response;
+            try {
+                response = await currentProvider.chat({
+                    systemInstruction,
+                    messages: chatMessages,
+                    tools
+                });
+            }
+            catch (err) {
+                if (iteration === 0 && currentProvider.constructor.name === 'FreeLLMProvider') {
+                    console.warn('[EduManager AI] FreeLLMAPI failed on initial query. Falling back to MockProvider for intent extraction.');
+                    const { MockProvider } = require('./ai.provider');
+                    currentProvider = new MockProvider();
+                    response = await currentProvider.chat({
+                        systemInstruction,
+                        messages: chatMessages,
+                        tools
+                    });
+                }
+                else {
+                    throw err;
+                }
+            }
             chatMessages.push(response);
             if (!response.tool_calls || response.tool_calls.length === 0) {
-                return { reply: response.content || 'No response generated.', navigateTo };
+                let finalReply = response.content || 'No response generated.';
+                try {
+                    if (finalReply.trim().startsWith('{') || finalReply.trim().startsWith('[')) {
+                        const parsed = JSON.parse(finalReply);
+                        if (typeof parsed === 'object' && lastToolName) {
+                            finalReply = formatDeterministicFallback(lastToolName, parsed);
+                        }
+                    }
+                }
+                catch (e) { }
+                return { reply: finalReply, navigateTo };
             }
             for (const call of response.tool_calls) {
                 const name = call.function.name;
@@ -145,8 +178,8 @@ RULES:
                     // ---------------- STUDENTS ----------------
                     else if (name === 'countStudents') {
                         requireAdminOrFaculty();
-                        const { students } = await repo_service_1.RepoService.findStudents({}, 1, 1);
-                        functionResult = { totalStudents: students.length }; // Or totalItems from Repo
+                        const { totalItems } = await repo_service_1.RepoService.findStudents({}, 1, 1);
+                        functionResult = { totalStudents: totalItems };
                     }
                     else if (name === 'searchStudents') {
                         requireAdminOrFaculty();
@@ -173,8 +206,8 @@ RULES:
                     // ---------------- FACULTY ----------------
                     else if (name === 'countFaculty') {
                         requireAdmin();
-                        const facs = await repo_service_1.RepoService.findFaculties();
-                        functionResult = { totalFaculty: facs.length };
+                        const totalFaculty = await repo_service_1.RepoService.countFaculties();
+                        functionResult = { totalFaculty };
                     }
                     else if (name === 'getFaculty') {
                         requireAdmin();
@@ -183,8 +216,8 @@ RULES:
                     }
                     // ---------------- COURSES ----------------
                     else if (name === 'countCourses') {
-                        const courses = await repo_service_1.RepoService.findCourses();
-                        functionResult = { totalCourses: courses.length };
+                        const totalCourses = await repo_service_1.RepoService.countCourses();
+                        functionResult = { totalCourses };
                     }
                     else if (name === 'getCourse') {
                         const c = await repo_service_1.RepoService.findCourseByCode(args.code);
@@ -231,9 +264,9 @@ RULES:
                     else if (name === 'getDashboardMetrics') {
                         requireAdmin();
                         const { totalItems: ts } = await repo_service_1.RepoService.findStudents({}, 1, 1);
-                        const tf = await repo_service_1.RepoService.findFaculties();
-                        const tc = await repo_service_1.RepoService.findCourses();
-                        functionResult = { students: ts, faculty: tf.length, courses: tc.length };
+                        const tf = await repo_service_1.RepoService.countFaculties();
+                        const tc = await repo_service_1.RepoService.countCourses();
+                        functionResult = { students: ts, faculty: tf, courses: tc };
                     }
                 }
                 catch (authError) {
@@ -245,12 +278,18 @@ RULES:
                     tool_call_id: call.id || name,
                     content: JSON.stringify(functionResult)
                 });
+                lastToolName = name;
+                lastToolResult = functionResult;
             }
             iteration++;
         }
         return { reply: 'I exceeded the maximum number of tool calls while trying to resolve your request.', navigateTo };
     }
     catch (err) {
+        if (iteration > 0 && lastToolResult && lastToolName) {
+            console.warn('[EduManager AI] Provider execution failed during synthesis. Falling back to deterministic formatter.');
+            return { reply: formatDeterministicFallback(lastToolName, lastToolResult), navigateTo };
+        }
         console.error('[EduManager AI] Provider execution failed:', {
             errorName: err.name,
             message: err.message,
@@ -258,6 +297,49 @@ RULES:
         });
         // Throwing error up to the controller to handle and map to 500 or UI
         throw err;
+    }
+}
+function formatDeterministicFallback(toolName, data) {
+    if (data?.error)
+        return `I encountered an error retrieving the data: ${data.error}`;
+    switch (toolName) {
+        case 'countStudents':
+            return `There are currently ${data.totalStudents || 0} students registered in the system.`;
+        case 'searchStudents':
+        case 'getStudentsByCourse':
+            if (!data.students || data.students.length === 0)
+                return 'No students found matching your criteria.';
+            return `I found ${data.students.length} student(s):\n` + data.students.map((s, i) => `${i + 1}. ${s.name} (ID: ${s.enrollmentNo || 'N/A'})${s.department ? ` - ${s.department}` : ''}`).join('\n');
+        case 'getStudentProfile':
+            return `Student Profile: ${data.name} (ID: ${data.enrollmentNo}). Department: ${data.department}. GPA: ${data.gpa || 'N/A'}. Attendance: ${data.attendance || 'N/A'}%.`;
+        case 'countFaculty':
+            return `There are currently ${data.totalFaculty || 0} faculty members registered in the system.`;
+        case 'getFaculty':
+            if (!data.faculty || data.faculty.length === 0)
+                return 'No faculty members found.';
+            return `I found ${data.faculty.length} faculty member(s):\n` + data.faculty.map((f, i) => `${i + 1}. ${f.name} (Dept: ${f.department || 'N/A'})`).join('\n');
+        case 'countCourses':
+            return `There are currently ${data.totalCourses || 0} courses registered in the system.`;
+        case 'getCourse':
+            return `Course Details: ${data.name} (Code: ${data.code}). Credits: ${data.credits}.`;
+        case 'getStudentAttendance':
+            return `The student's current attendance rate is ${data.attendanceRate}%.`;
+        case 'getLowAttendanceStudents':
+            if (!data.count || data.count === 0)
+                return 'No students are currently below the attendance threshold.';
+            return `There are ${data.count} student(s) with low attendance:\n` + data.students.map((s, i) => `${i + 1}. ${s.name} (ID: ${s.enrollmentNo}) - ${s.attendance}%`).join('\n');
+        case 'getStudentGrades':
+            return `The student's current GPA is ${data.gpa}.`;
+        case 'getAtRiskStudents':
+            if (!data.atRiskCount || data.atRiskCount === 0)
+                return 'No students are currently marked as at-risk.';
+            return `There are ${data.atRiskCount} at-risk student(s):\n` + data.students.map((s, i) => `${i + 1}. ${s.name} (ID: ${s.enrollmentNo}) - GPA: ${s.gpa || 'N/A'}, Attendance: ${s.attendance || 'N/A'}%`).join('\n');
+        case 'getDashboardMetrics':
+            return `System Overview:\n- Students: ${data.students || 0}\n- Faculty: ${data.faculty || 0}\n- Courses: ${data.courses || 0}`;
+        case 'navigate':
+            return `Navigating to ${data.navigatedTo}...`;
+        default:
+            return `Here is the requested information:\n${JSON.stringify(data, null, 2)}`;
     }
 }
 function getDefaultSummary(name, gpa, attendance) {

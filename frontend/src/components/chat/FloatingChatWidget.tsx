@@ -169,7 +169,6 @@ export default function FloatingChatWidget() {
       const res = await api.post('/ai/chat', {
         message: textToSend.trim(),
         currentPage: location.pathname,
-        userRole: user?.role,
         history: messages.map(m => ({ role: m.role, parts: [m.content] }))
       });
 

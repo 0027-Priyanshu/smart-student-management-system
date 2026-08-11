@@ -126,10 +126,18 @@ export class GeminiProvider implements AIProvider {
     // Note: Gemini SDK formatting is slightly different, adapting minimally
     const formattedMessages = input.messages
       .filter(m => m.role !== 'system') // Ensure no stray system messages
-      .map(m => ({
-        role: m.role === 'assistant' ? 'model' : m.role === 'tool' ? 'function' : m.role,
-        parts: m.tool_calls ? [] : [{ text: m.content || ' ' }]
-      }));
+      .map(m => {
+        if (m.role === 'tool') {
+          return {
+            role: 'function',
+            parts: [{ functionResponse: { name: m.name || m.tool_call_id || 'unknown_tool', response: { result: m.content } } }]
+          };
+        }
+        return {
+          role: m.role === 'assistant' ? 'model' : m.role,
+          parts: m.tool_calls ? [] : [{ text: m.content || ' ' }]
+        };
+      });
 
     try {
       const res = await this.ai.models.generateContent({
@@ -230,9 +238,16 @@ export class FreeLLMProvider implements AIProvider {
     
     formattedMessages.push(...input.messages.map(m => {
       const msg: any = { role: m.role, content: m.content || '' };
-      if (m.tool_calls) msg.tool_calls = m.tool_calls;
-      if (m.tool_call_id) msg.tool_call_id = m.tool_call_id;
-      if (m.name) msg.name = m.name;
+      
+      if (m.role === 'tool') {
+        msg.tool_call_id = m.tool_call_id || m.name || 'unknown';
+        // DO NOT send name inside tool message for strictly typed providers, tool_call_id is enough, but name is allowed by some.
+        // OpenAI says tool message MUST have `tool_call_id` and `content`.
+      } else {
+        if (m.tool_calls && m.tool_calls.length > 0) {
+          msg.tool_calls = m.tool_calls;
+        }
+      }
       return msg;
     }));
 

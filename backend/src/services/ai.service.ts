@@ -166,8 +166,8 @@ RULES:
           // ---------------- STUDENTS ----------------
           else if (name === 'countStudents') {
             requireAdminOrFaculty();
-            const { students } = await RepoService.findStudents({}, 1, 1);
-            functionResult = { totalStudents: students.length }; // Or totalItems from Repo
+            const { totalItems } = await RepoService.findStudents({}, 1, 1);
+            functionResult = { totalStudents: totalItems };
           } else if (name === 'searchStudents') {
             requireAdminOrFaculty();
             const { students } = await RepoService.findStudents({ search: (args as any).search, department: (args as any).department }, 1, 50);
@@ -185,8 +185,8 @@ RULES:
           // ---------------- FACULTY ----------------
           else if (name === 'countFaculty') {
             requireAdmin();
-            const facs = await RepoService.findFaculties();
-            functionResult = { totalFaculty: facs.length };
+            const totalFaculty = await RepoService.countFaculties();
+            functionResult = { totalFaculty };
           } else if (name === 'getFaculty') {
             requireAdmin();
             const facs = await RepoService.findFaculties();
@@ -194,8 +194,8 @@ RULES:
           }
           // ---------------- COURSES ----------------
           else if (name === 'countCourses') {
-            const courses = await RepoService.findCourses();
-            functionResult = { totalCourses: courses.length };
+            const totalCourses = await RepoService.countCourses();
+            functionResult = { totalCourses };
           } else if (name === 'getCourse') {
             const c = await RepoService.findCourseByCode((args as any).code);
             functionResult = c ? { name: c.name, code: c.code, credits: c.credits } : { error: 'Not found' };
@@ -226,9 +226,9 @@ RULES:
           } else if (name === 'getDashboardMetrics') {
             requireAdmin();
             const { totalItems: ts } = await RepoService.findStudents({}, 1, 1);
-            const tf = await RepoService.findFaculties();
-            const tc = await RepoService.findCourses();
-            functionResult = { students: ts, faculty: tf.length, courses: tc.length };
+            const tf = await RepoService.countFaculties();
+            const tc = await RepoService.countCourses();
+            functionResult = { students: ts, faculty: tf, courses: tc };
           }
         } catch (authError: any) {
           functionResult = { error: authError.message };

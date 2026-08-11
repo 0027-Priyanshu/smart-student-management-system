@@ -260,6 +260,16 @@ export class RepoService {
     }
   }
 
+  static async countFaculties(query: { isDeleted?: boolean } = { isDeleted: false }): Promise<number> {
+    const isDeleted = query.isDeleted !== undefined ? query.isDeleted : false;
+    if (isMongoConnected) {
+      return await Faculty.countDocuments({ isDeleted });
+    } else {
+      const db = readJsonDb();
+      return db.faculties.filter((f: any) => (f.isDeleted || false) === isDeleted).length;
+    }
+  }
+
   static async findFacultyById(id: string): Promise<any> {
     if (isMongoConnected) {
       return await Faculty.findById(id).populate('assignedCourses').lean();
@@ -424,6 +434,25 @@ export class RepoService {
         filtered = filtered.filter((c: any) => c.facultyId === query.facultyId);
       }
       return [...filtered].sort((a: any, b: any) => a.code.localeCompare(b.code));
+    }
+  }
+
+  static async countCourses(query: { isDeleted?: boolean; facultyId?: string } = { isDeleted: false }): Promise<number> {
+    const isDeleted = query.isDeleted !== undefined ? query.isDeleted : false;
+    const mongoQuery: any = { isDeleted };
+    if (query.facultyId) {
+      mongoQuery.facultyId = query.facultyId;
+    }
+    
+    if (isMongoConnected) {
+      return await Course.countDocuments(mongoQuery);
+    } else {
+      const db = readJsonDb();
+      let filtered = db.courses.filter((c: any) => (c.isDeleted || false) === isDeleted);
+      if (query.facultyId) {
+        filtered = filtered.filter((c: any) => c.facultyId === query.facultyId);
+      }
+      return filtered.length;
     }
   }
 

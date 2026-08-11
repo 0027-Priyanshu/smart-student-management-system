@@ -9,3 +9,11 @@ services:
         value: production
       - key: PORT
         value: 5001
+      - key: AI_PROVIDER
+        value: freellmapi
+      - key: FREELLM_BASE_URL
+        value: https://edumanager-ai.duckdns.org/v1
+      - key: FREELLM_MODEL
+        value: auto
+      - key: FREELLM_API_KEY
+        value: freellmapi-c9239d7b59b1f30f9cbd1c88edb0ee3390b024f418c7c7d3

@@ -274,7 +274,10 @@ exports.FreeLLMProvider = FreeLLMProvider;
 function getAIProvider() {
     const provider = process.env.AI_PROVIDER || 'freellmapi';
     if (provider.toLowerCase() === 'freellmapi') {
-        return new FreeLLMProvider(process.env.FREELLM_BASE_URL || 'https://edumanager-ai.duckdns.org/v1', process.env.FREELLM_API_KEY || 'freellmapi-32b3a4ac86050c8d3cc340c7c85c9d0ed44ad8aabd31ba01', process.env.FREELLM_MODEL || 'auto');
+        if (!process.env.FREELLM_API_KEY) {
+            throw new Error("FREELLM_API_KEY is required when AI_PROVIDER=freellmapi");
+        }
+        return new FreeLLMProvider(process.env.FREELLM_BASE_URL || 'https://edumanager-ai.duckdns.org/v1', process.env.FREELLM_API_KEY, process.env.FREELLM_MODEL || 'auto');
     }
     if (provider.toLowerCase() === 'ollama') {
         return new OllamaProvider(process.env.OLLAMA_BASE_URL || 'http://localhost:11434', process.env.OLLAMA_MODEL || 'qwen2.5:7b');

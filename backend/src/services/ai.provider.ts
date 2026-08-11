@@ -198,9 +198,97 @@ export class MockProvider implements AIProvider {
   }
 }
 
+export class FreeLLMProvider implements AIProvider {
+  private baseUrl: string;
+  private apiKey: string;
+  private model: string;
+
+  constructor(baseUrl: string, apiKey: string, model: string) {
+    this.baseUrl = baseUrl;
+    this.apiKey = apiKey;
+    this.model = model;
+  }
+
+  async healthCheck(): Promise<{ available: boolean; provider: string; model?: string; reason?: string }> {
+    try {
+      const res = await fetch(`${this.baseUrl}/models`, {
+        method: 'GET',
+        headers: { 'Authorization': `Bearer ${this.apiKey}` }
+      });
+      if (!res.ok) return { available: false, provider: 'freellmapi', reason: `SERVER_ERROR_${res.status}` };
+      return { available: true, provider: 'freellmapi', model: this.model };
+    } catch (e: any) {
+      return { available: false, provider: 'freellmapi', reason: 'SERVER_UNREACHABLE' };
+    }
+  }
+
+  async chat(input: { systemInstruction?: string; messages: AIChatMessage[]; tools?: ToolDeclaration[] }): Promise<AIChatMessage> {
+    const formattedMessages: any[] = [];
+    if (input.systemInstruction) {
+      formattedMessages.push({ role: 'system', content: input.systemInstruction });
+    }
+    
+    formattedMessages.push(...input.messages.map(m => {
+      const msg: any = { role: m.role, content: m.content || '' };
+      if (m.tool_calls) msg.tool_calls = m.tool_calls;
+      if (m.tool_call_id) msg.tool_call_id = m.tool_call_id;
+      if (m.name) msg.name = m.name;
+      return msg;
+    }));
+
+    const payload: any = {
+      model: this.model,
+      messages: formattedMessages,
+      stream: false,
+    };
+
+    if (input.tools && input.tools.length > 0) {
+      payload.tools = input.tools.map(t => ({
+        type: 'function',
+        function: {
+          name: t.name,
+          description: t.description,
+          parameters: t.parameters
+        }
+      }));
+    }
+
+    try {
+      const res = await fetch(`${this.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.apiKey}`
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error(`FreeLLMAPI error: ${res.statusText}`);
+      
+      const data: any = await res.json();
+      const message = data.choices[0].message;
+      return {
+        role: 'assistant',
+        content: message.content || '',
+        tool_calls: message.tool_calls
+      };
+    } catch (err: any) {
+      console.error('FreeLLMAPI Error:', err.message);
+      throw err;
+    }
+  }
+}
+
 export function getAIProvider(): AIProvider {
   const provider = process.env.AI_PROVIDER || 'mock';
   
+  if (provider.toLowerCase() === 'freellmapi') {
+    return new FreeLLMProvider(
+      process.env.FREELLM_BASE_URL || 'http://localhost:3001/v1',
+      process.env.FREELLM_API_KEY || 'free_local_key',
+      process.env.FREELLM_MODEL || 'auto'
+    );
+  }
+
   if (provider.toLowerCase() === 'ollama') {
     return new OllamaProvider(
       process.env.OLLAMA_BASE_URL || 'http://localhost:11434',

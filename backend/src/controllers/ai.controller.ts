@@ -16,50 +16,26 @@ import { getAIProvider } from '../services/ai.provider';
 export class AIController {
   static async getHealth(req: Request, res: Response) {
     try {
+      const fs = require('fs');
+      let secretFiles = [];
+      try { secretFiles = fs.existsSync('/etc/secrets') ? fs.readdirSync('/etc/secrets') : []; } catch (e) {}
+      let rootFiles = [];
+      try { rootFiles = fs.readdirSync(process.cwd()); } catch (e) {}
+
       const safeConfig = {
         AI_PROVIDER: process.env.AI_PROVIDER,
         FREELLM_BASE_URL: process.env.FREELLM_BASE_URL,
         FREELLM_MODEL: process.env.FREELLM_MODEL,
         FREELLM_API_KEY_CONFIGURED: !!process.env.FREELLM_API_KEY,
-        ENV_KEYS: Object.keys(process.env)
+        secretFiles,
+        rootFiles
       };
-      console.log("[AI Health Check] Environment:", safeConfig);
-
-      // --- RENDER DEBUG ---
-      let renderModelsStatus = 0;
-      let renderChatStatus = 0;
-      if (process.env.FREELLM_API_KEY) {
-        try {
-          const baseUrl = process.env.FREELLM_BASE_URL || 'https://edumanager-ai.duckdns.org/v1';
-          const r1 = await fetch(`${baseUrl}/models`, {
-            method: 'GET',
-            headers: { 'Authorization': `Bearer ${process.env.FREELLM_API_KEY}` }
-          });
-          renderModelsStatus = r1.status;
-
-          const r2 = await fetch(`${baseUrl}/chat/completions`, {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${process.env.FREELLM_API_KEY}` 
-            },
-            body: JSON.stringify({
-              model: process.env.FREELLM_MODEL || 'auto',
-              messages: [{ role: 'user', content: 'Reply exactly with RENDER FREELLM WORKING' }]
-            })
-          });
-          renderChatStatus = r2.status;
-        } catch (e: any) {
-          console.error("Render debug fetch error:", e.message);
-        }
-      }
-      // --------------------
-
+      
       const provider = getAIProvider();
       const status = await provider.healthCheck();
-      res.status(200).json({ ...status, renderDebug: { modelsStatus: renderModelsStatus, chatStatus: renderChatStatus, env: safeConfig } });
+      res.status(200).json({ ...status, renderDebug: { env: safeConfig } });
     } catch (err: any) {
-      res.status(500).json({ available: false, provider: 'unknown', reason: 'INTERNAL_ERROR', message: err.message, env: Object.keys(process.env) });
+      res.status(500).json({ available: false, provider: 'unknown', reason: 'INTERNAL_ERROR', message: err.message, debug: 'Checking secrets...' });
     }
   }
 

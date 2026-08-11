@@ -752,12 +752,24 @@ export class RepoService {
 
   static async findChatHistory(userId: string, limit = 50): Promise<any[]> {
     if (isMongoConnected) {
-      return await ChatHistory.find({ userId }).sort({ createdAt: 1 }).limit(limit).lean();
+      const history = await ChatHistory.find({ userId }).sort({ createdAt: 1 }).limit(limit).lean();
+      return history.map((msg: any) => {
+        if (msg.role === 'model' || msg.role === 'bot' || msg.role === 'ai') {
+          msg.role = 'assistant';
+        }
+        return msg;
+      });
     } else {
       const db = readJsonDb();
       if (!db.chatHistory) db.chatHistory = [];
-      const history = db.chatHistory.filter((c: any) => c.userId === userId);
-      return history.sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()).slice(-limit);
+      let history = db.chatHistory.filter((c: any) => c.userId === userId);
+      history = history.sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()).slice(-limit);
+      return history.map((msg: any) => {
+        if (msg.role === 'model' || msg.role === 'bot' || msg.role === 'ai') {
+          msg.role = 'assistant';
+        }
+        return msg;
+      });
     }
   }
 

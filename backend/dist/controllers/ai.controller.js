@@ -375,7 +375,7 @@ class AIController {
                 // Build history array from preceding items
                 const prevMsgs = messages.slice(0, -1);
                 history = prevMsgs.map((m) => {
-                    const r = m.role === 'model' || m.role === 'assistant' ? 'model' : 'user';
+                    const r = m.role === 'model' || m.role === 'assistant' ? 'assistant' : 'user';
                     let text = '';
                     if (Array.isArray(m.parts)) {
                         const p = m.parts[0];

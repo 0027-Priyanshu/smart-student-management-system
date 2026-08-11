@@ -34,7 +34,7 @@ export default function FloatingChatWidget() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome-msg',
-      role: 'model',
+      role: 'assistant',
       content: 'Hello! I am your EduManager AI Assistant. I provide context-aware assistance, quick actions, and direct navigation to detailed academic intelligence. How can I help you today?',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
@@ -58,6 +58,37 @@ export default function FloatingChatWidget() {
   useEffect(() => {
     if (isOpen) scrollToBottom();
   }, [messages, isOpen]);
+
+  // Load chat history on mount
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const res = await api.get('/ai/chat-history');
+        if (res.data && res.data.history && res.data.history.length > 0) {
+          const loadedMsgs = res.data.history.map((m: any, idx: number) => ({
+            id: m._id || `hist-${idx}`,
+            role: m.role,
+            content: m.content,
+            timestamp: new Date(m.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }));
+          setMessages([
+            {
+              id: 'welcome-msg',
+              role: 'assistant',
+              content: 'Hello! I am your EduManager AI Assistant. I provide context-aware assistance, quick actions, and direct navigation to detailed academic intelligence. How can I help you today?',
+              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            },
+            ...loadedMsgs
+          ]);
+        }
+      } catch (err) {
+        console.error('Failed to load chat history', err);
+      }
+    };
+    if (user) {
+      fetchHistory();
+    }
+  }, [user]);
 
   // Poll AI Health Status
   useEffect(() => {
@@ -573,7 +604,7 @@ export default function FloatingChatWidget() {
                   <div className="flex items-center justify-between px-1 text-[9px] font-mono text-slate-400">
                     <span>{msg.timestamp}</span>
 
-                    {msg.role === 'model' && (
+                    {msg.role === 'assistant' && (
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => handleCopy(msg.id, msg.content)}

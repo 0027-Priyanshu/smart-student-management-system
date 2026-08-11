@@ -77,24 +77,24 @@ export async function adminChatAssistant(
   const formattedKnowledge = RetrievalService.formatKnowledgeForPrompt(retrievedTopics);
 
   const allTools: ToolDeclaration[] = [
-    { name: 'countStudents', description: 'Get the total number of students in the system.', parameters: { type: 'object', properties: {}, required: [] } },
+    { name: 'countStudents', description: 'Get the total number of students in the system.', parameters: { type: 'object', properties: {} } },
     { name: 'searchStudents', description: 'Search students by name, email, or department.', parameters: { type: 'object', properties: { search: { type: 'string' }, department: { type: 'string' } }, required: [] } },
     { name: 'getStudentProfile', description: 'Fetch student by enrollmentNo.', parameters: { type: 'object', properties: { enrollmentNo: { type: 'string' } }, required: ['enrollmentNo'] } },
     { name: 'getStudentsByCourse', description: 'Get students enrolled in a specific course.', parameters: { type: 'object', properties: { courseId: { type: 'string' } }, required: ['courseId'] } },
     
-    { name: 'countFaculty', description: 'Get the total number of faculty in the system.', parameters: { type: 'object', properties: {}, required: [] } },
-    { name: 'getFaculty', description: 'Get list of faculty.', parameters: { type: 'object', properties: {}, required: [] } },
+    { name: 'countFaculty', description: 'Get the total number of faculty in the system.', parameters: { type: 'object', properties: {} } },
+    { name: 'getFaculty', description: 'Get list of faculty.', parameters: { type: 'object', properties: {} } },
     
-    { name: 'countCourses', description: 'Get the total number of courses.', parameters: { type: 'object', properties: {}, required: [] } },
+    { name: 'countCourses', description: 'Get the total number of courses.', parameters: { type: 'object', properties: {} } },
     { name: 'getCourse', description: 'Get course details by code.', parameters: { type: 'object', properties: { code: { type: 'string' } }, required: ['code'] } },
     
     { name: 'getStudentAttendance', description: 'Get attendance records for a student.', parameters: { type: 'object', properties: { studentId: { type: 'string' } }, required: ['studentId'] } },
-    { name: 'getLowAttendanceStudents', description: 'Get students with attendance below a threshold.', parameters: { type: 'object', properties: {}, required: [] } },
+    { name: 'getLowAttendanceStudents', description: 'Get students with attendance below a threshold.', parameters: { type: 'object', properties: {} } },
     
     { name: 'getStudentGrades', description: 'Get academic results/grades for a student.', parameters: { type: 'object', properties: { studentId: { type: 'string' } }, required: ['studentId'] } },
     
-    { name: 'getDashboardMetrics', description: 'Get high-level system analytics.', parameters: { type: 'object', properties: {}, required: [] } },
-    { name: 'getAtRiskStudents', description: 'Fetch students who are at risk due to low attendance or low grades.', parameters: { type: 'object', properties: {}, required: [] } },
+    { name: 'getDashboardMetrics', description: 'Get high-level system analytics.', parameters: { type: 'object', properties: {} } },
+    { name: 'getAtRiskStudents', description: 'Fetch students who are at risk due to low attendance or low grades.', parameters: { type: 'object', properties: {} } },
     
     { name: 'navigate', description: 'Navigate the user to a page.', parameters: { type: 'object', properties: { page: { type: 'string' } }, required: ['page'] } }
   ];

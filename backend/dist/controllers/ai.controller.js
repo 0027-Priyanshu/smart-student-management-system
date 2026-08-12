@@ -431,6 +431,19 @@ class AIController {
             return res.status(500).json({ error: cleanError, originalError: errMsg, errorName: error?.name, stack: error?.stack });
         }
     }
+    static async testChat(req, res, next) {
+        try {
+            const result = await (0, ai_service_1.adminChatAssistant)('how many students are there?', [], {
+                currentPage: '/dashboard',
+                userRole: 'Admin',
+                userId: 'test_admin_id'
+            });
+            return res.json(result);
+        }
+        catch (error) {
+            return res.status(500).json({ error: error.message, stack: error.stack, name: error.name });
+        }
+    }
     static async getAtRiskStudents(req, res, next) {
         try {
             const [{ students }, allResults, allAttendance] = await Promise.all([

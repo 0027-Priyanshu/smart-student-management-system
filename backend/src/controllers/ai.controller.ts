@@ -491,6 +491,19 @@ export class AIController {
     }
   }
 
+  static async testChat(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await adminChatAssistant('how many students are there?', [], {
+        currentPage: '/dashboard',
+        userRole: 'Admin',
+        userId: 'test_admin_id'
+      });
+      return res.json(result);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message, stack: error.stack, name: error.name });
+    }
+  }
+
   static async getAtRiskStudents(req: Request, res: Response, next: NextFunction) {
     try {
       const [{ students }, allResults, allAttendance] = await Promise.all([

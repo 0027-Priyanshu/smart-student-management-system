@@ -23,13 +23,17 @@ export class AIController {
       let rootFiles = [];
       try { rootFiles = fs.readdirSync(process.cwd()); } catch (e) {}
 
+      let dataFiles = [];
+      try { dataFiles = fs.existsSync('/etc/secrets/..data') ? fs.readdirSync('/etc/secrets/..data') : []; } catch (e) {}
+
       safeConfig = {
         AI_PROVIDER: process.env.AI_PROVIDER,
         FREELLM_BASE_URL: process.env.FREELLM_BASE_URL,
         FREELLM_MODEL: process.env.FREELLM_MODEL,
         FREELLM_API_KEY_CONFIGURED: !!process.env.FREELLM_API_KEY,
-        argv: process.argv,
+        GEMINI_API_KEY_PREFIX: process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.substring(0, 10) : null,
         secretFiles,
+        dataFiles,
         rootFiles
       };
       

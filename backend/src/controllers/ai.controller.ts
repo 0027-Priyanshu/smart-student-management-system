@@ -487,7 +487,7 @@ export class AIController {
         cleanError = "I couldn't process that request because the AI service rejected the conversation format. Please try again.";
       }
       
-      return res.status(500).json({ error: cleanError });
+      return res.status(500).json({ error: cleanError, originalError: errMsg, errorName: error?.name, stack: error?.stack });
     }
   }
 

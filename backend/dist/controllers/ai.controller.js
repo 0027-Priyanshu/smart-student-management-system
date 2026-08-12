@@ -428,7 +428,7 @@ class AIController {
             else if (errLower.includes('400') || errLower.includes('invalid_argument') || errLower.includes('rejected')) {
                 cleanError = "I couldn't process that request because the AI service rejected the conversation format. Please try again.";
             }
-            return res.status(500).json({ error: cleanError });
+            return res.status(500).json({ error: cleanError, originalError: errMsg, errorName: error?.name, stack: error?.stack });
         }
     }
     static async getAtRiskStudents(req, res, next) {

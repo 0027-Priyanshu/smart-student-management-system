@@ -248,8 +248,10 @@ class FreeLLMProvider {
                 }
             }));
         }
+        const requestUrl = `${this.baseUrl}/chat/completions`;
+        const startTime = Date.now();
         try {
-            const res = await fetch(`${this.baseUrl}/chat/completions`, {
+            const res = await fetch(requestUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -257,8 +259,23 @@ class FreeLLMProvider {
                 },
                 body: JSON.stringify(payload)
             });
-            if (!res.ok)
-                throw new Error(`FreeLLMAPI error: ${res.statusText}`);
+            const latency = Date.now() - startTime;
+            console.log(`[EduManagerAI] provider=freellmapi`);
+            console.log(`[EduManagerAI] baseUrl=${this.baseUrl}`);
+            console.log(`[EduManagerAI] model=${this.model}`);
+            console.log(`[EduManagerAI] apiKeyConfigured=${!!this.apiKey}`);
+            console.log(`[EduManagerAI] request=/chat/completions`);
+            console.log(`[EduManagerAI] status=${res.status}`);
+            console.log(`[EduManagerAI] latency=${latency}ms`);
+            if (!res.ok) {
+                let errBody = '';
+                try {
+                    errBody = await res.text();
+                }
+                catch (e) { }
+                console.error(`[EduManagerAI] errorClass=HTTPError error="HTTP ${res.status} ${res.statusText}" body="${errBody}"`);
+                throw new Error(`FreeLLMAPI error: ${res.statusText} - ${errBody}`);
+            }
             const data = await res.json();
             const message = data.choices[0].message;
             return {

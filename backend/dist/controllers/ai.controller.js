@@ -11,40 +11,14 @@ const ai_service_1 = require("../services/ai.service");
 const ai_provider_1 = require("../services/ai.provider");
 class AIController {
     static async getHealth(req, res) {
-        let safeConfig = {};
         try {
-            const fs = require('fs');
-            let secretFiles = [];
-            try {
-                secretFiles = fs.existsSync('/etc/secrets') ? fs.readdirSync('/etc/secrets') : [];
-            }
-            catch (e) { }
-            let rootFiles = [];
-            try {
-                rootFiles = fs.readdirSync(process.cwd());
-            }
-            catch (e) { }
-            let dataFiles = [];
-            try {
-                dataFiles = fs.existsSync('/etc/secrets/..data') ? fs.readdirSync('/etc/secrets/..data') : [];
-            }
-            catch (e) { }
-            safeConfig = {
-                AI_PROVIDER: process.env.AI_PROVIDER,
-                FREELLM_BASE_URL: process.env.FREELLM_BASE_URL,
-                FREELLM_MODEL: process.env.FREELLM_MODEL,
-                FREELLM_API_KEY_CONFIGURED: !!process.env.FREELLM_API_KEY,
-                GEMINI_API_KEY_PREFIX: process.env.GEMINI_API_KEY ? process.env.GEMINI_API_KEY.substring(0, 10) : null,
-                secretFiles,
-                dataFiles,
-                rootFiles
-            };
             const provider = (0, ai_provider_1.getAIProvider)();
             const status = await provider.healthCheck();
-            res.status(200).json({ ...status, renderDebug: { env: safeConfig } });
+            res.status(200).json(status);
         }
         catch (err) {
-            res.status(500).json({ available: false, provider: 'unknown', reason: 'INTERNAL_ERROR', message: err.message, renderDebug: { env: safeConfig } });
+            console.error("[AI Health Check Error]:", err.message);
+            res.status(500).json({ available: false, provider: 'unknown', reason: 'INTERNAL_ERROR', message: err.message });
         }
     }
     static async getStudentSummary(req, res, next) {

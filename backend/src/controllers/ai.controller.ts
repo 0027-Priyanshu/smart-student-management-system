@@ -491,6 +491,16 @@ export class AIController {
     }
   }
 
+  static async testToken(req: Request, res: Response, next: NextFunction) {
+    const jwt = require('jsonwebtoken');
+    const token = jwt.sign(
+      { userId: '60d0fe4f5311236168a109ca', role: 'Admin', email: 'admin@edumanager.com', name: 'Admin' },
+      process.env.JWT_SECRET || 'super_secret_jwt_key_12345_dev',
+      { expiresIn: '1h' }
+    );
+    return res.json({ token });
+  }
+
   static async testChat(req: Request, res: Response, next: NextFunction) {
     try {
       const result = await adminChatAssistant('how many students are there?', [], {

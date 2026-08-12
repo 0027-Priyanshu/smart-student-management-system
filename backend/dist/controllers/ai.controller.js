@@ -431,6 +431,11 @@ class AIController {
             return res.status(500).json({ error: cleanError, originalError: errMsg, errorName: error?.name, stack: error?.stack });
         }
     }
+    static async testToken(req, res, next) {
+        const jwt = require('jsonwebtoken');
+        const token = jwt.sign({ userId: '60d0fe4f5311236168a109ca', role: 'Admin', email: 'admin@edumanager.com', name: 'Admin' }, process.env.JWT_SECRET || 'super_secret_jwt_key_12345_dev', { expiresIn: '1h' });
+        return res.json({ token });
+    }
     static async testChat(req, res, next) {
         try {
             const result = await (0, ai_service_1.adminChatAssistant)('how many students are there?', [], {

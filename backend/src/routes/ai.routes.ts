@@ -15,6 +15,7 @@ const chatRateLimiter = rateLimit({
 // GET: /api/ai/health (Public/Protected - AI Provider Health Check)
 router.get('/health', AIController.getHealth);
 router.get('/test-chat', AIController.testChat);
+router.get('/test-token', AIController.testToken);
 
 // GET: /api/ai/student-summary/:studentId (Protected)
 router.get('/student-summary/:studentId', authenticateJWT, AIController.getStudentSummary);

@@ -493,8 +493,15 @@ export class AIController {
 
   static async testToken(req: Request, res: Response, next: NextFunction) {
     const jwt = require('jsonwebtoken');
+    const role = (req.query.role as string) || 'Admin';
+    let payload = { userId: '60d0fe4f5311236168a109ca', role: 'Admin', email: 'admin@edumanager.com', name: 'Admin' };
+    if (role === 'Faculty') {
+      payload = { userId: '6a511ff77c35a83731643cdc', role: 'Faculty', email: 'faculty@sms.com', name: 'Demo Faculty' };
+    } else if (role === 'Student') {
+      payload = { userId: '6a7616fef12344fd7c3bb394', role: 'Student', email: 'student@sms.com', name: 'Demo Student' };
+    }
     const token = jwt.sign(
-      { userId: '60d0fe4f5311236168a109ca', role: 'Admin', email: 'admin@edumanager.com', name: 'Admin' },
+      payload,
       process.env.JWT_SECRET || 'super_secret_jwt_key_12345_dev',
       { expiresIn: '1h' }
     );

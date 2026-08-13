@@ -6,6 +6,9 @@ import { useAuthStore } from '../stores/authStore';
 import { CardSkeleton } from '../components/Skeleton';
 import type { Faculty as FacultyType, Course } from '../types';
 import { toast } from '../stores/toastStore';
+import { UserAvatar } from '../components/common/StudentAvatar';
+import { ALLOWED_IMAGE_EXTS, ALLOWED_IMAGE_TYPES, FORMAT_ERROR_MESSAGE, MAX_PROFILE_IMAGE_SIZE, SIZE_ERROR_MESSAGE } from '../config/constants';
+import { Camera, Loader2 } from 'lucide-react';
 
 export default function Faculty() {
   const { user } = useAuthStore();
@@ -30,13 +33,15 @@ export default function Faculty() {
   const [selectedCourseId, setSelectedCourseId] = useState('');
   const [editDepartment, setEditDepartment] = useState('');
   const [editDesignation, setEditDesignation] = useState('');
+  const [editAvatarUrl, setEditAvatarUrl] = useState('');
 
   const [addFormData, setAddFormData] = useState({
     name: '',
     email: '',
     password: '',
     department: 'Computer Science',
-    designation: 'Assistant Professor'
+    designation: 'Assistant Professor',
+    avatarUrl: ''
   });
 
   async function loadData() {
@@ -120,7 +125,8 @@ export default function Faculty() {
       const fId = activeFaculty?._id || activeFaculty?.id;
       const res = await api.put(`/faculty/${fId}`, {
         department: editDepartment,
-        designation: editDesignation
+        designation: editDesignation,
+        avatarUrl: editAvatarUrl
       });
 
       toast.success(res.data.message || 'Updated faculty profile!');
@@ -128,6 +134,51 @@ export default function Faculty() {
       loadData();
     } catch (err: any) {
       toast.error(err.response?.data?.error || 'Failed to update faculty profile');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>, isEditMode: boolean = false) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    e.target.value = '';
+
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type) || !ALLOWED_IMAGE_EXTS.includes(ext || '')) {
+      toast.error(FORMAT_ERROR_MESSAGE);
+      return;
+    }
+
+    if (file.size > MAX_PROFILE_IMAGE_SIZE) {
+      toast.error(SIZE_ERROR_MESSAGE);
+      return;
+    }
+
+    const fData = new FormData();
+    fData.append('avatar', file);
+
+    try {
+      setActionLoading(true);
+      const res = await api.post('/faculty/upload-avatar', fData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      if (res.data.url) {
+        if (isEditMode) {
+          setEditAvatarUrl(res.data.url);
+        } else {
+          setAddFormData(prev => ({ ...prev, avatarUrl: res.data.url }));
+        }
+        toast.success('Profile image uploaded successfully!');
+      }
+    } catch (err: any) {
+      const errMsg = err.response?.data?.error;
+      if (err.response?.status === 413 || err.code === 'LIMIT_FILE_SIZE' || errMsg?.includes('large')) {
+        toast.error(SIZE_ERROR_MESSAGE);
+      } else {
+        toast.error(errMsg || 'Failed to upload profile photo');
+      }
     } finally {
       setActionLoading(false);
     }
@@ -293,9 +344,12 @@ export default function Faculty() {
                   {/* Faculty Header Row */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="h-11 w-11 rounded-full bg-slate-900 text-white font-extrabold text-xs flex items-center justify-center border border-slate-700">
-                        {fac.name?.slice(0, 2).toUpperCase()}
-                      </div>
+                      <UserAvatar 
+                        src={fac.avatarUrl} 
+                        name={fac.name} 
+                        className="h-11 w-11 rounded-full object-cover border border-slate-200" 
+                        fallbackClassName="h-11 w-11 rounded-full bg-slate-900 text-white font-extrabold text-xs flex items-center justify-center border border-slate-700"
+                      />
                       <div>
                         <h3 className="font-extrabold text-sm text-slate-900 group-hover:text-[#ff6b00] transition-colors">{fac.name}</h3>
                         <p className="text-[11px] text-slate-400 font-medium">{fac.designation || 'Professor'}</p>
@@ -321,6 +375,7 @@ export default function Faculty() {
                           setActiveFaculty(fac);
                           setEditDepartment(fac.department || '');
                           setEditDesignation(fac.designation || '');
+                          setEditAvatarUrl(fac.avatarUrl || '');
                           setShowEditModal(true);
                         }}
                         className="text-xs font-bold text-slate-600 hover:text-[#ff6b00] transition-colors cursor-pointer"
@@ -460,6 +515,21 @@ export default function Faculty() {
               </div>
 
               <form onSubmit={handleEditSubmit} className="space-y-4">
+                {/* Profile Photo */}
+                <div className="flex flex-col items-center justify-center space-y-3 pb-2">
+                  <div className="relative group">
+                    <UserAvatar src={editAvatarUrl} name={activeFaculty?.name} className="w-20 h-20 rounded-full object-cover border-2 border-slate-100 shadow-sm" fallbackClassName="w-20 h-20 rounded-full bg-slate-100 text-slate-400 font-bold text-xl flex items-center justify-center border-2 border-slate-200" />
+                    <label className="absolute inset-0 flex items-center justify-center bg-black/40 text-white rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                      {actionLoading ? <Loader2 size={20} className="animate-spin" /> : <Camera size={20} />}
+                      <input type="file" className="hidden" accept=".jpg,.jpeg,.png,.webp" onChange={(e) => handleAvatarUpload(e, true)} disabled={actionLoading} />
+                    </label>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs font-bold text-slate-700">Profile Photo</p>
+                    <p className="text-[10px] font-medium text-slate-400 mt-0.5">PNG, JPG, JPEG or WEBP &bull; Max 5 MB</p>
+                  </div>
+                </div>
+
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-700">Department</label>
                   <select
@@ -522,6 +592,21 @@ export default function Faculty() {
               </div>
 
               <form onSubmit={handleAddFacultySubmit} className="space-y-4">
+                {/* Profile Photo */}
+                <div className="flex flex-col items-center justify-center space-y-3 pb-2">
+                  <div className="relative group">
+                    <UserAvatar src={addFormData.avatarUrl} name={addFormData.name} className="w-20 h-20 rounded-full object-cover border-2 border-slate-100 shadow-sm" fallbackClassName="w-20 h-20 rounded-full bg-slate-100 text-slate-400 font-bold text-xl flex items-center justify-center border-2 border-slate-200" />
+                    <label className="absolute inset-0 flex items-center justify-center bg-black/40 text-white rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                      {actionLoading ? <Loader2 size={20} className="animate-spin" /> : <Camera size={20} />}
+                      <input type="file" className="hidden" accept=".jpg,.jpeg,.png,.webp" onChange={(e) => handleAvatarUpload(e, false)} disabled={actionLoading} />
+                    </label>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs font-bold text-slate-700">Profile Photo</p>
+                    <p className="text-[10px] font-medium text-slate-400 mt-0.5">PNG, JPG, JPEG or WEBP &bull; Max 5 MB</p>
+                  </div>
+                </div>
+
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-700">Full Name *</label>
                   <input

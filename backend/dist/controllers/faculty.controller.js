@@ -106,7 +106,7 @@ class FacultyController {
     static async updateFaculty(req, res, next) {
         try {
             const requester = req.user;
-            const { department, designation } = req.body;
+            const { department, designation, avatarUrl } = req.body;
             const faculty = await repo_service_1.RepoService.findFacultyById(req.params.id);
             if (!faculty) {
                 return res.status(404).json({ error: 'Faculty profile not found' });
@@ -116,6 +116,8 @@ class FacultyController {
                 updateData.department = department;
             if (designation)
                 updateData.designation = designation;
+            if (avatarUrl !== undefined)
+                updateData.avatarUrl = avatarUrl;
             await repo_service_1.RepoService.updateFaculty(req.params.id, updateData);
             // Log Activity
             await repo_service_1.RepoService.createLog({
@@ -126,6 +128,25 @@ class FacultyController {
                 details: `Updated faculty profile: ${faculty.name} (${designation || faculty.designation})`
             });
             return res.json({ message: 'Faculty profile updated successfully' });
+        }
+        catch (error) {
+            next(error);
+        }
+    }
+    static async uploadAvatar(req, res, next) {
+        try {
+            if (!req.file) {
+                return res.status(400).json({ error: 'Avatar image file is required' });
+            }
+            const allowedImageExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+            const fileExt = req.file.originalname.split('.').pop()?.toLowerCase();
+            if (!req.file.mimetype.startsWith('image/') || !allowedImageExtensions.includes(fileExt || '')) {
+                return res.status(400).json({ error: 'Unsupported image format. Please upload PNG, JPG, JPEG or WEBP.' });
+            }
+            // We need to import uploadFile at the top of the file if not already imported
+            const { uploadFile } = require('../services/cloudinary.service');
+            const secureUrl = await uploadFile(req.file.path, 'avatars');
+            return res.json({ url: secureUrl });
         }
         catch (error) {
             next(error);

@@ -66,17 +66,14 @@ export default function StudentDashboard() {
     // Reset input value so the same file can be selected again if needed
     e.target.value = '';
 
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
     const ext = file.name.split('.').pop()?.toLowerCase();
-    const allowedExts = ['jpg', 'jpeg', 'png', 'webp'];
-    if (!allowedTypes.includes(file.type) || !allowedExts.includes(ext || '')) {
-      toast.error('Unsupported file format! Only JPG, PNG, and WEBP image uploads are allowed.');
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type) || !ALLOWED_IMAGE_EXTS.includes(ext || '')) {
+      toast.error(FORMAT_ERROR_MESSAGE);
       return;
     }
 
-    const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
-    if (file.size > MAX_AVATAR_SIZE_BYTES) {
-      toast.error('Image is too large. Maximum allowed size is 5 MB.');
+    if (file.size > MAX_PROFILE_IMAGE_SIZE) {
+      toast.error(SIZE_ERROR_MESSAGE);
       return;
     }
 

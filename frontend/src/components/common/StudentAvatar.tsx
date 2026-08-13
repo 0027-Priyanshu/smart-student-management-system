@@ -44,4 +44,6 @@ export const StudentAvatar: React.FC<StudentAvatarProps> = ({
   );
 };
 
+export const UserAvatar = StudentAvatar;
+
 export default StudentAvatar;

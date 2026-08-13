@@ -3,7 +3,16 @@ import { FacultyController } from '../controllers/faculty.controller';
 import { authenticateJWT, requireRole } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validation.middleware';
 import { updateFacultySchema } from '../schemas/faculty.schema';
+import { uploadLocal } from '../middlewares/upload.middleware';
 const router = Router();
+
+// POST: /api/faculty/upload-avatar
+router.post(
+  '/upload-avatar',
+  authenticateJWT,
+  uploadLocal.single('avatar'),
+  FacultyController.uploadAvatar
+);
 
 // GET: /api/faculty (Protected)
 router.get('/', authenticateJWT, FacultyController.getFaculties);

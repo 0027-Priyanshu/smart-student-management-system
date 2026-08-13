@@ -41,6 +41,7 @@ const FacultySchema = new mongoose_1.Schema({
     department: { type: String, required: true },
     designation: { type: String, required: true }, // e.g. Assistant Professor, HOD
     assignedCourses: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'Course' }],
+    avatarUrl: { type: String, default: '' },
     isDeleted: { type: Boolean, default: false, index: true },
     createdAt: { type: Date, default: Date.now, index: true }
 });

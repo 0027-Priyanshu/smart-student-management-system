@@ -224,7 +224,7 @@ export default function DashboardShell({ children }: DashboardShellProps) {
           >
             <div className="relative">
               <StudentAvatar
-                src={user?.studentProfile?.avatarUrl}
+                src={user?.studentProfile?.avatarUrl || user?.facultyProfile?.avatarUrl}
                 name={user?.name}
                 className="h-9 w-9 rounded-full object-cover border border-slate-200"
                 fallbackClassName="h-9 w-9 rounded-full bg-slate-900 text-white font-extrabold text-xs flex items-center justify-center border border-slate-700"
@@ -349,7 +349,7 @@ export default function DashboardShell({ children }: DashboardShellProps) {
                 className="flex items-center gap-2 cursor-pointer"
               >
                 <StudentAvatar
-                  src={user?.studentProfile?.avatarUrl}
+                  src={user?.studentProfile?.avatarUrl || user?.facultyProfile?.avatarUrl}
                   name={user?.name}
                   className="h-9 w-9 rounded-full object-cover border border-slate-200"
                   fallbackClassName="h-9 w-9 rounded-full bg-slate-900 text-white font-extrabold text-xs flex items-center justify-center shadow-2xs border border-slate-700"

@@ -46,6 +46,7 @@ export interface Faculty {
   userId: string;
   name: string;
   email: string;
+  avatarUrl?: string;
   phone?: string;
   department: string;
   designation: string;

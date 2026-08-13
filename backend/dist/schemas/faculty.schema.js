@@ -8,5 +8,6 @@ exports.createFacultySchema = zod_1.z.object({
     department: zod_1.z.string().min(1, 'Department is required'),
     designation: zod_1.z.string().min(1, 'Designation is required'),
     assignedCourses: zod_1.z.array(zod_1.z.string()).optional().default([]),
+    avatarUrl: zod_1.z.string().optional(),
 });
 exports.updateFacultySchema = exports.createFacultySchema.partial();

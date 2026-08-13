@@ -6,6 +6,7 @@ export const createFacultySchema = z.object({
   department: z.string().min(1, 'Department is required'),
   designation: z.string().min(1, 'Designation is required'),
   assignedCourses: z.array(z.string()).optional().default([]),
+  avatarUrl: z.string().optional(),
 });
 
 export const updateFacultySchema = createFacultySchema.partial();

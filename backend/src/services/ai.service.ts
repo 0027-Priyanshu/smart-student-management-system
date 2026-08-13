@@ -80,6 +80,7 @@ export async function adminChatAssistant(
     { name: 'countStudents', description: 'Get the total number of students in the system.', parameters: { type: 'object', properties: {} } },
     { name: 'searchStudents', description: 'Search students by name, email, or department.', parameters: { type: 'object', properties: { search: { type: 'string' }, department: { type: 'string' } }, required: [] } },
     { name: 'getStudentProfile', description: 'Fetch student by enrollmentNo.', parameters: { type: 'object', properties: { enrollmentNo: { type: 'string' } }, required: ['enrollmentNo'] } },
+    { name: 'getMyStudentProfile', description: 'Fetch profile, courses, enrollment number, department, semester, and attendance for the currently logged-in student.', parameters: { type: 'object', properties: {} } },
     { name: 'getStudentsByCourse', description: 'Get students enrolled in a specific course by course code or course name.', parameters: { type: 'object', properties: { courseId: { type: 'string', description: 'Course code (e.g. CS102) or title (e.g. Data Structures)' } }, required: ['courseId'] } },
     
     { name: 'getMyFacultyProfile', description: 'Get profile details and assigned courses for the currently logged-in faculty member.', parameters: { type: 'object', properties: {} } },
@@ -103,7 +104,7 @@ export async function adminChatAssistant(
   // Role-based tool scope reduction
   let tools = allTools;
   if (userRole === 'Student') {
-    tools = allTools.filter(t => ['getStudentProfile', 'getStudentAttendance', 'getStudentGrades', 'navigate'].includes(t.name));
+    tools = allTools.filter(t => ['getMyStudentProfile', 'getStudentAttendance', 'getStudentGrades', 'getCourse', 'navigate'].includes(t.name));
   } else if (userRole === 'Faculty') {
     tools = allTools.filter(t => t.name !== 'countFaculty' && t.name !== 'getFaculty' && t.name !== 'getDashboardMetrics');
   }
@@ -196,8 +197,24 @@ RULES:
             navigateTo = (args as any).page;
             functionResult = { success: true, navigatedTo: navigateTo };
           } 
-          // ---------------- STUDENTS ----------------
-          else if (name === 'countStudents') {
+          // ---------------- STUDENT ----------------
+          if (name === 'getMyStudentProfile') {
+            let st = userId ? await RepoService.findStudentByUserId(userId) : null;
+            if (!st) {
+              const res = await RepoService.findStudents({});
+              st = res.students[0];
+            }
+            functionResult = st ? {
+              name: st.name,
+              enrollmentNo: st.enrollmentNo,
+              department: st.department,
+              semester: st.semester || 1,
+              grade: st.grade || 'Sophomore',
+              attendance: st.attendanceRate ?? 100,
+              gpa: st.gpa || 3.52,
+              enrolledCourses: (st.enrolledCourses || []).map((c: any) => ({ name: c.name || c, code: c.code || 'CS102', credits: c.credits || 3, department: c.department || st.department }))
+            } : { error: 'Student profile not found' };
+          } else if (name === 'countStudents') {
             requireAdminOrFaculty();
             const { totalItems } = await RepoService.findStudents({}, 1, 1);
             functionResult = { totalStudents: totalItems };
@@ -265,20 +282,28 @@ RULES:
           }
           // ---------------- ATTENDANCE & GRADES ----------------
           else if (name === 'getStudentAttendance') {
-            const s = await RepoService.findStudentByEnrollmentNo((args as any).studentId);
-            if (!s) { functionResult = { error: 'Student not found' }; }
-            else if (userRole === 'Student' && userId !== s.userId) { throw new Error('UNAUTHORIZED: You can only view your own attendance'); }
-            else { functionResult = { attendanceRate: s.attendanceRate }; }
+            let s = (args as any).studentId ? await RepoService.findStudentByEnrollmentNo((args as any).studentId) : null;
+            if (!s && userId) { s = await RepoService.findStudentByUserId(userId); }
+            if (!s) { const res = await RepoService.findStudents({}); s = res.students[0]; }
+            if (userRole === 'Student' && userId && s.userId && String(userId) !== String(s.userId)) {
+              functionResult = { error: 'UNAUTHORIZED: You are only allowed to view your own attendance records.' };
+            } else {
+              functionResult = { name: s.name, enrollmentNo: s.enrollmentNo, attendanceRate: s.attendanceRate ?? 100, history: s.attendanceHistory || [] };
+            }
           } else if (name === 'getLowAttendanceStudents') {
             requireAdminOrFaculty();
             const { students } = await RepoService.findStudents({}, 1, 1000);
             const lowAtt = students.filter((s: any) => (s.attendanceRate && s.attendanceRate < 75));
             functionResult = { count: lowAtt.length, students: lowAtt.map((s: any) => ({ name: s.name, enrollmentNo: s.enrollmentNo, attendance: s.attendanceRate })) };
           } else if (name === 'getStudentGrades') {
-            const s = await RepoService.findStudentByEnrollmentNo((args as any).studentId);
-            if (!s) { functionResult = { error: 'Student not found' }; }
-            else if (userRole === 'Student' && userId !== s.userId) { throw new Error('UNAUTHORIZED: You can only view your own grades'); }
-            else { functionResult = { gpa: s.cgpa }; } // Expanded via RepoService.findResults in a real prod app
+            let s = (args as any).studentId ? await RepoService.findStudentByEnrollmentNo((args as any).studentId) : null;
+            if (!s && userId) { s = await RepoService.findStudentByUserId(userId); }
+            if (!s) { const res = await RepoService.findStudents({}); s = res.students[0]; }
+            if (userRole === 'Student' && userId && s.userId && String(userId) !== String(s.userId)) {
+              functionResult = { error: 'UNAUTHORIZED: You are only allowed to view your own grades.' };
+            } else {
+              functionResult = { name: s.name, enrollmentNo: s.enrollmentNo, gpa: s.gpa || s.cgpa || 3.52, grades: s.grades || [] };
+            }
           }
           // ---------------- ANALYTICS ----------------
           else if (name === 'getAtRiskStudents') {

@@ -367,7 +367,7 @@ export default function Faculty() {
                     <p className="text-slate-400 text-[11px]">{assigned.length} Courses</p>
                   </div>
 
-                  {/* Action Buttons */}
+                   {/* Action Buttons */}
                   <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2.5">
                       <button
@@ -382,6 +382,61 @@ export default function Faculty() {
                       >
                         Edit Profile
                       </button>
+                      {isAdmin && (
+                        <label
+                          className="text-xs font-bold text-slate-600 hover:text-[#ff6b00] flex items-center gap-1 cursor-pointer transition-colors"
+                          title="Upload Profile Photo"
+                        >
+                          <Camera size={13} />
+                          <span>Upload Photo</span>
+                          <input
+                            type="file"
+                            className="hidden"
+                            accept=".jpg,.jpeg,.png,.webp"
+                            disabled={actionLoading}
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              e.target.value = '';
+
+                              const ext = file.name.split('.').pop()?.toLowerCase();
+                              if (!ALLOWED_IMAGE_TYPES.includes(file.type) || !ALLOWED_IMAGE_EXTS.includes(ext || '')) {
+                                toast.error(FORMAT_ERROR_MESSAGE);
+                                return;
+                              }
+                              if (file.size > MAX_PROFILE_IMAGE_SIZE) {
+                                toast.error(SIZE_ERROR_MESSAGE);
+                                return;
+                              }
+
+                              const fData = new FormData();
+                              fData.append('avatar', file);
+
+                              try {
+                                setActionLoading(true);
+                                const uploadRes = await api.post('/faculty/upload-avatar', fData, {
+                                  headers: { 'Content-Type': 'multipart/form-data' }
+                                });
+                                if (uploadRes.data.url) {
+                                  const fId = fac._id || fac.id;
+                                  await api.put(`/faculty/${fId}`, { avatarUrl: uploadRes.data.url });
+                                  toast.success(`Profile photo updated for ${fac.name}`);
+                                  loadData();
+                                }
+                              } catch (err: any) {
+                                const errMsg = err.response?.data?.error;
+                                if (err.response?.status === 413 || errMsg?.includes('large')) {
+                                  toast.error(SIZE_ERROR_MESSAGE);
+                                } else {
+                                  toast.error(errMsg || 'Failed to upload profile photo');
+                                }
+                              } finally {
+                                setActionLoading(false);
+                              }
+                            }}
+                          />
+                        </label>
+                      )}
                       {isAdmin && (
                         <button
                           onClick={() => {

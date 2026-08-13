@@ -63,14 +63,20 @@ export default function StudentDashboard() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('File size exceeds 5 MB limit. Please select a smaller photo.');
+    // Reset input value so the same file can be selected again if needed
+    e.target.value = '';
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    const allowedExts = ['jpg', 'jpeg', 'png', 'webp'];
+    if (!allowedTypes.includes(file.type) || !allowedExts.includes(ext || '')) {
+      toast.error('Unsupported file format! Only JPG, PNG, and WEBP image uploads are allowed.');
       return;
     }
 
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-      toast.error('Invalid file format! Only PNG, JPG, JPEG, and WEBP image uploads are allowed.');
+    const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+    if (file.size > MAX_AVATAR_SIZE_BYTES) {
+      toast.error('Image is too large. Maximum allowed size is 5 MB.');
       return;
     }
 
@@ -101,7 +107,12 @@ export default function StudentDashboard() {
 
       toast.success('Profile photo updated successfully!');
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Failed to upload profile photo');
+      const errMsg = err.response?.data?.error;
+      if (err.response?.status === 413 || err.code === 'LIMIT_FILE_SIZE' || errMsg?.includes('large')) {
+        toast.error('Image is too large. Maximum allowed size is 5 MB.');
+      } else {
+        toast.error(errMsg || 'Failed to upload profile photo');
+      }
     } finally {
       setUploadingAvatar(false);
     }

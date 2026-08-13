@@ -265,9 +265,20 @@ export default function Students() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Reset input value so the same file can be selected again if needed
+    e.target.value = '';
+
     const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-      toast.error('Only JPG, JPEG, PNG, and WEBP image formats are supported.');
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    const allowedExts = ['jpg', 'jpeg', 'png', 'webp'];
+    if (!allowedTypes.includes(file.type) || !allowedExts.includes(ext || '')) {
+      toast.error('Unsupported file format! Only JPG, PNG, and WEBP image uploads are allowed.');
+      return;
+    }
+
+    const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+    if (file.size > MAX_AVATAR_SIZE_BYTES) {
+      toast.error('Image is too large. Maximum allowed size is 5 MB.');
       return;
     }
 
@@ -284,7 +295,12 @@ export default function Students() {
         toast.success('Profile image uploaded successfully!');
       }
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Failed to upload profile photo');
+      const errMsg = err.response?.data?.error;
+      if (err.response?.status === 413 || err.code === 'LIMIT_FILE_SIZE' || errMsg?.includes('large')) {
+        toast.error('Image is too large. Maximum allowed size is 5 MB.');
+      } else {
+        toast.error(errMsg || 'Failed to upload profile photo');
+      }
     } finally {
       setActionLoading(false);
     }
@@ -611,11 +627,11 @@ export default function Students() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <span className="text-xs font-bold text-slate-800 block">Student Profile Photo</span>
-                  <span className="text-[10px] text-slate-500 block mb-1.5">PNG, JPG, JPEG or WEBP</span>
+                  <span className="text-[10px] text-slate-500 block mb-1.5">PNG, JPG, JPEG or WEBP • Max 5 MB</span>
                   <div className="flex gap-2">
                     <label className="cursor-pointer px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-lg text-[11px] font-semibold transition-colors">
                       {formData.avatarUrl ? 'Replace Photo' : 'Upload Photo'}
-                      <input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+                      <input type="file" accept="image/png, image/jpeg, image/jpg, image/webp" onChange={handleAvatarUpload} className="hidden" />
                     </label>
                     {formData.avatarUrl && (
                       <button

@@ -33,7 +33,7 @@ const fileFilter = (req: Request, file: Express.Multer.File, cb: FileFilterCallb
 export const uploadLocal = multer({
   storage: storage,
   fileFilter: fileFilter,
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
 // Separate memory storage for parsing Excel spreadsheets directly without disk write

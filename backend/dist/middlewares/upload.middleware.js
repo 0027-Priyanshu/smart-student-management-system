@@ -35,7 +35,7 @@ const fileFilter = (req, file, cb) => {
 exports.uploadLocal = (0, multer_1.default)({
     storage: storage,
     fileFilter: fileFilter,
-    limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+    limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 // Separate memory storage for parsing Excel spreadsheets directly without disk write
 exports.uploadMemory = (0, multer_1.default)({

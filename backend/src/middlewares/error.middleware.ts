@@ -7,6 +7,10 @@ export function errorHandler(
   res: Response,
   next: NextFunction
 ) {
+  if (err?.code === 'LIMIT_FILE_SIZE' || err?.message?.includes('File too large')) {
+    return res.status(400).json({ error: 'Image is too large. Maximum allowed size is 5 MB.' });
+  }
+
   const status = err.status || err.statusCode || 500;
   const message = err.message || 'Internal Server Error';
 

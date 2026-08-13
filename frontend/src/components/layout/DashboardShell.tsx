@@ -17,6 +17,8 @@ import {
   Sparkles,
   ChevronDown
 } from 'lucide-react';
+import { toast } from '../../stores/toastStore';
+import { StudentAvatar } from '../common/StudentAvatar';
 import { useAuthStore } from '../../stores/authStore';
 import { useSocketStore } from '../../stores/socketStore';
 import FloatingChatWidget from '../chat/FloatingChatWidget';
@@ -221,13 +223,12 @@ export default function DashboardShell({ children }: DashboardShellProps) {
             onClick={() => setShowProfileMenu(!showProfileMenu)}
           >
             <div className="relative">
-              {user?.studentProfile?.avatarUrl ? (
-                <img src={user.studentProfile.avatarUrl} alt={user?.name} className="h-9 w-9 rounded-full object-cover border border-slate-200" />
-              ) : (
-                <div className="h-9 w-9 rounded-full bg-slate-900 text-white font-extrabold text-xs flex items-center justify-center border border-slate-700">
-                  {initials}
-                </div>
-              )}
+              <StudentAvatar
+                src={user?.studentProfile?.avatarUrl}
+                name={user?.name}
+                className="h-9 w-9 rounded-full object-cover border border-slate-200"
+                fallbackClassName="h-9 w-9 rounded-full bg-slate-900 text-white font-extrabold text-xs flex items-center justify-center border border-slate-700"
+              />
               <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-white"></span>
             </div>
 
@@ -347,13 +348,12 @@ export default function DashboardShell({ children }: DashboardShellProps) {
                 }}
                 className="flex items-center gap-2 cursor-pointer"
               >
-                {user?.studentProfile?.avatarUrl ? (
-                  <img src={user.studentProfile.avatarUrl} alt={user?.name} className="h-9 w-9 rounded-full object-cover border border-slate-200" />
-                ) : (
-                  <div className="h-9 w-9 rounded-full bg-slate-900 text-white font-extrabold text-xs flex items-center justify-center shadow-2xs border border-slate-700">
-                    {initials}
-                  </div>
-                )}
+                <StudentAvatar
+                  src={user?.studentProfile?.avatarUrl}
+                  name={user?.name}
+                  className="h-9 w-9 rounded-full object-cover border border-slate-200"
+                  fallbackClassName="h-9 w-9 rounded-full bg-slate-900 text-white font-extrabold text-xs flex items-center justify-center shadow-2xs border border-slate-700"
+                />
                 <ChevronDown size={14} className="text-slate-400 hidden sm:block" />
               </button>
 

@@ -17,6 +17,7 @@ import {
   Trash2,
   Upload
 } from 'lucide-react';
+import { StudentAvatar } from '../common/StudentAvatar';
 import { 
   AreaChart, 
   Area, 
@@ -265,17 +266,12 @@ export default function StudentDashboard() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
             {/* Student Profile Photo Upload Widget */}
             <div className="relative group shrink-0">
-              {student?.avatarUrl ? (
-                <img 
-                  src={student.avatarUrl} 
-                  alt={user?.name} 
-                  className="h-20 w-20 rounded-full object-cover border-4 border-white shadow-md transition-transform group-hover:scale-105" 
-                />
-              ) : (
-                <div className="h-20 w-20 rounded-full bg-gradient-to-tr from-[#f97316] to-[#ef4444] text-white flex items-center justify-center font-black text-2xl border-4 border-white shadow-md">
-                  {user?.name ? user.name.charAt(0).toUpperCase() : 'S'}
-                </div>
-              )}
+              <StudentAvatar
+                src={student?.avatarUrl}
+                name={user?.name || student?.name}
+                className="h-20 w-20 rounded-full object-cover border-4 border-white shadow-md transition-transform group-hover:scale-105"
+                fallbackClassName="h-20 w-20 rounded-full bg-gradient-to-tr from-[#f97316] to-[#ef4444] text-white flex items-center justify-center font-black text-2xl border-4 border-white shadow-md"
+              />
 
               {/* Hover overlay actions */}
               <label 

@@ -1,0 +1,157 @@
+[INFO] 17:19:43 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 5.9.3)
+Health: { available: true, provider: 'freellmapi', model: 'auto' }
+
+Testing [1. Connectivity]: "hello"
+
+Testing [1. Connectivity]: "what can you do?"
+
+Testing [1. Connectivity]: "give me example questions"
+
+Testing [2. Student Queries]: "students"
+
+Testing [2. Student Queries]: "student"
+
+Testing [2. Student Queries]: "how many students are there?"
+
+Testing [2. Student Queries]: "total students"
+
+Testing [2. Student Queries]: "student count"
+
+Testing [2. Student Queries]: "registered students"
+
+Testing [2. Student Queries]: "show students"
+Reply: Here are the students currently in the directory:
+
+| Name | Enrollment No. | Department |
+|------|----------------|------------|
+| Demo Student | ENR2026001 | Computer Science |
+
+Let me know if you’d like to filter by a specific department, search for a particular name or enrollment number, view a student’s full profile, or perform any other actions (e.g., add a new student, import a CSV, etc.).
+
+Testing [2. Student Queries]: "list students"
+Reply: Here are the students currently in the system:
+
+- **Demo Student** (Enrollment No: ENR2026001) – Department: Computer Science
+
+If you’d like more details about any student or need to filter by department, semester, or status, just let me know!
+
+Testing [2. Student Queries]: "show all students"
+Reply: Here are the students currently in the system:
+
+- **Demo Student** – Enrollment No: **ENR2026001**, Department: **Computer Science**  
+
+If you need more details about a specific student (attendance, grades, contact information, etc.) or want to filter the list by department, semester, or risk level, just let me know!
+
+Testing [2. Student Queries]: "show student names"
+Reply: Here are the student names currently in the system:
+
+- **Demo Student** (Enrollment No: ENR2026001)
+
+If you’d like to see more details or filter by department, semester, or any other criteria, just let me know!
+
+Testing [2. Student Queries]: "show names and IDs"
+Reply: I’m happy to help! Could you let me know which records you’d like to see—students, faculty members, or something else?
+
+Testing [2. Student Queries]: "show students with enrollment numbers"
+Reply: Here are the students currently in the system:
+
+*   **Demo Student**
+    *   Enrollment No: ENR2026001
+    *   Department: Computer Science
+
+Testing [2. Student Queries]: "students?"
+Reply: There are currently **1 student** registered in the system. If you’d like more details—such as a list of all students, search results, or specific profiles—just let me know!
+
+Testing [2. Student Queries]: "students!"
+Reply: There’s just one student currently in the system: **Demo Student** (Enrollment No. ENR2026001) from the Computer Science department.
+
+Testing [2. Student Queries]: "Students"
+Reply: You’re now on the **Student Directory** page.  
+From here you can:
+
+- **Search** by name or enrollment number  
+- **Filter** by department, semester, status, or risk level  
+- **Add** a new student (or bulk‑import via CSV)  
+- **View** a student’s full profile by clicking a row
+
+Let me know what you’d like to do next—e.g., search for a specific student, filter the list, or add a new record.
+
+Testing [2. Student Queries]: "studnts"
+Reply: There is currently 1 student enrolled in the system.
+
+Testing [2. Student Queries]: "studentsss"
+Reply: There is **1 student** currently in the system.  
+If you’d like to see the full list or search for a specific student, just let me know or I can take you straight to the Student Directory page.
+
+Testing [3. Student Lookup]: "find ENR2026001"
+Reply: Here’s the profile for enrollment number **ENR2026001**:
+
+- **Name:** Demo Student  
+- **Department:** Computer Science  
+- **Semester:** 1 (Sophomore)  
+- **Enrolled courses:**
+  1. **CS101 – Introduction to Programming** (3 credits, capacity 40) – *course is marked as deleted, so it may be no longer active*  
+  2. **CS202 – Database Management Systems** (4 credits, capacity 45) – *also marked as deleted*  
+  3. **CS102 – Data Structures** (3 credits, capacity 40) – *currently active, with the student listed as an enrolled student*
+
+Let me know if you need more details, like grades, attendance, or anything else!
+
+Testing [3. Student Lookup]: "search ENR2026001"
+Reply: Here’s the profile for **Demo Student** (Enrollment No: **ENR2026001**):
+
+- **Department**: Computer Science
+- **Semester**: 1
+- **Grade**: Sophomore
+
+### Enrolled Courses:
+1. **Introduction to Programming (CS101)**
+   - Credits: 3
+   - Semester: 1
+   - Department: CSE
+
+2. **Database Management Systems (CS202)**
+   - Credits: 4
+   - Semester: 2
+   - Department: CSE
+   - Prerequisites: CS101
+
+3. **Data Structures (CS102)**
+   - Credits: 3
+   - Semester: 1
+   - Department: Computer Science
+   - Faculty Assigned: Yes
+   - Status: Active (Not deleted)
+
+Testing [3. Student Lookup]: "tell me about ENR2026001"
+Reply: Here's what I found about **Demo Student (ENR2026001)**:
+
+- **Name**: Demo Student
+- **Enrollment Number**: ENR2026001
+- **Department**: Computer Science
+- **Semester**: 1
+- **Grade Level**: Sophomore
+
+### **Enrolled Courses**:
+1. **Introduction to Programming (CS101)**
+   - Credits: 3
+   - Semester: 1
+   - Department: CSE
+   - Description: Fundamental programming constructs using Python and basic problem-solving.
+
+2. **Database Management Systems (CS202)**
+   - Credits: 4
+   - Semester: 2
+   - Department: CSE
+   - Description: Relational database concepts, schema normalization, and SQL query design.
+   - Prerequisites: CS101
+
+3. **Data Structures (CS102)**
+   - Credits: 3
+   - Semester: 1
+   - Department: Computer Science
+   - Description: Standard academic course curriculum.
+
+### **Attendance & Grades**:
+- No attendance or grade records are currently available for this student.
+
+Would you like to update their records or explore further details?

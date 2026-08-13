@@ -35,8 +35,27 @@ async function uploadFile(localFilePath, folderName = 'edumanager') {
             return response.secure_url;
         }
         catch (error) {
-            console.error('Cloudinary upload error, falling back to local file URL:', error);
+            console.error('Cloudinary upload error, falling back to Data URI / local storage:', error);
         }
+    }
+    // Fallback for local disk storage / persistence:
+    // Read file into base64 Data URI so it persists in MongoDB across Render redeployments & restarts!
+    try {
+        if (fs_1.default.existsSync(localFilePath)) {
+            const fileBuffer = fs_1.default.readFileSync(localFilePath);
+            const ext = localFilePath.split('.').pop()?.toLowerCase() || 'png';
+            const mimeType = ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : ext === 'webp' ? 'image/webp' : 'image/png';
+            const base64Data = fileBuffer.toString('base64');
+            // Clean up temp file
+            try {
+                fs_1.default.unlinkSync(localFilePath);
+            }
+            catch (e) { }
+            return `data:${mimeType};base64,${base64Data}`;
+        }
+    }
+    catch (err) {
+        console.error('Error converting file to Data URI:', err);
     }
     const filename = localFilePath.split(/[\\/]/).pop();
     return `/uploads/${filename}`;

@@ -19,6 +19,7 @@ import type { Student } from '../types';
 import { toast } from '../stores/toastStore';
 import { TableSkeleton } from '../components/Skeleton';
 import { useDebounce } from '../hooks/useDebounce';
+import { StudentAvatar } from '../components/common/StudentAvatar';
 
 const FaceRegistrationModal = lazy(() => import('../components/FaceRegistrationModal'));
 
@@ -429,9 +430,12 @@ export default function Students() {
                     return (
                       <tr key={student._id || student.id} className="hover:bg-slate-50/80 transition-colors">
                         <td className="px-6 py-4 flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-full bg-slate-900 text-white font-extrabold text-xs flex items-center justify-center border border-slate-700">
-                            {student.name?.slice(0, 2).toUpperCase()}
-                          </div>
+                          <StudentAvatar
+                            src={student.avatarUrl}
+                            name={student.name}
+                            className="h-9 w-9 rounded-full object-cover border border-slate-200"
+                            fallbackClassName="h-9 w-9 rounded-full bg-slate-900 text-white font-extrabold text-xs flex items-center justify-center border border-slate-700"
+                          />
                           <div>
                             <span className="font-extrabold text-slate-900 block">{student.name}</span>
                             <span className="text-[10px] text-slate-400 font-normal">{student.email}</span>
@@ -598,13 +602,12 @@ export default function Students() {
               {/* Profile Photo Upload & Preview */}
               <div className="flex items-center gap-4 p-3 bg-slate-50 border border-slate-200 rounded-2xl">
                 <div className="relative shrink-0">
-                  {formData.avatarUrl ? (
-                    <img src={formData.avatarUrl} alt="Avatar Preview" className="h-14 w-14 rounded-full object-cover border-2 border-[#f97316]" />
-                  ) : (
-                    <div className="h-14 w-14 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center font-bold text-lg border-2 border-slate-300">
-                      {formData.name ? formData.name.charAt(0).toUpperCase() : 'S'}
-                    </div>
-                  )}
+                  <StudentAvatar
+                    src={formData.avatarUrl}
+                    name={formData.name}
+                    className="h-14 w-14 rounded-full object-cover border-2 border-[#f97316]"
+                    fallbackClassName="h-14 w-14 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-lg border-2 border-slate-300"
+                  />
                 </div>
                 <div className="flex-1 min-w-0">
                   <span className="text-xs font-bold text-slate-800 block">Student Profile Photo</span>

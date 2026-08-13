@@ -82,6 +82,7 @@ export async function adminChatAssistant(
     { name: 'getStudentProfile', description: 'Fetch student by enrollmentNo.', parameters: { type: 'object', properties: { enrollmentNo: { type: 'string' } }, required: ['enrollmentNo'] } },
     { name: 'getStudentsByCourse', description: 'Get students enrolled in a specific course by course code or course name.', parameters: { type: 'object', properties: { courseId: { type: 'string', description: 'Course code (e.g. CS102) or title (e.g. Data Structures)' } }, required: ['courseId'] } },
     
+    { name: 'getMyFacultyProfile', description: 'Get profile details and assigned courses for the currently logged-in faculty member.', parameters: { type: 'object', properties: {} } },
     { name: 'countFaculty', description: 'Get the total number of faculty in the system.', parameters: { type: 'object', properties: {} } },
     { name: 'getFaculty', description: 'Get list of faculty.', parameters: { type: 'object', properties: {} } },
     
@@ -230,7 +231,20 @@ RULES:
             functionResult = { courseName: course?.name || query, students: students.map((s: any) => ({ name: s.name, enrollmentNo: s.enrollmentNo })) };
           }
           // ---------------- FACULTY ----------------
-          else if (name === 'countFaculty') {
+          else if (name === 'getMyFacultyProfile') {
+            let fac = userId ? await RepoService.findFacultyByUserId(userId) : null;
+            if (!fac) {
+              const facs = await RepoService.findFaculties();
+              fac = facs[0];
+            }
+            functionResult = fac ? { 
+              name: fac.name, 
+              email: fac.email, 
+              department: fac.department, 
+              designation: fac.designation || 'Professor', 
+              assignedCourses: (fac.assignedCourses || []).map((c: any) => ({ name: c.name || c, code: c.code || 'CS102', credits: c.credits || 3 }))
+            } : { error: 'Faculty profile not found' };
+          } else if (name === 'countFaculty') {
             requireAdmin();
             const totalFaculty = await RepoService.countFaculties();
             functionResult = { totalFaculty };

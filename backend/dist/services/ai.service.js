@@ -72,6 +72,7 @@ async function adminChatAssistant(message, history = [], options = {}) {
         { name: 'searchStudents', description: 'Search students by name, email, or department.', parameters: { type: 'object', properties: { search: { type: 'string' }, department: { type: 'string' } }, required: [] } },
         { name: 'getStudentProfile', description: 'Fetch student by enrollmentNo.', parameters: { type: 'object', properties: { enrollmentNo: { type: 'string' } }, required: ['enrollmentNo'] } },
         { name: 'getStudentsByCourse', description: 'Get students enrolled in a specific course by course code or course name.', parameters: { type: 'object', properties: { courseId: { type: 'string', description: 'Course code (e.g. CS102) or title (e.g. Data Structures)' } }, required: ['courseId'] } },
+        { name: 'getMyFacultyProfile', description: 'Get profile details and assigned courses for the currently logged-in faculty member.', parameters: { type: 'object', properties: {} } },
         { name: 'countFaculty', description: 'Get the total number of faculty in the system.', parameters: { type: 'object', properties: {} } },
         { name: 'getFaculty', description: 'Get list of faculty.', parameters: { type: 'object', properties: {} } },
         { name: 'countCourses', description: 'Get the total number of courses.', parameters: { type: 'object', properties: {} } },
@@ -217,6 +218,20 @@ RULES:
                         functionResult = { courseName: course?.name || query, students: students.map((s) => ({ name: s.name, enrollmentNo: s.enrollmentNo })) };
                     }
                     // ---------------- FACULTY ----------------
+                    else if (name === 'getMyFacultyProfile') {
+                        let fac = userId ? await repo_service_1.RepoService.findFacultyByUserId(userId) : null;
+                        if (!fac) {
+                            const facs = await repo_service_1.RepoService.findFaculties();
+                            fac = facs[0];
+                        }
+                        functionResult = fac ? {
+                            name: fac.name,
+                            email: fac.email,
+                            department: fac.department,
+                            designation: fac.designation || 'Professor',
+                            assignedCourses: (fac.assignedCourses || []).map((c) => ({ name: c.name || c, code: c.code || 'CS102', credits: c.credits || 3 }))
+                        } : { error: 'Faculty profile not found' };
+                    }
                     else if (name === 'countFaculty') {
                         requireAdmin();
                         const totalFaculty = await repo_service_1.RepoService.countFaculties();

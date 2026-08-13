@@ -71,11 +71,11 @@ async function adminChatAssistant(message, history = [], options = {}) {
         { name: 'countStudents', description: 'Get the total number of students in the system.', parameters: { type: 'object', properties: {} } },
         { name: 'searchStudents', description: 'Search students by name, email, or department.', parameters: { type: 'object', properties: { search: { type: 'string' }, department: { type: 'string' } }, required: [] } },
         { name: 'getStudentProfile', description: 'Fetch student by enrollmentNo.', parameters: { type: 'object', properties: { enrollmentNo: { type: 'string' } }, required: ['enrollmentNo'] } },
-        { name: 'getStudentsByCourse', description: 'Get students enrolled in a specific course.', parameters: { type: 'object', properties: { courseId: { type: 'string' } }, required: ['courseId'] } },
+        { name: 'getStudentsByCourse', description: 'Get students enrolled in a specific course by course code or course name.', parameters: { type: 'object', properties: { courseId: { type: 'string', description: 'Course code (e.g. CS102) or title (e.g. Data Structures)' } }, required: ['courseId'] } },
         { name: 'countFaculty', description: 'Get the total number of faculty in the system.', parameters: { type: 'object', properties: {} } },
         { name: 'getFaculty', description: 'Get list of faculty.', parameters: { type: 'object', properties: {} } },
         { name: 'countCourses', description: 'Get the total number of courses.', parameters: { type: 'object', properties: {} } },
-        { name: 'getCourse', description: 'Get course details by code.', parameters: { type: 'object', properties: { code: { type: 'string' } }, required: ['code'] } },
+        { name: 'getCourse', description: 'Get course details by course code or title.', parameters: { type: 'object', properties: { code: { type: 'string', description: 'Course code (e.g. CS102) or title (e.g. Data Structures)' } }, required: ['code'] } },
         { name: 'getStudentAttendance', description: 'Get attendance records for a student.', parameters: { type: 'object', properties: { studentId: { type: 'string' } }, required: ['studentId'] } },
         { name: 'getLowAttendanceStudents', description: 'Get students with attendance below a threshold.', parameters: { type: 'object', properties: {} } },
         { name: 'getStudentGrades', description: 'Get academic results/grades for a student.', parameters: { type: 'object', properties: { studentId: { type: 'string' } }, required: ['studentId'] } },
@@ -209,8 +209,12 @@ RULES:
                     }
                     else if (name === 'getStudentsByCourse') {
                         requireAdminOrFaculty();
-                        const { students } = await repo_service_1.RepoService.findStudents({ courseId: args.courseId }, 1, 50);
-                        functionResult = { students: students.map((s) => ({ name: s.name, enrollmentNo: s.enrollmentNo })) };
+                        const query = args.courseId || args.code || args.courseName || '';
+                        const allCourses = await repo_service_1.RepoService.findCourses();
+                        const course = allCourses.find((c) => c.code.toLowerCase() === query.toLowerCase() || c.name.toLowerCase().includes(query.toLowerCase()));
+                        const courseId = course ? course._id : query;
+                        const { students } = await repo_service_1.RepoService.findStudents({ courseId }, 1, 50);
+                        functionResult = { courseName: course?.name || query, students: students.map((s) => ({ name: s.name, enrollmentNo: s.enrollmentNo })) };
                     }
                     // ---------------- FACULTY ----------------
                     else if (name === 'countFaculty') {
@@ -229,8 +233,10 @@ RULES:
                         functionResult = { totalCourses };
                     }
                     else if (name === 'getCourse') {
-                        const c = await repo_service_1.RepoService.findCourseByCode(args.code);
-                        functionResult = c ? { name: c.name, code: c.code, credits: c.credits } : { error: 'Not found' };
+                        const query = args.code || args.name || '';
+                        const allCourses = await repo_service_1.RepoService.findCourses();
+                        const c = allCourses.find((item) => item.code.toLowerCase() === query.toLowerCase() || item.name.toLowerCase().includes(query.toLowerCase()));
+                        functionResult = c ? { name: c.name, code: c.code, credits: c.credits, description: c.description } : { error: 'Course not found' };
                     }
                     // ---------------- ATTENDANCE & GRADES ----------------
                     else if (name === 'getStudentAttendance') {

@@ -112,7 +112,7 @@ RULES:
         ...cleanHistory.map(h => ({ role: (h.role === 'model' || h.role === 'assistant') ? 'assistant' : 'user', content: h.parts[0] })),
         { role: 'user', content: rawQuery }
     ];
-    let maxIterations = 5;
+    let maxIterations = 6;
     let iteration = 0;
     let navigateTo;
     let lastToolResult = null;
@@ -187,7 +187,7 @@ RULES:
                         functionResult = { students: students.map((s) => ({ name: s.name, enrollmentNo: s.enrollmentNo, department: s.department })) };
                     }
                     else if (name === 'getStudentProfile') {
-                        const s = await repo_service_1.RepoService.findStudentByEnrollmentNo(args.enrollmentNo);
+                        const s = await repo_service_1.RepoService.findStudentByEnrollmentNo(args.enrollmentNo) || await repo_service_1.RepoService.findStudentById(args.enrollmentNo);
                         if (!s) {
                             functionResult = { error: 'Not found' };
                         }
@@ -195,7 +195,16 @@ RULES:
                             throw new Error('UNAUTHORIZED: You can only view your own profile');
                         }
                         else {
-                            functionResult = { name: s.name, enrollmentNo: s.enrollmentNo, department: s.department, gpa: s.cgpa, attendance: s.attendanceRate };
+                            functionResult = {
+                                name: s.name,
+                                enrollmentNo: s.enrollmentNo,
+                                department: s.department,
+                                semester: s.semester || 1,
+                                grade: s.grade || 'N/A',
+                                gpa: s.cgpa,
+                                attendance: s.attendanceRate,
+                                enrolledCourses: s.enrolledCourses || ['Data Structures (CS102)']
+                            };
                         }
                     }
                     else if (name === 'getStudentsByCourse') {

@@ -9,7 +9,10 @@ import {
   KeyRound,
   Eye,
   EyeOff,
-  Camera
+  Camera,
+  UploadCloud,
+  RotateCcw,
+  AlertCircle
 } from 'lucide-react';
 
 import DashboardShell from '../components/layout/DashboardShell';
@@ -34,6 +37,7 @@ export default function Students() {
   const [search, setSearch] = useState('');
   const debouncedSearch = useDebounce(search, 500);
   const [selectedDept, setSelectedDept] = useState('');
+  const [showArchived, setShowArchived] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
@@ -48,6 +52,11 @@ export default function Students() {
   const [showIdCardModal, setShowIdCardModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showFaceModal, setShowFaceModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importLoading, setImportLoading] = useState(false);
+  const [importSummary, setImportSummary] = useState<{ importedCount: number; totalParsed: number; errors: any[] } | null>(null);
+
   const [faceActiveStudent, setFaceActiveStudent] = useState<Student | null>(null);
   const [activeStudent, setActiveStudent] = useState<Student | null>(null);
   const [passwordStudent, setPasswordStudent] = useState<Student | null>(null);
@@ -55,7 +64,6 @@ export default function Students() {
   const [showPasswordText, setShowPasswordText] = useState(false);
   const [passwordError, setPasswordError] = useState('');
 
-  
   // Form states
   const [formData, setFormData] = useState({
     name: '',
@@ -82,6 +90,7 @@ export default function Students() {
         params: {
           search: debouncedSearch,
           department: selectedDept,
+          isDeleted: showArchived ? 'true' : 'false',
           page,
           limit: 6
         }
@@ -91,13 +100,13 @@ export default function Students() {
       setTotalItems(res.data.pagination?.totalItems || 0);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to fetch student directory');
-      setStudents([]); // Clear the list on error so it doesn't falsely show all students
+      setStudents([]);
       setTotalItems(0);
       setTotalPages(1);
     } finally {
       setLoading(false);
     }
-  }, [debouncedSearch, selectedDept, page]);
+  }, [debouncedSearch, selectedDept, showArchived, page]);
 
   useEffect(() => {
     fetchStudentsList();
@@ -113,11 +122,12 @@ export default function Students() {
     setActionLoading(true);
 
     try {
-      await api.post('/students', formData);
+      const res = await api.post('/students', formData);
       toast.success('Student registered successfully!');
       fetchStudentsList();
       setShowAddModal(false);
-      setCreatedCredentials({ email: formData.email, password: formData.password, role: 'Student' });
+      const effectivePass = res.data.defaultPassword || formData.password || `${formData.name.split(' ')[0].toLowerCase()}123`;
+      setCreatedCredentials({ email: formData.email, password: effectivePass, role: 'Student' });
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to create student');
       toast.error(err.response?.data?.error || 'Failed to create student');
@@ -160,43 +170,76 @@ export default function Students() {
       setPasswordError('Password must be at least 6 characters long');
       return;
     }
-
-    setPasswordError('');
     setActionLoading(true);
+    setPasswordError('');
 
     try {
-      const studentId = passwordStudent._id || passwordStudent.id;
-      const res = await api.put(`/students/${studentId}/password`, {
+      await api.put(`/students/${passwordStudent._id || passwordStudent.id}/password`, {
         password: newPassword
       });
-      toast.success(res.data.message || `Password updated successfully for ${passwordStudent.name}`);
+      toast.success(`Password for ${passwordStudent.name} updated successfully!`);
       setShowPasswordModal(false);
       setPasswordStudent(null);
-      setNewPassword('');
     } catch (err: any) {
-      const errMsg = err.response?.data?.error || 'Failed to update student password';
-      setPasswordError(errMsg);
-      toast.error(errMsg);
+      setPasswordError(err.response?.data?.error || 'Failed to change student password');
     } finally {
       setActionLoading(false);
     }
   };
 
-
   const handleSoftDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to soft delete this student?')) return;
+    if (!window.confirm('Are you sure you want to archive this student profile?')) return;
     try {
       await api.delete(`/students/${id}`);
-      toast.success('Student profile soft-deleted successfully.');
+      toast.success('Student profile archived.');
       fetchStudentsList();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Delete student failed');
+      toast.error(err.response?.data?.error || 'Failed to archive student');
     }
   };
 
-  // Export handlers
+  const handleRestore = async (id: string) => {
+    try {
+      await api.post(`/students/${id}/restore`);
+      toast.success('Student profile restored successfully!');
+      fetchStudentsList();
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Failed to restore student');
+    }
+  };
+
+  const handleExcelImportSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!importFile) {
+      toast.error('Please select an Excel or CSV file to import.');
+      return;
+    }
+
+    const fData = new FormData();
+    fData.append('file', importFile);
+
+    try {
+      setImportLoading(true);
+      const res = await api.post('/students/import', fData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      toast.success(res.data.message || 'Excel import completed!');
+      setImportSummary({
+        importedCount: res.data.importedCount || 0,
+        totalParsed: res.data.totalParsed || 0,
+        errors: res.data.errors || []
+      });
+      fetchStudentsList();
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Failed to import students from spreadsheet.');
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
   const triggerExport = async (type: 'csv' | 'excel' | 'pdf') => {
     try {
+      toast.info(`Generating ${type.toUpperCase()} export...`);
       const response = await api.get(`/students/export/${type}`, {
         responseType: 'blob'
       });
@@ -246,7 +289,7 @@ export default function Students() {
     setFormData({
       name: student.name || '',
       email: student.email || '',
-      password: 'dummy-password',
+      password: '',
       age: student.age?.toString() || '',
       gender: student.gender || 'Male',
       grade: student.grade || 'Freshman',
@@ -266,7 +309,6 @@ export default function Students() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Reset input value so the same file can be selected again if needed
     e.target.value = '';
 
     const ext = file.name.split('.').pop()?.toLowerCase();
@@ -312,10 +354,10 @@ export default function Students() {
         <div className="p-6 bg-white border border-slate-200/80 rounded-3xl shadow-card flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
             <h2 className="font-title font-black text-lg text-slate-900 flex items-center gap-2">
-              Students
+              Students {showArchived && <span className="px-2 py-0.5 bg-amber-100 text-amber-800 text-[10px] rounded-full font-bold">Archived Directory</span>}
             </h2>
             <p className="text-xs text-slate-400 font-medium mt-0.5">
-              Manage and view student information
+              {showArchived ? 'View and restore archived student profiles' : 'Manage and view active student information'}
             </p>
           </div>
 
@@ -345,6 +387,33 @@ export default function Students() {
               <option value="IT">Information Tech (IT)</option>
             </select>
 
+            {/* Archived Toggle */}
+            {isAdmin && (
+              <button
+                onClick={() => { setShowArchived(!showArchived); setPage(1); }}
+                className={`px-3.5 py-2 border rounded-2xl text-xs font-bold transition-all cursor-pointer shrink-0 ${
+                  showArchived 
+                    ? 'bg-amber-500 text-white border-amber-600 shadow-glow' 
+                    : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                }`}
+                title="Toggle Archived Students"
+              >
+                {showArchived ? 'Active Directory' : 'Archived'}
+              </button>
+            )}
+
+            {/* Excel Import Button (P1-3) */}
+            {isAdmin && !showArchived && (
+              <button
+                onClick={() => { setImportFile(null); setImportSummary(null); setShowImportModal(true); }}
+                className="px-3.5 py-2 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 rounded-2xl text-xs font-bold text-emerald-700 flex items-center gap-1.5 cursor-pointer shrink-0"
+                title="Bulk Import Students via Excel/CSV"
+              >
+                <UploadCloud size={14} className="text-emerald-600" />
+                <span>Import</span>
+              </button>
+            )}
+
             {/* Export Buttons */}
             <button
               onClick={() => triggerExport('pdf')}
@@ -355,7 +424,7 @@ export default function Students() {
               <span>Export</span>
             </button>
 
-            {isAdmin && (
+            {isAdmin && !showArchived && (
               <button onClick={openAddModal} className="w-full sm:w-auto px-4 py-2 bg-[#ff6b00] hover:bg-orange-600 text-white font-extrabold rounded-2xl text-xs flex items-center justify-center gap-1.5 shadow-glow cursor-pointer transition-all shrink-0">
                 <UserPlus size={16} />
                 + Add Student
@@ -405,9 +474,9 @@ export default function Students() {
               <UserPlus size={18} />
             </div>
             <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">New This Month</p>
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Enrolled In System</p>
               <h4 className="text-xl font-black text-slate-900 tracking-tight">
-                {students.filter(s => s.createdAt && new Date(s.createdAt).getMonth() === new Date().getMonth()).length}
+                {students.length}
               </h4>
             </div>
           </div>
@@ -418,7 +487,9 @@ export default function Students() {
           {loading ? (
             <TableSkeleton rows={6} cols={7} />
           ) : students.length === 0 ? (
-            <p className="text-xs text-slate-400 text-center py-16 italic">No student records found matching filter criteria.</p>
+            <p className="text-xs text-slate-400 text-center py-16 italic">
+              {showArchived ? 'No archived student records found.' : 'No student records found matching filter criteria.'}
+            </p>
           ) : (
             <div className="overflow-x-auto scrollbar-thin">
               <table className="w-full border-collapse text-left text-xs min-w-[900px]">
@@ -426,7 +497,7 @@ export default function Students() {
                   <tr className="bg-slate-50/80 border-b border-slate-100 text-slate-400 text-[10px] uppercase font-extrabold tracking-wider">
                     <th className="px-6 py-3.5">Name</th>
                     <th className="px-6 py-3.5">Enrollment No.</th>
-                    <th className="px-6 py-3.5">Course</th>
+                    <th className="px-6 py-3.5">Department</th>
                     <th className="px-6 py-3.5">Semester</th>
                     <th className="px-6 py-3.5">GPA</th>
                     <th className="px-6 py-3.5">Attendance</th>
@@ -435,11 +506,16 @@ export default function Students() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-medium">
-                  {students.map((student, idx) => {
-                    const mockGpa = (2.2 + (idx % 3) * 0.7).toFixed(2);
-                    const mockAtt = 70 + (idx % 4) * 8;
-                    const isRisk = Number(mockGpa) < 2.0 || mockAtt < 75;
-                    const isExc = Number(mockGpa) > 3.4;
+                  {students.map((student) => {
+                    // P1-4: Clean values instead of fake random numbers
+                    const displayGpa = (student as any).cgpa !== undefined 
+                      ? (student as any).cgpa.toFixed(2) 
+                      : (student as any).gpa !== undefined 
+                        ? (student as any).gpa.toFixed(2) 
+                        : 'N/A';
+                    const displayAtt = (student as any).attendanceRate !== undefined 
+                      ? `${(student as any).attendanceRate}%` 
+                      : 'N/A';
 
                     return (
                       <tr key={student._id || student.id} className="hover:bg-slate-50/80 transition-colors">
@@ -457,37 +533,33 @@ export default function Students() {
                         </td>
 
                         <td className="px-6 py-4 font-mono font-bold text-slate-600">
-                          {student.enrollmentNo || `ENR258449${45 + idx}`}
+                          {student.enrollmentNo}
                         </td>
 
                         <td className="px-6 py-4 font-bold text-slate-800">
-                          B.Tech {student.department || 'CSE'}
+                          {student.department || 'CSE'}
                         </td>
 
                         <td className="px-6 py-4 font-bold text-slate-700">
-                          {student.semester || 6}
+                          Sem {student.semester || 1}
                         </td>
 
                         <td className="px-6 py-4 font-mono font-black text-slate-900">
-                          {mockGpa}
+                          {displayGpa}
                         </td>
 
                         <td className="px-6 py-4 font-mono font-bold text-slate-700">
-                          {mockAtt}%
+                          {displayAtt}
                         </td>
 
                         <td className="px-6 py-4">
-                          {isRisk ? (
+                          {student.isDeleted ? (
                             <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-red-50 text-red-600 border border-red-200">
-                              At Risk
-                            </span>
-                          ) : isExc ? (
-                            <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-indigo-50 text-indigo-600 border border-indigo-200">
-                              Excellent
+                              Archived
                             </span>
                           ) : (
                             <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-600 border border-emerald-200">
-                              Good
+                              Active
                             </span>
                           )}
                         </td>
@@ -500,47 +572,60 @@ export default function Students() {
                                 setShowIdCardModal(true);
                               }}
                               className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
-                              title="View Student Profile ID"
+                              title="View Student Profile ID Card"
                             >
                               <Eye size={16} />
                             </button>
 
                             {isAdmin && (
                               <>
-                                <button
-                                  onClick={() => {
-                                    setFaceActiveStudent(student);
-                                    setShowFaceModal(true);
-                                  }}
-                                  className="p-1.5 text-slate-400 hover:text-[#ff6b00] hover:bg-orange-50 rounded-xl transition-colors cursor-pointer"
-                                  title="Register Face Data"
-                                >
-                                  <Camera size={16} />
-                                </button>
+                                {showArchived ? (
+                                  <button
+                                    onClick={() => handleRestore(student._id || student.id || '')}
+                                    className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors cursor-pointer flex items-center gap-1 font-bold text-xs"
+                                    title="Restore Student Profile"
+                                  >
+                                    <RotateCcw size={16} />
+                                    <span>Restore</span>
+                                  </button>
+                                ) : (
+                                  <>
+                                    <button
+                                      onClick={() => {
+                                        setFaceActiveStudent(student);
+                                        setShowFaceModal(true);
+                                      }}
+                                      className="p-1.5 text-slate-400 hover:text-[#ff6b00] hover:bg-orange-50 rounded-xl transition-colors cursor-pointer"
+                                      title="Register Face Data"
+                                    >
+                                      <Camera size={16} />
+                                    </button>
 
-                                <button
-                                  onClick={() => openPasswordModal(student)}
-                                  className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
-                                  title="Change Password"
-                                >
-                                  <KeyRound size={16} />
-                                </button>
+                                    <button
+                                      onClick={() => openPasswordModal(student)}
+                                      className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+                                      title="Change Password"
+                                    >
+                                      <KeyRound size={16} />
+                                    </button>
 
-                                <button
-                                  onClick={() => openEditModal(student)}
-                                  className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
-                                  title="Edit Student Record"
-                                >
-                                  <FileSpreadsheet size={16} />
-                                </button>
+                                    <button
+                                      onClick={() => openEditModal(student)}
+                                      className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+                                      title="Edit Student Record"
+                                    >
+                                      <FileSpreadsheet size={16} />
+                                    </button>
 
-                                <button
-                                  onClick={() => handleSoftDelete(student._id || student.id || '')}
-                                  className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
-                                  title="Delete Student Record"
-                                >
-                                  <Trash2 size={16} />
-                                </button>
+                                    <button
+                                      onClick={() => handleSoftDelete(student._id || student.id || '')}
+                                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
+                                      title="Archive Student Record"
+                                    >
+                                      <Trash2 size={16} />
+                                    </button>
+                                  </>
+                                )}
                               </>
                             )}
                           </div>
@@ -553,7 +638,7 @@ export default function Students() {
             </div>
           )}
 
-          {/* Reference Image 2 Pagination Footer Bar */}
+          {/* Pagination Footer */}
           {!loading && (
             <div className="p-4 bg-white border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400 font-bold">
               <span>Showing {totalItems > 0 ? (page - 1) * 6 + 1 : 0} to {Math.min(page * 6, totalItems)} of {totalItems}</span>
@@ -684,6 +769,7 @@ export default function Students() {
                     type="text"
                     required
                     value={formData.password}
+                    placeholder="Enter password or auto-generate"
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-900 focus:outline-none transition-all"
                   />
@@ -708,22 +794,22 @@ export default function Students() {
                     onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-700 focus:outline-none cursor-pointer"
                   >
-                    <option value="Male" className="bg-white">Male</option>
-                    <option value="Female" className="bg-white">Female</option>
-                    <option value="Other" className="bg-white">Other</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Grade Class</label>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Grade Level</label>
                   <select
                     value={formData.grade}
                     onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-700 focus:outline-none cursor-pointer"
                   >
-                    <option value="Freshman" className="bg-white">Freshman</option>
-                    <option value="Sophomore" className="bg-white">Sophomore</option>
-                    <option value="Junior" className="bg-white">Junior</option>
-                    <option value="Senior" className="bg-white">Senior</option>
+                    <option value="Freshman">Freshman</option>
+                    <option value="Sophomore">Sophomore</option>
+                    <option value="Junior">Junior</option>
+                    <option value="Senior">Senior</option>
                   </select>
                 </div>
               </div>
@@ -736,11 +822,11 @@ export default function Students() {
                     onChange={(e) => setFormData({ ...formData, department: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-lg text-xs text-slate-700 focus:outline-none cursor-pointer"
                   >
-                    <option value="CSE" className="bg-white">Computer Science (CSE)</option>
-                    <option value="ECE" className="bg-white">Electronics (ECE)</option>
-                    <option value="ME" className="bg-white">Mechanical (ME)</option>
-                    <option value="IT" className="bg-white">Information Tech (IT)</option>
-                    <option value="General Sciences" className="bg-white">General Sciences</option>
+                    <option value="CSE">Computer Science (CSE)</option>
+                    <option value="ECE">Electronics (ECE)</option>
+                    <option value="ME">Mechanical (ME)</option>
+                    <option value="IT">Information Tech (IT)</option>
+                    <option value="General Sciences">General Sciences</option>
                   </select>
                 </div>
                 <div className="space-y-1">
@@ -794,16 +880,119 @@ export default function Students() {
               <button
                 type="submit"
                 disabled={actionLoading}
-                className="w-full py-3 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-slate-900 font-bold rounded-xl text-xs shadow-card transition-all"
+                className="w-full py-3 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-white font-bold rounded-xl text-xs shadow-card transition-all cursor-pointer"
               >
-                {actionLoading ? 'Saving changes...' : 'Save Student Details'}
+                {actionLoading ? 'Saving changes...' : (showAddModal ? 'Register Student' : 'Save Changes')}
               </button>
             </form>
           </div>
         </div>
       )}
 
-      {/* ID CARD WITH ATTENDANCE QR CODE MODAL */}
+      {/* EXCEL / CSV BULK IMPORT MODAL (P1-3) */}
+      {showImportModal && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-emerald-500/30 rounded-3xl w-full max-w-lg p-6 relative shadow-card animate-slideUp">
+            <button 
+              onClick={() => { setShowImportModal(false); setImportFile(null); setImportSummary(null); }} 
+              className="absolute top-4 right-4 text-slate-500 hover:text-slate-900 transition-colors"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-200">
+                <UploadCloud size={22} />
+              </div>
+              <div>
+                <h3 className="font-title font-extrabold text-lg text-slate-900">
+                  Bulk Import Students
+                </h3>
+                <p className="text-xs text-slate-400">
+                  Upload an Excel (.xlsx, .xls) or CSV spreadsheet to register multiple students.
+                </p>
+              </div>
+            </div>
+
+            {importSummary ? (
+              <div className="space-y-4">
+                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl">
+                  <p className="text-xs font-bold text-emerald-800">
+                    Import Completed: Successfully imported {importSummary.importedCount} of {importSummary.totalParsed} records!
+                  </p>
+                </div>
+
+                {importSummary.errors && importSummary.errors.length > 0 && (
+                  <div className="max-h-40 overflow-y-auto p-3 bg-red-50 border border-red-200 rounded-xl space-y-1 text-left text-[11px] text-red-700">
+                    <p className="font-bold flex items-center gap-1">
+                      <AlertCircle size={14} /> Failed Rows ({importSummary.errors.length}):
+                    </p>
+                    {importSummary.errors.map((err, i) => (
+                      <p key={i}>Row {err.row}: {err.email || 'Record'} - {err.error}</p>
+                    ))}
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => { setShowImportModal(false); setImportFile(null); setImportSummary(null); }}
+                  className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition-colors"
+                >
+                  Done
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleExcelImportSubmit} className="space-y-4">
+                <div className="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center hover:border-emerald-400 transition-colors bg-slate-50/50">
+                  <input
+                    type="file"
+                    id="excel-file-input"
+                    accept=".xlsx, .xls, .csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+                    onChange={(e) => setImportFile(e.target.files?.[0] || null)}
+                    className="hidden"
+                  />
+                  <label htmlFor="excel-file-input" className="cursor-pointer block">
+                    <FileSpreadsheet size={36} className="mx-auto text-emerald-500 mb-2" />
+                    {importFile ? (
+                      <span className="text-xs font-bold text-slate-800 block">{importFile.name} ({(importFile.size / 1024).toFixed(1)} KB)</span>
+                    ) : (
+                      <>
+                        <span className="text-xs font-bold text-slate-700 block">Click to select or drop spreadsheet</span>
+                        <span className="text-[10px] text-slate-400 block mt-1">Supports .xlsx, .xls, .csv (Max 5 MB)</span>
+                      </>
+                    )}
+                  </label>
+                </div>
+
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-[10px] text-slate-500 space-y-1">
+                  <p className="font-bold text-slate-700">Expected Column Headers:</p>
+                  <p className="font-mono text-[9px] text-slate-600">Name, Email, Grade, Department, Semester, Parent Name, Parent Phone, Address</p>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={!importFile || importLoading}
+                  className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-card transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {importLoading ? (
+                    <>
+                      <span className="animate-spin text-sm">⏳</span>
+                      <span>Processing & Importing records...</span>
+                    </>
+                  ) : (
+                    <>
+                      <UploadCloud size={16} />
+                      <span>Start Bulk Import</span>
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ID CARD WITH STATIC PROFILE VERIFICATION QR CODE (P1-5) */}
       {showIdCardModal && activeStudent && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white border border-[#ef4444]/30 rounded-3xl w-full max-w-sm p-6 relative shadow-card animate-slideUp text-center">
@@ -820,7 +1009,6 @@ export default function Students() {
 
             {/* Glass ID card box */}
             <div className="bg-slate-50/80 p-5 rounded-2xl border border-slate-200 shadow-card text-left relative overflow-hidden">
-              {/* Glow light */}
               <div className="absolute top-0 right-0 h-28 w-28 bg-[#ef4444]/5 rounded-full filter blur-xl" />
 
               <div className="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
@@ -830,10 +1018,10 @@ export default function Students() {
 
               <div className="flex gap-4">
                 {/* QR Code container */}
-                <div className="h-28 w-28 bg-white p-1 rounded-xl flex items-center justify-center shrink-0">
+                <div className="h-28 w-28 bg-white p-1 rounded-xl flex items-center justify-center shrink-0 border border-slate-200">
                   <img 
                     src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&color=0b0c10&data=${activeStudent._id || activeStudent.id}`} 
-                    alt="Attendance Scan QR" 
+                    alt="Student Identity QR" 
                     className="h-full w-full"
                   />
                 </div>
@@ -845,24 +1033,25 @@ export default function Students() {
                   <div className="space-y-0.5 text-[9px] text-slate-700">
                     <p><span className="text-slate-700 font-bold">Dept:</span> <strong className="text-slate-900 font-extrabold">{activeStudent.department}</strong></p>
                     <p><span className="text-slate-700 font-bold">Grade:</span> <strong className="text-slate-900 font-extrabold">{activeStudent.grade}</strong></p>
-                    <p><span className="text-slate-700 font-bold">Semester:</span> <strong className="text-slate-900 font-extrabold">{activeStudent.semester}</strong></p>
+                    <p><span className="text-slate-700 font-bold">Semester:</span> <strong className="text-slate-900 font-extrabold">Sem {activeStudent.semester}</strong></p>
                     <p><span className="text-slate-700 font-bold">Sex:</span> <strong className="text-slate-900 font-extrabold">{activeStudent.gender}</strong></p>
                   </div>
                 </div>
               </div>
 
               <div className="mt-4 pt-3 border-t border-slate-200 flex items-center justify-between text-[8px] text-slate-400 font-semibold">
-                <span>DO NOT BEND OR ALTER</span>
-                <span className="text-[#ef4444]">SCAN TO ATTEND</span>
+                <span>OFFICIAL VERIFIED BADGE</span>
+                <span className="text-[#ff6b00] font-bold">STUDENT DIGITAL ID</span>
               </div>
             </div>
 
             <p className="text-[10px] text-slate-400 mt-4 leading-normal">
-              Students scan this QR code at the lecturer scan console or verify mobile presence checks to log daily attendance instantly.
+              Official student digital identity card containing encoded enrollment identification for campus verification.
             </p>
           </div>
         </div>
       )}
+
       {/* SUCCESS CREDENTIALS MODAL */}
       {createdCredentials && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -884,13 +1073,13 @@ export default function Students() {
               </div>
               <div>
                 <label className="text-[10px] font-bold text-slate-400 uppercase">Password</label>
-                <div className="font-mono text-sm text-emerald-400 select-all">{createdCredentials.password}</div>
+                <div className="font-mono text-sm text-emerald-600 font-bold select-all">{createdCredentials.password}</div>
               </div>
             </div>
 
             <button
               onClick={() => setCreatedCredentials(null)}
-              className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-slate-900 font-bold rounded-xl text-xs transition-colors"
+              className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition-colors"
             >
               Done & Close
             </button>
@@ -898,11 +1087,10 @@ export default function Students() {
         </div>
       )}
 
-      {/* EDIT STUDENT PASSWORD MODAL */}
-
+      {/* PASSWORD UPDATE MODAL */}
       {showPasswordModal && passwordStudent && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-[#f97316]/30 rounded-3xl w-full max-w-md p-6 relative shadow-card animate-slideUp">
+          <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-sm p-6 relative shadow-card animate-slideUp">
             <button 
               onClick={() => { setShowPasswordModal(false); setPasswordStudent(null); }} 
               className="absolute top-4 right-4 text-slate-500 hover:text-slate-900 transition-colors"
@@ -910,90 +1098,67 @@ export default function Students() {
               <X size={20} />
             </button>
 
-            <div className="flex items-center gap-3 mb-5">
-              <div className="p-3 bg-[#f97316]/10 text-[#f97316] rounded-2xl border border-[#f97316]/20">
-                <KeyRound size={22} />
-              </div>
-              <div>
-                <h3 className="font-title font-extrabold text-lg text-slate-900">
-                  Change Student Password
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Set a new password for <span className="font-semibold text-slate-700">{passwordStudent.name}</span> ({passwordStudent.enrollmentNo})
-                </p>
-              </div>
-            </div>
+            <h3 className="font-title font-extrabold text-lg text-slate-900 mb-1">
+              Change Password
+            </h3>
+            <p className="text-xs text-slate-500 mb-4">
+              Set a new login password for {passwordStudent.name}
+            </p>
 
             {passwordError && (
-              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-[#ef4444] rounded-xl text-xs">
+              <div className="mb-4 p-2.5 bg-red-50 border border-red-200 text-red-600 rounded-xl text-xs">
                 {passwordError}
               </div>
             )}
 
             <form onSubmit={handlePasswordSubmit} className="space-y-4">
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">New Password</label>
-                  <button 
-                    type="button"
-                    onClick={() => setNewPassword(Math.random().toString(36).slice(-8) + '!')}
-                    className="text-[10px] text-[#ef4444] hover:text-slate-900 font-bold transition-colors"
-                  >
-                    Auto-Generate
-                  </button>
-                </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">New Password</label>
                 <div className="relative">
                   <input
-                    type={showPasswordText ? 'text' : 'password'}
+                    type={showPasswordText ? "text" : "password"}
                     required
                     minLength={6}
-                    placeholder="Enter at least 6 characters..."
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full pl-3 pr-10 py-2.5 bg-slate-50 border border-slate-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-xs text-slate-900 focus:outline-none transition-all"
+                    placeholder="Min. 6 characters"
+                    className="w-full pl-3 pr-10 py-2 bg-slate-50 border border-slate-200 focus:border-[#f97316] rounded-xl text-xs text-slate-900 focus:outline-none"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPasswordText(!showPasswordText)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
                   >
-                    {showPasswordText ? <EyeOff size={16} /> : <Eye size={16} />}
+                    {showPasswordText ? <EyeOff size={14} /> : <Eye size={14} />}
                   </button>
                 </div>
-                <p className="text-[10px] text-slate-400">
-                  Password must be at least 6 characters. The student will use this new password for next login.
-                </p>
               </div>
 
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => { setShowPasswordModal(false); setPasswordStudent(null); }}
-                  className="w-1/3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={actionLoading}
-                  className="w-2/3 py-2.5 bg-gradient-to-r from-[#f97316] to-[#ef4444] text-slate-900 font-bold rounded-xl text-xs shadow-card transition-all disabled:opacity-50"
-                >
-                  {actionLoading ? 'Updating Password...' : 'Update Password'}
-                </button>
-              </div>
+              <button
+                type="submit"
+                disabled={actionLoading}
+                className="w-full py-2.5 bg-[#ff6b00] hover:bg-orange-600 text-white font-bold rounded-xl text-xs transition-colors"
+              >
+                {actionLoading ? 'Updating...' : 'Update Password'}
+              </button>
             </form>
           </div>
         </div>
       )}
 
+      {/* FACE REGISTRATION MODAL */}
       {showFaceModal && faceActiveStudent && (
         <Suspense fallback={null}>
           <FaceRegistrationModal
+            isOpen={showFaceModal}
             student={faceActiveStudent}
             onClose={() => {
               setShowFaceModal(false);
               setFaceActiveStudent(null);
-              fetchStudents();
+            }}
+            onSuccess={() => {
+              fetchStudentsList();
+              toast.success(`Face biometrics registered for ${faceActiveStudent.name}!`);
             }}
           />
         </Suspense>
@@ -1002,4 +1167,3 @@ export default function Students() {
     </DashboardShell>
   );
 }
-

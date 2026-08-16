@@ -14,8 +14,19 @@ router.post(
   FacultyController.uploadAvatar
 );
 
+// POST: /api/faculty (Admin only - Create Faculty)
+router.post(
+  '/',
+  authenticateJWT,
+  requireRole(['Super Admin', 'Admin']),
+  FacultyController.createFaculty
+);
+
 // GET: /api/faculty (Protected)
 router.get('/', authenticateJWT, FacultyController.getFaculties);
+
+// GET: /api/faculty/:id (Protected)
+router.get('/:id', authenticateJWT, FacultyController.getFacultyById);
 
 // POST: /api/faculty/assign-course (Admin only)
 router.post(

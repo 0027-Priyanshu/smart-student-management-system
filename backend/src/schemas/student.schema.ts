@@ -18,6 +18,7 @@ export const createStudentSchema = z.object({
   parentName: z.string().min(2, 'Parent name is required'),
   parentPhone: z.string().min(8, 'Parent phone must be at least 8 digits'),
   address: z.string().min(5, 'Address must be at least 5 characters'),
+  password: z.string().min(6, 'Password must be at least 6 characters').optional(),
   avatarUrl: z.string().optional(),
   enrolledCourses: z.array(z.string()).optional(),
   academicHistory: z.array(academicHistorySchema).optional(),

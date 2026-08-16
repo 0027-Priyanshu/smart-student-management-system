@@ -77,7 +77,7 @@ export class StudentController {
 
   static async createStudent(req: Request, res: Response, next: NextFunction) {
     try {
-      const { name, email, age, gender, grade, department, semester, parentName, parentPhone, address, enrolledCourses, academicHistory } = req.body;
+      const { name, email, password, avatarUrl, age, gender, grade, department, semester, parentName, parentPhone, address, enrolledCourses, academicHistory } = req.body;
       const requester = (req as any).user;
       
       const cleanEmail = email.toLowerCase().trim();
@@ -86,10 +86,13 @@ export class StudentController {
         return res.status(400).json({ error: 'Email already registered' });
       }
 
-      // Generate seed password from name
-      const defaultPass = name.split(' ')[0].toLowerCase() + '123';
+      // P1-1: Use Admin-provided password if supplied, otherwise generate default
+      const effectivePassword = (password && typeof password === 'string' && password.trim().length >= 6)
+        ? password.trim()
+        : name.split(' ')[0].toLowerCase() + '123';
+
       const salt = bcrypt.genSaltSync(10);
-      const passwordHash = bcrypt.hashSync(defaultPass, salt);
+      const passwordHash = bcrypt.hashSync(effectivePassword, salt);
 
       // Create main login User account (Student accounts are marked verified by default when created by Admins)
       const user = await RepoService.createUser({
@@ -97,12 +100,14 @@ export class StudentController {
         email: cleanEmail,
         password: passwordHash,
         role: 'Student',
+        avatarUrl: avatarUrl || '',
         isVerified: true
       });
 
       const userId = user._id || user.id;
       const enrollmentNo = 'ENR' + Date.now().toString().slice(-8);
 
+      // P1-2: Pass avatarUrl to Student model so profile photo persists
       const student = await RepoService.createStudent({
         userId,
         name,
@@ -116,6 +121,7 @@ export class StudentController {
         parentName,
         parentPhone,
         address,
+        avatarUrl: avatarUrl || '',
         enrolledCourses: enrolledCourses || [],
         academicHistory: academicHistory || [],
         isDeleted: false
@@ -137,7 +143,8 @@ export class StudentController {
 
       return res.status(201).json({
         message: 'Student profile created successfully',
-        student
+        student,
+        defaultPassword: effectivePassword
       });
     } catch (error) {
       next(error);

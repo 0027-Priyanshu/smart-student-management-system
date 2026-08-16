@@ -65,6 +65,8 @@ export default function Faculty() {
     loadData();
   }, []);
 
+  const [createdFacultyCredentials, setCreatedFacultyCredentials] = useState<{email: string, password: string, name: string} | null>(null);
+
   const handleAddFacultySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!addFormData.name || !addFormData.email || !addFormData.password) {
@@ -73,18 +75,22 @@ export default function Faculty() {
     }
     setActionLoading(true);
     try {
-      await api.post('/auth/register', {
-        ...addFormData,
-        role: 'Faculty'
-      });
+      const res = await api.post('/faculty', addFormData);
       toast.success(`Faculty member ${addFormData.name} registered successfully!`);
       setShowAddModal(false);
+      const effectivePassword = res.data.defaultPassword || addFormData.password;
+      setCreatedFacultyCredentials({
+        name: addFormData.name,
+        email: addFormData.email,
+        password: effectivePassword
+      });
       setAddFormData({
         name: '',
         email: '',
         password: '',
         department: 'Computer Science',
-        designation: 'Assistant Professor'
+        designation: 'Assistant Professor',
+        avatarUrl: ''
       });
       loadData();
     } catch (err: any) {
@@ -787,6 +793,41 @@ export default function Faculty() {
                   <span>{actionLoading ? 'Deleting...' : 'Delete Faculty'}</span>
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Faculty Success Credentials Modal */}
+        {createdFacultyCredentials && (
+          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white border border-emerald-500/30 rounded-3xl w-full max-w-sm p-6 relative shadow-card animate-slideUp text-center">
+              <div className="mx-auto w-12 h-12 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mb-4 border border-emerald-500/30">
+                <GraduationCap size={24} />
+              </div>
+              <h3 className="font-title font-extrabold text-lg text-slate-900 mb-2">
+                Faculty Registered!
+              </h3>
+              <p className="text-xs text-slate-500 mb-6">
+                Please securely share these initial credentials with <strong>{createdFacultyCredentials.name}</strong>.
+              </p>
+
+              <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-left space-y-3 mb-6">
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase">Email ID</label>
+                  <div className="font-mono text-sm text-slate-900 select-all">{createdFacultyCredentials.email}</div>
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase">Password</label>
+                  <div className="font-mono text-sm text-emerald-600 font-bold select-all">{createdFacultyCredentials.password}</div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setCreatedFacultyCredentials(null)}
+                className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer"
+              >
+                Done & Close
+              </button>
             </div>
           </div>
         )}

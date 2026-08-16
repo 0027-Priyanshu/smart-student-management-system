@@ -39,10 +39,31 @@ export class CourseController {
 
   static async getCourseById(req: Request, res: Response, next: NextFunction) {
     try {
+      const requester = (req as any).user;
       const course = await RepoService.findCourseById(req.params.id);
       if (!course) {
         return res.status(404).json({ error: 'Course not found' });
       }
+
+      // P1-15: Course Detail RBAC
+      if (requester.role === 'Student') {
+        const studentProfile = await RepoService.findStudentByUserId(requester.userId);
+        if (!studentProfile) return res.status(404).json({ error: 'Student profile not found' });
+        const enrolledIds = (studentProfile.enrolledCourses || []).map((c: any) => (c._id || c.id || c).toString());
+        if (!enrolledIds.includes(course._id?.toString() || course.id?.toString())) {
+          return res.status(403).json({ error: 'Access denied: You are not enrolled in this course.' });
+        }
+      } else if (requester.role === 'Faculty') {
+        const facultyProfile = await RepoService.findFacultyByUserId(requester.userId);
+        if (!facultyProfile) return res.status(404).json({ error: 'Faculty profile not found' });
+        const assignedIds = (facultyProfile.assignedCourses || []).map((c: any) => (c._id || c.id || c).toString());
+        const courseFacultyId = (course.facultyId?._id || course.facultyId?.id || course.facultyId || '').toString();
+        const profileId = (facultyProfile._id || facultyProfile.id).toString();
+        if (!assignedIds.includes(course._id?.toString() || course.id?.toString()) && courseFacultyId !== profileId) {
+          return res.status(403).json({ error: 'Access denied: You are not assigned to teach this course.' });
+        }
+      }
+
       return res.json({ course });
     } catch (error) {
       next(error);
@@ -195,18 +216,22 @@ export class CourseController {
         return res.status(404).json({ error: 'Course not found' });
       }
 
-      const studentCourses: string[] = student.enrolledCourses?.map((c: any) => c._id?.toString() || c.id?.toString()) || [];
-      if (studentCourses.includes(courseId)) {
+      const studentCourses: string[] = student.enrolledCourses?.map((c: any) => (c._id || c.id || c).toString()) || [];
+      if (studentCourses.includes(courseId.toString())) {
         return res.status(400).json({ error: 'Student is already enrolled in this course' });
       }
 
-      const updatedCourses = [...studentCourses, courseId];
-      await RepoService.updateStudent(studentId, { enrolledCourses: updatedCourses });
-
-      const courseStudents: string[] = course.enrolledStudents?.map((s: any) => s._id?.toString() || s.id?.toString()) || [];
-      if (!courseStudents.includes(studentId)) {
-        await RepoService.updateCourse(courseId, { enrolledStudents: [...courseStudents, studentId] });
+      const courseStudents: string[] = course.enrolledStudents?.map((s: any) => (s._id || s.id || s).toString()) || [];
+      
+      // P1-13: Course Capacity Enforcement
+      if (course.capacity && courseStudents.length >= course.capacity) {
+        return res.status(400).json({ 
+          error: `Cannot enroll student: Course "${course.name}" (${course.code}) has reached its maximum capacity of ${course.capacity} students.` 
+        });
       }
+
+      // P1-12: Transactional / Atomic bidirectional enrollment
+      await RepoService.enrollStudentInCourse(studentId, courseId);
 
       // Send course assignment email notification
       NotificationService.sendCourseAssignmentNotification(
@@ -228,6 +253,74 @@ export class CourseController {
       emitLiveUpdate('dashboard_update', { action: 'course_assigned' });
 
       return res.json({ message: 'Student successfully enrolled in course!' });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async unassignCourse(req: Request, res: Response, next: NextFunction) {
+    try {
+      const requester = (req as any).user;
+      const { studentId, courseId } = req.body;
+
+      const student = await RepoService.findStudentById(studentId);
+      if (!student) {
+        return res.status(404).json({ error: 'Student not found' });
+      }
+
+      const course = await RepoService.findCourseById(courseId);
+      if (!course) {
+        return res.status(404).json({ error: 'Course not found' });
+      }
+
+      // P1-14: Unenroll student from course (preserves historical attendance and grades)
+      await RepoService.unenrollStudentFromCourse(studentId, courseId);
+
+      // Log Activity
+      await RepoService.createLog({
+        userId: requester.userId,
+        userName: requester.name,
+        role: requester.role,
+        action: 'Course Un-enrollment',
+        details: `Un-enrolled student ${student.name} from course ${course.code}`
+      });
+
+      emitLiveUpdate('dashboard_update', { action: 'course_unassigned' });
+
+      return res.json({ message: 'Student successfully un-enrolled from course!' });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getCourseStudents(req: Request, res: Response, next: NextFunction) {
+    try {
+      const requester = (req as any).user;
+      const { id: courseId } = req.params;
+
+      const course = await RepoService.findCourseById(courseId);
+      if (!course) {
+        return res.status(404).json({ error: 'Course not found' });
+      }
+
+      // P1-18: RBAC check for faculty
+      if (requester.role === 'Faculty') {
+        const facultyProfile = await RepoService.findFacultyByUserId(requester.userId);
+        if (!facultyProfile) return res.status(404).json({ error: 'Faculty profile not found' });
+        const assignedIds = (facultyProfile.assignedCourses || []).map((c: any) => (c._id || c.id || c).toString());
+        const courseFacultyId = (course.facultyId?._id || course.facultyId?.id || course.facultyId || '').toString();
+        const profileId = (facultyProfile._id || facultyProfile.id).toString();
+        if (!assignedIds.includes(courseId.toString()) && courseFacultyId !== profileId) {
+          return res.status(403).json({ error: 'Access denied: You are not assigned to teach this course.' });
+        }
+      } else if (requester.role === 'Student') {
+        return res.status(403).json({ error: 'Access denied: Students cannot query course rosters.' });
+      }
+
+      // Find all active students enrolled in this course
+      const { students } = await RepoService.findStudents({ courseId, isDeleted: false }, 1, 1000);
+
+      return res.json({ students });
     } catch (error) {
       next(error);
     }

@@ -54,4 +54,19 @@ router.post(
   CourseController.assignCourse
 );
 
+// POST: /api/courses/unassign (Admin un-enrolls student from course)
+router.post(
+  '/unassign',
+  authenticateJWT,
+  requireRole(['Super Admin', 'Admin']),
+  CourseController.unassignCourse
+);
+
+// GET: /api/courses/:id/students (Protected - Enrolled course roster for faculty/admin)
+router.get(
+  '/:id/students',
+  authenticateJWT,
+  CourseController.getCourseStudents
+);
+
 export default router;

@@ -18,6 +18,7 @@ class AttendanceController {
                 // Force the query to only fetch this student's records
                 studentId = studentProfile._id || studentProfile.id;
             }
+            const query = {};
             if (requester.role === 'Faculty') {
                 const facultyProfile = await repo_service_1.RepoService.findFacultyByUserId(requester.userId);
                 if (!facultyProfile)
@@ -26,8 +27,11 @@ class AttendanceController {
                 if (courseId && !facultyCourses.includes(courseId)) {
                     return res.status(403).json({ error: 'Access denied: You are not assigned to this course.' });
                 }
+                // P1-17: Always scope results to faculty assigned courses when no courseId query parameter is provided
+                if (!courseId) {
+                    query.courseId = { $in: facultyCourses };
+                }
             }
-            const query = {};
             if (studentId)
                 query.studentId = studentId;
             if (courseId)
@@ -45,15 +49,24 @@ class AttendanceController {
         try {
             const requester = req.user;
             const { studentId, courseId, date, status } = req.body;
-            // Faculty RBAC: only allow marking attendance for assigned courses
+            // P1-16: Faculty RBAC: verify faculty teaches course
             if (requester.role === 'Faculty') {
                 const facultyProfile = await repo_service_1.RepoService.findFacultyByUserId(requester.userId);
                 if (facultyProfile) {
                     const assignedCourses = facultyProfile.assignedCourses?.map((c) => (c._id || c.id || c).toString()) || [];
                     if (!assignedCourses.includes(courseId)) {
-                        return res.status(403).json({ error: 'Access denied: You are not assigned to this course.' });
+                        return res.status(403).json({ error: 'Access denied: You are not assigned to teach this course.' });
                     }
                 }
+            }
+            // P1-16: Verify Student exists and is actually enrolled in this course
+            const student = await repo_service_1.RepoService.findStudentById(studentId);
+            if (!student) {
+                return res.status(404).json({ error: 'Student not found.' });
+            }
+            const studentEnrolledCourses = (student.enrolledCourses || []).map((c) => (c._id || c.id || c).toString());
+            if (!studentEnrolledCourses.includes(courseId.toString())) {
+                return res.status(400).json({ error: 'Cannot mark attendance: Student is not enrolled in this course.' });
             }
             const log = await repo_service_1.RepoService.markAttendance({
                 studentId,
@@ -62,14 +75,13 @@ class AttendanceController {
                 status,
                 markedBy: requester.userId
             });
-            const student = await repo_service_1.RepoService.findStudentById(studentId);
             // Log Activity
             await repo_service_1.RepoService.createLog({
                 userId: requester.userId,
                 userName: requester.name,
                 role: requester.role,
                 action: 'Attendance Updated',
-                details: `Marked student ${student?.name || studentId} as ${status} on ${date}`
+                details: `Marked student ${student.name || studentId} as ${status} on ${date}`
             });
             // Notify real-time counters
             (0, socket_1.emitLiveUpdate)('attendance_update', { studentId, courseId, date, status });
@@ -184,6 +196,9 @@ class AttendanceController {
             if (!session) {
                 return res.status(404).json({ error: 'Invalid or expired QR session token.' });
             }
+            if (session.status === 'CLOSED') {
+                return res.status(400).json({ error: 'This QR Code session has been terminated by the instructor.' });
+            }
             if (new Date(session.expiresAt).getTime() < Date.now()) {
                 return res.status(400).json({ error: 'This QR Code session has expired. Please ask your instructor for a new QR code.' });
             }
@@ -202,7 +217,7 @@ class AttendanceController {
             if (scannedList.includes(studentIdStr)) {
                 return res.status(400).json({ error: 'Attendance already recorded for this session! Duplicate entries are not allowed.' });
             }
-            // Mark Attendance (P0-6: Session-based identity)
+            // P1-19: Mark Attendance with method QR and sessionId
             const log = await repo_service_1.RepoService.markAttendance({
                 studentId: student._id || student.id,
                 courseId: session.courseId,
@@ -227,6 +242,38 @@ class AttendanceController {
                 message: `Attendance confirmed successfully for ${session.courseName} - ${session.lectureTitle}!`,
                 attendance: log
             });
+        }
+        catch (error) {
+            next(error);
+        }
+    }
+    static async closeQrSession(req, res, next) {
+        try {
+            const requester = req.user;
+            const { sessionId } = req.body;
+            if (!sessionId) {
+                return res.status(400).json({ error: 'Session ID is required.' });
+            }
+            const session = await repo_service_1.RepoService.findQrSessionById(sessionId);
+            if (!session) {
+                return res.status(404).json({ error: 'QR session not found.' });
+            }
+            // P1-20: Faculty Authorization
+            if (requester.role === 'Faculty') {
+                const facultyIdStr = (session.facultyId?._id || session.facultyId?.id || session.facultyId || '').toString();
+                if (facultyIdStr !== requester.userId.toString()) {
+                    return res.status(403).json({ error: 'Access denied: You can only terminate QR sessions created by you.' });
+                }
+            }
+            else if (requester.role !== 'Admin' && requester.role !== 'Super Admin') {
+                return res.status(403).json({ error: 'Access denied.' });
+            }
+            await repo_service_1.RepoService.closeQrSession(sessionId);
+            (0, socket_1.emitLiveUpdate)('attendance_update', {
+                sessionId,
+                action: 'qr_session_closed'
+            });
+            return res.json({ message: 'QR attendance session closed successfully.' });
         }
         catch (error) {
             next(error);

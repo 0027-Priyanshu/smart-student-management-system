@@ -26,6 +26,14 @@ router.post(
   AttendanceController.generateQrSession
 );
 
+// POST: /api/attendance/qr/close (Admin or Faculty)
+router.post(
+  '/qr/close',
+  authenticateJWT,
+  requireRole(['Super Admin', 'Admin', 'Faculty']),
+  AttendanceController.closeQrSession
+);
+
 // GET: /api/attendance/qr/session/:sessionId (Protected)
 router.get('/qr/session/:sessionId', authenticateJWT, AttendanceController.getQrSession);
 

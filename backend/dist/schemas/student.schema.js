@@ -19,6 +19,7 @@ exports.createStudentSchema = zod_1.z.object({
     parentName: zod_1.z.string().min(2, 'Parent name is required'),
     parentPhone: zod_1.z.string().min(8, 'Parent phone must be at least 8 digits'),
     address: zod_1.z.string().min(5, 'Address must be at least 5 characters'),
+    password: zod_1.z.string().min(6, 'Password must be at least 6 characters').optional(),
     avatarUrl: zod_1.z.string().optional(),
     enrolledCourses: zod_1.z.array(zod_1.z.string()).optional(),
     academicHistory: zod_1.z.array(academicHistorySchema).optional(),

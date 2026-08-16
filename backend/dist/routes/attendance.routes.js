@@ -12,6 +12,8 @@ router.get('/', auth_middleware_1.authenticateJWT, attendance_controller_1.Atten
 router.post('/mark', auth_middleware_1.authenticateJWT, (0, auth_middleware_1.requireRole)(['Super Admin', 'Admin', 'Faculty']), (0, validation_middleware_1.validate)({ body: attendance_schema_1.markAttendanceSchema }), attendance_controller_1.AttendanceController.markAttendance);
 // POST: /api/attendance/qr/generate (Admin or Faculty)
 router.post('/qr/generate', auth_middleware_1.authenticateJWT, (0, auth_middleware_1.requireRole)(['Super Admin', 'Admin', 'Faculty']), attendance_controller_1.AttendanceController.generateQrSession);
+// POST: /api/attendance/qr/close (Admin or Faculty)
+router.post('/qr/close', auth_middleware_1.authenticateJWT, (0, auth_middleware_1.requireRole)(['Super Admin', 'Admin', 'Faculty']), attendance_controller_1.AttendanceController.closeQrSession);
 // GET: /api/attendance/qr/session/:sessionId (Protected)
 router.get('/qr/session/:sessionId', auth_middleware_1.authenticateJWT, attendance_controller_1.AttendanceController.getQrSession);
 // POST: /api/attendance/qr/confirm (Student only)

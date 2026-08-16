@@ -9,6 +9,7 @@ const QrSessionSchema = new Schema({
   facultyId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   expiresAt: { type: Date, required: true },
   durationMinutes: { type: Number, default: 10 },
+  status: { type: String, enum: ['ACTIVE', 'CLOSED', 'EXPIRED'], default: 'ACTIVE', index: true },
   scannedStudents: [{ type: Schema.Types.ObjectId, ref: 'Student' }],
   createdAt: { type: Date, default: Date.now }
 });

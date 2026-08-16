@@ -9,8 +9,12 @@ const upload_middleware_1 = require("../middlewares/upload.middleware");
 const router = (0, express_1.Router)();
 // POST: /api/faculty/upload-avatar
 router.post('/upload-avatar', auth_middleware_1.authenticateJWT, upload_middleware_1.uploadLocal.single('avatar'), faculty_controller_1.FacultyController.uploadAvatar);
+// POST: /api/faculty (Admin only - Create Faculty)
+router.post('/', auth_middleware_1.authenticateJWT, (0, auth_middleware_1.requireRole)(['Super Admin', 'Admin']), faculty_controller_1.FacultyController.createFaculty);
 // GET: /api/faculty (Protected)
 router.get('/', auth_middleware_1.authenticateJWT, faculty_controller_1.FacultyController.getFaculties);
+// GET: /api/faculty/:id (Protected)
+router.get('/:id', auth_middleware_1.authenticateJWT, faculty_controller_1.FacultyController.getFacultyById);
 // POST: /api/faculty/assign-course (Admin only)
 router.post('/assign-course', auth_middleware_1.authenticateJWT, (0, auth_middleware_1.requireRole)(['Super Admin', 'Admin']), faculty_controller_1.FacultyController.assignCourse);
 // GET: /api/faculty/:id/students (Protected)

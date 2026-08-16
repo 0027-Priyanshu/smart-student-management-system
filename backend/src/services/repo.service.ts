@@ -539,6 +539,52 @@ export class RepoService {
     }
   }
 
+  static async enrollStudentInCourse(studentId: string, courseId: string): Promise<void> {
+    if (isMongoConnected) {
+      await Promise.all([
+        Student.findByIdAndUpdate(studentId, { $addToSet: { enrolledCourses: courseId } }),
+        Course.findByIdAndUpdate(courseId, { $addToSet: { enrolledStudents: studentId } })
+      ]);
+    } else {
+      const db = readJsonDb();
+      const st = db.students.find((s: any) => (s._id || s.id) === studentId);
+      const cr = db.courses.find((c: any) => (c._id || c.id) === courseId);
+      if (st) {
+        if (!st.enrolledCourses) st.enrolledCourses = [];
+        if (!st.enrolledCourses.some((id: any) => (id._id || id.id || id).toString() === courseId.toString())) {
+          st.enrolledCourses.push(courseId);
+        }
+      }
+      if (cr) {
+        if (!cr.enrolledStudents) cr.enrolledStudents = [];
+        if (!cr.enrolledStudents.some((id: any) => (id._id || id.id || id).toString() === studentId.toString())) {
+          cr.enrolledStudents.push(studentId);
+        }
+      }
+      writeJsonDb(db);
+    }
+  }
+
+  static async unenrollStudentFromCourse(studentId: string, courseId: string): Promise<void> {
+    if (isMongoConnected) {
+      await Promise.all([
+        Student.findByIdAndUpdate(studentId, { $pull: { enrolledCourses: courseId } }),
+        Course.findByIdAndUpdate(courseId, { $pull: { enrolledStudents: studentId } })
+      ]);
+    } else {
+      const db = readJsonDb();
+      const st = db.students.find((s: any) => (s._id || s.id) === studentId);
+      const cr = db.courses.find((c: any) => (c._id || c.id) === courseId);
+      if (st && st.enrolledCourses) {
+        st.enrolledCourses = st.enrolledCourses.filter((id: any) => (id._id || id.id || id).toString() !== courseId.toString());
+      }
+      if (cr && cr.enrolledStudents) {
+        cr.enrolledStudents = cr.enrolledStudents.filter((id: any) => (id._id || id.id || id).toString() !== studentId.toString());
+      }
+      writeJsonDb(db);
+    }
+  }
+
   // ==================== ATTENDANCE OPERATIONS ====================
 
   static async findAttendance(query: { studentId?: string; courseId?: string; date?: string }): Promise<any[]> {
@@ -861,6 +907,25 @@ export class RepoService {
           session.scannedStudents.push(studentId);
           writeJsonDb(db);
         }
+      }
+      return session;
+    }
+  }
+
+  static async closeQrSession(sessionId: string): Promise<any> {
+    if (isMongoConnected) {
+      return await QrSession.findOneAndUpdate(
+        { sessionId },
+        { status: 'CLOSED' },
+        { new: true }
+      );
+    } else {
+      const db = readJsonDb();
+      if (!db.qrSessions) db.qrSessions = [];
+      const session = db.qrSessions.find((s: any) => s.sessionId === sessionId);
+      if (session) {
+        session.status = 'CLOSED';
+        writeJsonDb(db);
       }
       return session;
     }

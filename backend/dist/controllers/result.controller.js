@@ -64,6 +64,15 @@ class ResultController {
                     return res.status(403).json({ error: 'Access denied: You can only grade courses you teach.' });
                 }
             }
+            // P1-22: Verify student exists and is enrolled in this course
+            const student = await repo_service_1.RepoService.findStudentById(studentId);
+            if (!student) {
+                return res.status(404).json({ error: 'Student profile not found.' });
+            }
+            const studentCourses = (student.enrolledCourses || []).map((c) => (c._id || c.id || c).toString());
+            if (!studentCourses.includes(courseId.toString())) {
+                return res.status(400).json({ error: 'Cannot record grade: Student is not enrolled in this course.' });
+            }
             const total = intVal + extVal + assignVal + pracVal;
             // Grade calculation mapping
             let grade = 'F';
@@ -104,14 +113,13 @@ class ResultController {
                 gpa,
                 markedBy: requester.userId
             });
-            const student = await repo_service_1.RepoService.findStudentById(studentId);
             // Log Activity
             await repo_service_1.RepoService.createLog({
                 userId: requester.userId,
                 userName: requester.name,
                 role: requester.role,
                 action: 'Marks Entered',
-                details: `Entered marks for student ${student?.name || studentId} in course ID: ${courseId}. Total: ${total} (Grade: ${grade})`
+                details: `Entered marks for student ${student.name || studentId} in course ID: ${courseId}. Total: ${total} (Grade: ${grade})`
             });
             // Trigger stub alert hook for published marks
             if (student) {

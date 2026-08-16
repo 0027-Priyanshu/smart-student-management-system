@@ -20,4 +20,8 @@ router.delete('/:id', auth_middleware_1.authenticateJWT, (0, auth_middleware_1.r
 router.post('/:id/restore', auth_middleware_1.authenticateJWT, (0, auth_middleware_1.requireRole)(['Super Admin', 'Admin']), course_controller_1.CourseController.restoreCourse);
 // POST: /api/courses/assign (Admin assigns student to course)
 router.post('/assign', auth_middleware_1.authenticateJWT, (0, auth_middleware_1.requireRole)(['Super Admin', 'Admin']), course_controller_1.CourseController.assignCourse);
+// POST: /api/courses/unassign (Admin un-enrolls student from course)
+router.post('/unassign', auth_middleware_1.authenticateJWT, (0, auth_middleware_1.requireRole)(['Super Admin', 'Admin']), course_controller_1.CourseController.unassignCourse);
+// GET: /api/courses/:id/students (Protected - Enrolled course roster for faculty/admin)
+router.get('/:id/students', auth_middleware_1.authenticateJWT, course_controller_1.CourseController.getCourseStudents);
 exports.default = router;

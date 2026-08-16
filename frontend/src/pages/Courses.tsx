@@ -114,10 +114,31 @@ export default function Courses() {
       });
 
       toast.success(res.data.message || 'Enrolled student successfully!');
-      setShowAssignModal(false);
+      setSelectedStudentId('');
       loadData();
     } catch (err: any) {
       toast.error(err.response?.data?.error || 'Failed to enroll student');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleUnenrollStudent = async (studentId: string) => {
+    if (!activeCourse) return;
+    if (!window.confirm('Are you sure you want to un-enroll this student from the course?')) return;
+
+    setActionLoading(true);
+    try {
+      const cId = activeCourse._id || activeCourse.id;
+      const res = await api.post('/courses/unassign', {
+        courseId: cId,
+        studentId
+      });
+
+      toast.success(res.data.message || 'Student un-enrolled successfully!');
+      loadData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Failed to un-enroll student');
     } finally {
       setActionLoading(false);
     }
@@ -417,56 +438,113 @@ export default function Courses() {
           </div>
         )}
 
-        {/* Enroll Student Modal */}
-        {showAssignModal && activeCourse && (
-          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white border border-slate-200 rounded-3xl shadow-card max-w-md w-full p-6 space-y-4 animate-scaleUp">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 className="font-title font-extrabold text-sm text-slate-900">
-                  Enroll Student in {activeCourse.code} ({activeCourse.name})
-                </h3>
-                <button onClick={() => setShowAssignModal(false)} className="text-slate-400 hover:text-slate-900 cursor-pointer">
-                  <X size={18} />
-                </button>
+        {/* Enroll & Manage Students Modal (P1-13, P1-14) */}
+        {showAssignModal && activeCourse && (() => {
+          const currentEnrolled = activeCourse.enrolledStudents || [];
+          const capacity = activeCourse.capacity || 40;
+          const isCapacityFull = currentEnrolled.length >= capacity;
+
+          return (
+            <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-white border border-slate-200 rounded-3xl shadow-card max-w-lg w-full p-6 space-y-4 animate-scaleUp">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div>
+                    <h3 className="font-title font-extrabold text-sm text-slate-900">
+                      Manage Roster: {activeCourse.code} ({activeCourse.name})
+                    </h3>
+                    <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+                      Enrolled: {currentEnrolled.length} / {capacity} Students {isCapacityFull && <span className="text-red-500 font-bold">(Capacity Full)</span>}
+                    </p>
+                  </div>
+                  <button onClick={() => setShowAssignModal(false)} className="text-slate-400 hover:text-slate-900 cursor-pointer">
+                    <X size={18} />
+                  </button>
+                </div>
+
+                {/* Enrolled Students List with Un-enroll Action */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 block">Enrolled Students ({currentEnrolled.length})</label>
+                  {currentEnrolled.length === 0 ? (
+                    <p className="text-xs text-slate-400 italic py-2 bg-slate-50 rounded-xl px-3 border border-slate-100">No students currently enrolled in this course.</p>
+                  ) : (
+                    <div className="max-h-36 overflow-y-auto space-y-1.5 pr-1 scrollbar-thin">
+                      {currentEnrolled.map((st: any) => {
+                        const stId = st._id || st.id || st;
+                        const studentObj = typeof st === 'object' ? st : students.find(s => (s._id || s.id) === stId);
+                        const stName = studentObj?.name || 'Enrolled Student';
+                        const stEnr = studentObj?.enrollmentNo || stId;
+
+                        return (
+                          <div key={stId} className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+                            <div>
+                              <span className="font-bold text-slate-900 block">{stName}</span>
+                              <span className="text-[10px] font-mono text-slate-400">{stEnr}</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleUnenrollStudent(stId.toString())}
+                              disabled={actionLoading}
+                              className="px-2 py-1 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-lg text-[10px] font-bold transition-colors cursor-pointer"
+                              title="Un-enroll from course"
+                            >
+                              Un-enroll
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Enroll New Student Form */}
+                <form onSubmit={handleEnrollSubmit} className="space-y-3 pt-2 border-t border-slate-100">
+                  {isCapacityFull ? (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-medium">
+                      ⚠️ Course capacity limit ({capacity}) reached. Please un-enroll a student before adding more.
+                    </div>
+                  ) : (
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-700">Enroll New Student</label>
+                      <select
+                        value={selectedStudentId}
+                        onChange={(e) => setSelectedStudentId(e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#ff6b00]"
+                      >
+                        <option value="">Select student to enroll...</option>
+                        {students
+                          .filter(s => !currentEnrolled.some((ce: any) => (ce._id || ce.id || ce).toString() === (s._id || s.id).toString()))
+                          .map((s) => (
+                            <option key={s._id || s.id} value={s._id || s.id}>
+                              {s.name} ({s.enrollmentNo})
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowAssignModal(false)}
+                      className="px-4 py-2.5 bg-slate-100 text-slate-700 text-xs font-bold rounded-2xl hover:bg-slate-200 cursor-pointer"
+                    >
+                      Done & Close
+                    </button>
+                    {!isCapacityFull && (
+                      <button
+                        type="submit"
+                        disabled={actionLoading || !selectedStudentId}
+                        className="px-4 py-2.5 bg-[#ff6b00] hover:bg-orange-600 text-white text-xs font-bold rounded-2xl transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        {actionLoading ? 'Enrolling...' : 'Enroll Student'}
+                      </button>
+                    )}
+                  </div>
+                </form>
               </div>
-
-              <form onSubmit={handleEnrollSubmit} className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700">Select Student</label>
-                  <select
-                    value={selectedStudentId}
-                    onChange={(e) => setSelectedStudentId(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#ff6b00]"
-                  >
-                    <option value="">Select student to enroll...</option>
-                    {students.map((s) => (
-                      <option key={s._id || s.id} value={s._id || s.id}>
-                        {s.name} ({s.enrollmentNo})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowAssignModal(false)}
-                    className="px-4 py-2.5 bg-slate-100 text-slate-700 text-xs font-bold rounded-2xl hover:bg-slate-200 cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={actionLoading}
-                    className="px-4 py-2.5 bg-[#ff6b00] hover:bg-orange-600 text-white text-xs font-bold rounded-2xl transition-all cursor-pointer"
-                  >
-                    {actionLoading ? 'Enrolling...' : 'Confirm Enrollment'}
-                  </button>
-                </div>
-              </form>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Delete Confirmation Modal */}
         {showDeleteModal && courseToDelete && (

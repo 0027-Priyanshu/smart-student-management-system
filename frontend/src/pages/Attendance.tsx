@@ -64,6 +64,8 @@ export default function Attendance() {
 
   // Attendance List
   const [attendanceList, setAttendanceList] = useState<any[]>([]);
+  const [courseRosterStudents, setCourseRosterStudents] = useState<any[]>([]);
+  const [rosterLoading, setRosterLoading] = useState(false);
   const [, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [qrLoading, setQrLoading] = useState(false);
@@ -145,6 +147,26 @@ export default function Attendance() {
       }
     })();
   }, [isStudent, fetchAttendanceRecords]);
+
+  // P1-18: Fetch course-scoped students when selectedCourse changes for manual attendance
+  useEffect(() => {
+    if (!selectedCourse) {
+      setCourseRosterStudents([]);
+      return;
+    }
+    (async () => {
+      try {
+        setRosterLoading(true);
+        const res = await api.get(`/courses/${selectedCourse}/students`);
+        setCourseRosterStudents(res.data.students || []);
+      } catch (err) {
+        console.error('Failed to load course roster:', err);
+        setCourseRosterStudents([]);
+      } finally {
+        setRosterLoading(false);
+      }
+    })();
+  }, [selectedCourse]);
 
   // Fetch Dropdowns (Courses & Students)
   useEffect(() => {
@@ -1189,7 +1211,13 @@ export default function Attendance() {
                       </div>
 
                       <button
-                        onClick={() => {
+                        onClick={async () => {
+                          if (activeQrSession) {
+                            try {
+                              await api.post('/attendance/qr/close', { sessionId: activeQrSession.sessionId });
+                              toast.info('QR session terminated on server.');
+                            } catch (e) {}
+                          }
                           setActiveQrSession(null);
                           setQrTimeLeft(null);
                         }}
@@ -1238,12 +1266,13 @@ export default function Attendance() {
 
               {!selectedCourse ? (
                 <p className="text-xs text-slate-400 italic text-center py-12">Please select an academic course to load students.</p>
+              ) : rosterLoading ? (
+                <p className="text-xs text-slate-400 italic text-center py-12">Loading course roster...</p>
+              ) : courseRosterStudents.length === 0 ? (
+                <p className="text-xs text-slate-400 italic text-center py-12">No enrolled students found for this course.</p>
               ) : (
-                <div className="space-y-3 max-h-[460px] overflow-y-auto">
-                  {students.filter(s => {
-                    const courseIds = (s.enrolledCourses || []).map((c: any) => typeof c === 'object' ? (c._id || c.id) : c);
-                    return courseIds.includes(selectedCourse);
-                  }).map(s => {
+                <div className="space-y-3 max-h-[460px] overflow-y-auto pr-1 scrollbar-thin">
+                  {courseRosterStudents.map(s => {
                     const stId = s._id || s.id;
                     const stStatus = studentStatuses[stId] || 'Absent';
                     return (
@@ -1255,13 +1284,13 @@ export default function Attendance() {
                         <div className="flex gap-1">
                           <button
                             onClick={() => handleMarkStatus(stId, 'Present')}
-                            className={`px-3 py-1 rounded-lg text-[9px] font-extrabold ${stStatus === 'Present' ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-700'}`}
+                            className={`px-3 py-1 rounded-lg text-[9px] font-extrabold transition-colors cursor-pointer ${stStatus === 'Present' ? 'bg-emerald-500 text-white shadow-sm' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'}`}
                           >
                             Present
                           </button>
                           <button
                             onClick={() => handleMarkStatus(stId, 'Absent')}
-                            className={`px-3 py-1 rounded-lg text-[9px] font-extrabold ${stStatus === 'Absent' ? 'bg-red-500 text-white' : 'bg-slate-200 text-slate-700'}`}
+                            className={`px-3 py-1 rounded-lg text-[9px] font-extrabold transition-colors cursor-pointer ${stStatus === 'Absent' ? 'bg-red-500 text-white shadow-sm' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'}`}
                           >
                             Absent
                           </button>

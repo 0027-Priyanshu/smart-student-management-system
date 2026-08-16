@@ -34,29 +34,26 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
-const AttendanceSchema = new mongoose_1.Schema({
-    studentId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Student', required: true, index: true },
+const FaceAttendanceSessionSchema = new mongoose_1.Schema({
+    sessionId: { type: String, required: true, unique: true, index: true },
     courseId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Course', required: true, index: true },
-    date: { type: String, required: true, index: true }, // Format YYYY-MM-DD for easy lookup
-    sessionId: { type: String, default: null, index: true }, // Dynamic session token for Face/QR/Lecture sessions
-    status: {
-        type: String,
-        enum: ['Present', 'Absent', 'On Leave', 'Excused'],
-        default: 'Present'
-    },
-    attendanceMethod: {
-        type: String,
-        enum: ['MANUAL', 'QR', 'FACE'],
-        default: 'MANUAL',
-        index: true
-    },
-    recognitionConfidence: { type: Number },
-    lectureTitle: { type: String, default: '' },
-    markedBy: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User' },
+    courseName: { type: String, required: true },
+    lectureTitle: { type: String, required: true },
+    facultyId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    facultyName: { type: String, required: true },
+    durationMinutes: { type: Number, default: 10 },
+    startTime: { type: Date, default: Date.now },
+    expiresAt: { type: Date, required: true, index: true },
+    status: { type: String, enum: ['ACTIVE', 'CLOSED'], default: 'ACTIVE', index: true },
+    verifiedStudents: [
+        {
+            studentId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Student', required: true },
+            studentName: { type: String, required: true },
+            enrollmentNo: { type: String, required: true },
+            timestamp: { type: Date, default: Date.now },
+            confidence: { type: Number, default: 90 }
+        }
+    ],
     createdAt: { type: Date, default: Date.now, index: true }
 });
-// Compound index for fast queries by student, course and date
-AttendanceSchema.index({ studentId: 1, courseId: 1, date: 1 });
-// Enforce strict uniqueness per session (prevents duplicate check-in for the same session)
-AttendanceSchema.index({ studentId: 1, sessionId: 1 }, { unique: true, sparse: true });
-exports.default = mongoose_1.default.models.Attendance || mongoose_1.default.model('Attendance', AttendanceSchema);
+exports.default = mongoose_1.default.model('FaceAttendanceSession', FaceAttendanceSessionSchema);

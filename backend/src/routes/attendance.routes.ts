@@ -18,14 +18,6 @@ router.post(
   AttendanceController.markAttendance
 );
 
-// POST: /api/attendance/scan-qr (Student only)
-router.post(
-  '/scan-qr', 
-  authenticateJWT, 
-  requireRole(['Student']), 
-  AttendanceController.scanQR
-);
-
 // POST: /api/attendance/qr/generate (Admin or Faculty)
 router.post(
   '/qr/generate',

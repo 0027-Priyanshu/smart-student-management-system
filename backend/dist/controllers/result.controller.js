@@ -18,7 +18,17 @@ class ResultController {
                 }
                 targetStudentId = studentProfile._id || studentProfile.id;
             }
-            const results = await repo_service_1.RepoService.findResults(targetStudentId);
+            let results = await repo_service_1.RepoService.findResults(targetStudentId);
+            if (requester.role === 'Faculty') {
+                const facultyProfile = await repo_service_1.RepoService.findFacultyByUserId(requester.userId);
+                if (facultyProfile) {
+                    const facultyCourses = (facultyProfile.assignedCourses || []).map((c) => (c._id || c.id || c).toString());
+                    results = results.filter((r) => {
+                        const courseIdStr = (r.courseId?._id || r.courseId?.id || r.courseId || '').toString();
+                        return facultyCourses.includes(courseIdStr);
+                    });
+                }
+            }
             let totalGradePoints = 0;
             let totalCredits = 0;
             const formattedResults = results.map(r => {

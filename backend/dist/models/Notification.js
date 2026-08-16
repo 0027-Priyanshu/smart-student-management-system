@@ -34,29 +34,18 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
-const AttendanceSchema = new mongoose_1.Schema({
+const NotificationSchema = new mongoose_1.Schema({
     studentId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Student', required: true, index: true },
-    courseId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Course', required: true, index: true },
-    date: { type: String, required: true, index: true }, // Format YYYY-MM-DD for easy lookup
-    sessionId: { type: String, default: null, index: true }, // Dynamic session token for Face/QR/Lecture sessions
-    status: {
-        type: String,
-        enum: ['Present', 'Absent', 'On Leave', 'Excused'],
-        default: 'Present'
-    },
-    attendanceMethod: {
-        type: String,
-        enum: ['MANUAL', 'QR', 'FACE'],
-        default: 'MANUAL',
-        index: true
-    },
-    recognitionConfidence: { type: Number },
-    lectureTitle: { type: String, default: '' },
-    markedBy: { type: mongoose_1.Schema.Types.ObjectId, ref: 'User' },
+    sessionId: { type: String, index: true },
+    courseId: { type: mongoose_1.Schema.Types.ObjectId, ref: 'Course' },
+    courseName: { type: String },
+    lectureTitle: { type: String },
+    title: { type: String, required: true },
+    message: { type: String, required: true },
+    type: { type: String, enum: ['FACE_ATTENDANCE', 'QR_ATTENDANCE', 'ALERT', 'GENERAL'], default: 'FACE_ATTENDANCE' },
+    durationMinutes: { type: Number },
+    expiresAt: { type: Date },
+    isRead: { type: Boolean, default: false, index: true },
     createdAt: { type: Date, default: Date.now, index: true }
 });
-// Compound index for fast queries by student, course and date
-AttendanceSchema.index({ studentId: 1, courseId: 1, date: 1 });
-// Enforce strict uniqueness per session (prevents duplicate check-in for the same session)
-AttendanceSchema.index({ studentId: 1, sessionId: 1 }, { unique: true, sparse: true });
-exports.default = mongoose_1.default.models.Attendance || mongoose_1.default.model('Attendance', AttendanceSchema);
+exports.default = mongoose_1.default.model('Notification', NotificationSchema);

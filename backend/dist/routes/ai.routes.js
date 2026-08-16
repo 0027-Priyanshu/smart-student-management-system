@@ -16,8 +16,6 @@ const chatRateLimiter = (0, express_rate_limit_1.default)({
 });
 // GET: /api/ai/health (Public/Protected - AI Provider Health Check)
 router.get('/health', ai_controller_1.AIController.getHealth);
-router.get('/test-chat', ai_controller_1.AIController.testChat);
-router.get('/test-token', ai_controller_1.AIController.testToken);
 // GET: /api/ai/student-summary/:studentId (Protected)
 router.get('/student-summary/:studentId', auth_middleware_1.authenticateJWT, ai_controller_1.AIController.getStudentSummary);
 // GET: /api/ai/student-recommendations/:studentId (Protected)

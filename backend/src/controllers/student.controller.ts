@@ -54,10 +54,21 @@ export class StudentController {
 
   static async getStudentById(req: Request, res: Response, next: NextFunction) {
     try {
+      const requester = (req as any).user;
       const student = await RepoService.findStudentById(req.params.id);
       if (!student) {
         return res.status(404).json({ error: 'Student profile not found' });
       }
+
+      // P0-9: Student role can ONLY view their own private student profile
+      if (requester.role === 'Student') {
+        const studentUserId = (student.userId?._id || student.userId?.id || student.userId || '').toString();
+        const studentId = (student._id || student.id || '').toString();
+        if (studentUserId !== requester.userId.toString() && studentId !== req.params.id) {
+          return res.status(403).json({ error: 'Access denied: You can only view your own student profile.' });
+        }
+      }
+
       return res.json({ student });
     } catch (error) {
       next(error);

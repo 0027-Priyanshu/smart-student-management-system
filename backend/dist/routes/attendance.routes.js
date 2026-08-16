@@ -10,8 +10,6 @@ const router = (0, express_1.Router)();
 router.get('/', auth_middleware_1.authenticateJWT, attendance_controller_1.AttendanceController.getAttendance);
 // POST: /api/attendance/mark (Admin or Faculty only)
 router.post('/mark', auth_middleware_1.authenticateJWT, (0, auth_middleware_1.requireRole)(['Super Admin', 'Admin', 'Faculty']), (0, validation_middleware_1.validate)({ body: attendance_schema_1.markAttendanceSchema }), attendance_controller_1.AttendanceController.markAttendance);
-// POST: /api/attendance/scan-qr (Student only)
-router.post('/scan-qr', auth_middleware_1.authenticateJWT, (0, auth_middleware_1.requireRole)(['Student']), attendance_controller_1.AttendanceController.scanQR);
 // POST: /api/attendance/qr/generate (Admin or Faculty)
 router.post('/qr/generate', auth_middleware_1.authenticateJWT, (0, auth_middleware_1.requireRole)(['Super Admin', 'Admin', 'Faculty']), attendance_controller_1.AttendanceController.generateQrSession);
 // GET: /api/attendance/qr/session/:sessionId (Protected)

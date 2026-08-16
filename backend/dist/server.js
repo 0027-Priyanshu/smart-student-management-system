@@ -73,12 +73,8 @@ if (!fs_1.default.existsSync(uploadDir)) {
     fs_1.default.mkdirSync(uploadDir, { recursive: true });
 }
 app.use('/uploads', express_1.default.static(uploadDir));
-// Connect to Database (MongoDB or fallback to JSON)
-(0, db_1.connectDB)();
-// Initialize Real-time WebSockets
-(0, socket_1.initSocket)(server);
 const activity_routes_1 = __importDefault(require("./routes/activity.routes"));
-// Ensure other routes remain...
+// API Routes
 app.use('/api/auth', auth_routes_1.default);
 app.use('/api/students', student_routes_1.default);
 app.use('/api/courses', course_routes_1.default);
@@ -88,14 +84,28 @@ app.use('/api/results', result_routes_1.default);
 app.use('/api/ai', ai_routes_1.default);
 app.use('/api/dashboard', dashboard_routes_1.default);
 app.use('/api/activities', activity_routes_1.default);
-// Base Route
+// Base Route / Healthcheck
 app.get('/', (req, res) => {
     res.json({ message: 'EduManager Smart Management API is active!' });
 });
 // Centralized Global Error Handler Middleware
 app.use(error_middleware_1.errorHandler);
-// Start listener
+// Server startup with database readiness guarantee (P0-10)
 const HOST = process.env.HOST || '0.0.0.0';
-server.listen(Number(PORT), HOST, () => {
-    logger_1.logger.info(`📡 Server listening on http://${HOST}:${PORT}`);
-});
+async function startServer() {
+    try {
+        // 1. Connect to Database first
+        await (0, db_1.connectDB)();
+        // 2. Initialize Real-time WebSockets
+        (0, socket_1.initSocket)(server);
+        // 3. Start listening for incoming traffic
+        server.listen(Number(PORT), HOST, () => {
+            logger_1.logger.info(`📡 Server listening on http://${HOST}:${PORT}`);
+        });
+    }
+    catch (error) {
+        logger_1.logger.error('Failed to start server:', error);
+        process.exit(1);
+    }
+}
+startServer();

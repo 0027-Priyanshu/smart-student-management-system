@@ -19,8 +19,19 @@ export class ResultController {
         targetStudentId = studentProfile._id || studentProfile.id;
       }
 
-      const results = await RepoService.findResults(targetStudentId);
+      let results = await RepoService.findResults(targetStudentId);
       
+      if (requester.role === 'Faculty') {
+        const facultyProfile = await RepoService.findFacultyByUserId(requester.userId);
+        if (facultyProfile) {
+          const facultyCourses = (facultyProfile.assignedCourses || []).map((c: any) => (c._id || c.id || c).toString());
+          results = results.filter((r: any) => {
+            const courseIdStr = (r.courseId?._id || r.courseId?.id || r.courseId || '').toString();
+            return facultyCourses.includes(courseIdStr);
+          });
+        }
+      }
+
       let totalGradePoints = 0;
       let totalCredits = 0;
       

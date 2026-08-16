@@ -20,6 +20,15 @@ export class AuthController {
       const { name, email, password, role } = req.body;
       const cleanEmail = email.toLowerCase().trim();
 
+      // P0-2 Security: Public registration is strictly for Students only
+      if (role && role !== 'Student') {
+        return res.status(403).json({ 
+          error: 'Public registration is restricted to students only. Faculty and Administrator accounts must be created by an Administrator.' 
+        });
+      }
+
+      const assignedRole = 'Student';
+
       // Check if user exists
       const existingUser = await RepoService.findUserByEmail(cleanEmail);
       if (existingUser) {
@@ -40,7 +49,7 @@ export class AuthController {
         name,
         email: cleanEmail,
         password: passwordHash,
-        role,
+        role: assignedRole,
         isVerified,
         verificationToken: isVerified ? null : verificationToken
       });
@@ -48,35 +57,24 @@ export class AuthController {
       const userId = user._id || user.id;
 
       // Handle role profile initialization
-      if (role === 'Student') {
-        const enrollmentNo = 'ENR' + Date.now().toString().slice(-8);
-        await RepoService.createStudent({
-          userId,
-          name,
-          email: cleanEmail,
-          enrollmentNo,
-          age: 18,
-          gender: 'Male',
-          grade: 'Freshman',
-          department: 'General Sciences',
-          semester: 1,
-          parentName: 'Not Specified',
-          parentPhone: '0000000000',
-          address: 'Not Specified'
-        });
+      const enrollmentNo = 'ENR' + Date.now().toString().slice(-8);
+      await RepoService.createStudent({
+        userId,
+        name,
+        email: cleanEmail,
+        enrollmentNo,
+        age: 18,
+        gender: 'Male',
+        grade: 'Freshman',
+        department: 'General Sciences',
+        semester: 1,
+        parentName: 'Not Specified',
+        parentPhone: '0000000000',
+        address: 'Not Specified'
+      });
 
-        // Send registration email notification and trigger stub alerts
-        NotificationService.sendStudentRegistrationNotification(cleanEmail, name, enrollmentNo).catch(err => console.error(err));
-      } else if (role === 'Faculty') {
-        await RepoService.createFaculty({
-          userId,
-          name,
-          email: cleanEmail,
-          department: 'General Sciences',
-          designation: 'Assistant Professor'
-        });
-      }
-
+      // Send registration email notification and trigger stub alerts
+      NotificationService.sendStudentRegistrationNotification(cleanEmail, name, enrollmentNo).catch(err => console.error(err));
       // Log Activity
       await RepoService.createLog({
         userId,

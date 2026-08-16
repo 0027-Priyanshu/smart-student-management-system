@@ -27,9 +27,18 @@ export class AIController {
 
   static async getStudentSummary(req: Request, res: Response, next: NextFunction) {
     try {
+      const requester = (req as any).user;
       const student = await RepoService.findStudentById(req.params.studentId);
       if (!student) {
         return res.status(404).json({ error: 'Student profile not found' });
+      }
+
+      if (requester.role === 'Student') {
+        const studentUserId = (student.userId?._id || student.userId?.id || student.userId || '').toString();
+        const studentId = (student._id || student.id || '').toString();
+        if (studentUserId !== requester.userId.toString() && studentId !== req.params.studentId) {
+          return res.status(403).json({ error: 'Access denied: You can only view your own AI summary.' });
+        }
       }
 
       const courseCodes = student.enrolledCourses?.map((c: any) => c.code) || [];
@@ -75,9 +84,18 @@ export class AIController {
 
   static async getStudentRecommendations(req: Request, res: Response, next: NextFunction) {
     try {
+      const requester = (req as any).user;
       const student = await RepoService.findStudentById(req.params.studentId);
       if (!student) {
         return res.status(404).json({ error: 'Student profile not found' });
+      }
+
+      if (requester.role === 'Student') {
+        const studentUserId = (student.userId?._id || student.userId?.id || student.userId || '').toString();
+        const studentId = (student._id || student.id || '').toString();
+        if (studentUserId !== requester.userId.toString() && studentId !== req.params.studentId) {
+          return res.status(403).json({ error: 'Access denied: You can only view your own AI recommendations.' });
+        }
       }
 
       const results = await RepoService.findResults(req.params.studentId);
@@ -120,9 +138,18 @@ export class AIController {
 
   static async getPredictRisk(req: Request, res: Response, next: NextFunction) {
     try {
+      const requester = (req as any).user;
       const student = await RepoService.findStudentById(req.params.studentId);
       if (!student) {
         return res.status(404).json({ error: 'Student profile not found' });
+      }
+
+      if (requester.role === 'Student') {
+        const studentUserId = (student.userId?._id || student.userId?.id || student.userId || '').toString();
+        const studentId = (student._id || student.id || '').toString();
+        if (studentUserId !== requester.userId.toString() && studentId !== req.params.studentId) {
+          return res.status(403).json({ error: 'Access denied: You can only view your own risk predictions.' });
+        }
       }
 
       const results = await RepoService.findResults(req.params.studentId);
@@ -491,36 +518,6 @@ export class AIController {
     }
   }
 
-  static async testToken(req: Request, res: Response, next: NextFunction) {
-    const jwt = require('jsonwebtoken');
-    const role = (req.query.role as string) || 'Admin';
-    let payload = { userId: '60d0fe4f5311236168a109ca', role: 'Admin', email: 'admin@edumanager.com', name: 'Admin' };
-    if (role === 'Faculty') {
-      payload = { userId: '6a511ff77c35a83731643cdc', role: 'Faculty', email: 'faculty@sms.com', name: 'Demo Faculty' };
-    } else if (role === 'Student') {
-      payload = { userId: '6a7616fef12344fd7c3bb394', role: 'Student', email: 'student@sms.com', name: 'Demo Student' };
-    }
-    const token = jwt.sign(
-      payload,
-      process.env.JWT_SECRET || 'super_secret_jwt_key_12345_dev',
-      { expiresIn: '1h' }
-    );
-    return res.json({ token });
-  }
-
-  static async testChat(req: Request, res: Response, next: NextFunction) {
-    try {
-      const result = await adminChatAssistant('how many students are there?', [], {
-        currentPage: '/dashboard',
-        userRole: 'Admin',
-        userId: 'test_admin_id'
-      });
-      return res.json(result);
-    } catch (error: any) {
-      return res.status(500).json({ error: error.message, stack: error.stack, name: error.name });
-    }
-  }
-
   static async getAtRiskStudents(req: Request, res: Response, next: NextFunction) {
     try {
       const [{ students }, allResults, allAttendance] = await Promise.all([
@@ -626,23 +623,23 @@ export class AIController {
         return res.status(400).json({ error: 'Action type and payload are required.' });
       }
 
+      // P0-8: AI Assistant is strictly read-only / advisory for academic safety
       if (actionType === 'mark_attendance') {
-        const { studentId, courseId, status = 'Present', date } = payload;
-        await RepoService.markAttendance({
-          studentId: studentId || '656565656565656565656565',
-          courseId: courseId || 'CS101',
-          date: date || new Date().toISOString().split('T')[0],
-          status,
-          markedBy: requester?.name || 'AI Assistant'
-        });
-        return res.json({
-          success: true,
-          message: `Attendance marked successfully as ${status}!`
+        return res.status(403).json({
+          error: 'Attendance mutations cannot be executed via AI Assistant. Please use the official Attendance portal.'
         });
       }
 
       if (actionType === 'send_parent_email') {
+        if (!['Super Admin', 'Admin', 'Faculty'].includes(requester.role)) {
+          return res.status(403).json({ error: 'Access denied: Only Faculty and Administrators can dispatch parent emails.' });
+        }
+
         const { studentId } = payload;
+        if (!studentId) {
+          return res.status(400).json({ error: 'Student ID is required.' });
+        }
+
         const student = await RepoService.findStudentById(studentId);
         if (!student) return res.status(404).json({ error: 'Student profile not found.' });
 
@@ -673,10 +670,19 @@ export class AIController {
 
   static async downloadReportPDF(req: Request, res: Response, next: NextFunction) {
     try {
+      const requester = (req as any).user;
       const studentId = req.params.studentId;
       const student = await RepoService.findStudentById(studentId);
       if (!student) {
         return res.status(404).json({ error: 'Student profile not found' });
+      }
+
+      if (requester.role === 'Student') {
+        const studentUserId = (student.userId?._id || student.userId?.id || student.userId || '').toString();
+        const sId = (student._id || student.id || '').toString();
+        if (studentUserId !== requester.userId.toString() && sId !== studentId) {
+          return res.status(403).json({ error: 'Access denied: You can only download your own AI report.' });
+        }
       }
 
       // Fetch stats

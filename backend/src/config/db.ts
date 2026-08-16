@@ -20,6 +20,10 @@ import Result from '../models/Result';
 
 export async function connectDB() {
   if (!process.env.MONGODB_URI) {
+    if (process.env.NODE_ENV === 'production') {
+      console.error('❌ FATAL: MONGODB_URI environment variable is required in production.');
+      process.exit(1);
+    }
     console.log('ℹ️  No MONGODB_URI set. Falling back immediately to local JSON File Database.');
     isMongoConnected = false;
     initJsonDb();
@@ -28,7 +32,7 @@ export async function connectDB() {
   try {
     mongoose.set('strictQuery', true);
     await mongoose.connect(MONGODB_URI, {
-      serverSelectionTimeoutMS: 3000 // Timeout fast so we can fallback to JSON database quickly
+      serverSelectionTimeoutMS: process.env.NODE_ENV === 'production' ? 10000 : 3000
     });
     isMongoConnected = true;
     console.log('🚀 MongoDB connected successfully!');
@@ -108,6 +112,10 @@ export async function connectDB() {
   } catch (error) {
     isMongoConnected = false;
     console.error('❌ MongoDB Connection/Seeding Error:', error);
+    if (process.env.NODE_ENV === 'production') {
+      console.error('❌ FATAL: MongoDB connection failed in production mode. Process exiting.');
+      process.exit(1);
+    }
     console.log('⚠️  MongoDB connection failed. Falling back to local JSON File Database.');
     initJsonDb();
   }

@@ -84,51 +84,6 @@ class AttendanceController {
             next(error);
         }
     }
-    static async scanQR(req, res, next) {
-        try {
-            const requester = req.user;
-            const { courseId } = req.body;
-            // Get student profile
-            const student = await repo_service_1.RepoService.findStudentByUserId(requester.userId);
-            if (!student) {
-                return res.status(404).json({ error: 'Student profile not found' });
-            }
-            const today = new Date().toISOString().split('T')[0];
-            // Check if enrolled
-            const studentCourses = student.enrolledCourses?.map((c) => c._id?.toString() || c.id?.toString()) || [];
-            if (!studentCourses.includes(courseId)) {
-                return res.status(400).json({ error: 'You are not enrolled in this course.' });
-            }
-            const log = await repo_service_1.RepoService.markAttendance({
-                studentId: student._id || student.id,
-                courseId,
-                date: today,
-                status: 'Present',
-                markedBy: requester.userId
-            });
-            // Log Activity
-            await repo_service_1.RepoService.createLog({
-                userId: requester.userId,
-                userName: requester.name,
-                role: requester.role,
-                action: 'QR Scan Attendance',
-                details: `Self-scanned present for course ID: ${courseId} on date: ${today}`
-            });
-            (0, socket_1.emitLiveUpdate)('attendance_update', { studentId: student._id || student.id, courseId, date: today, status: 'Present' });
-            // Trigger stub alert hook for attendance
-            if (student) {
-                const course = await repo_service_1.RepoService.findCourseById(courseId);
-                notification_service_1.NotificationService.triggerAttendanceAlert(student.email, student.name, today, course?.name || 'Academic Course', 'Present').catch(err => console.error(err));
-            }
-            return res.json({
-                message: 'Attendance scanned & recorded successfully!',
-                attendance: log
-            });
-        }
-        catch (error) {
-            next(error);
-        }
-    }
     static async getHeatmap(req, res, next) {
         try {
             const studentId = req.query.studentId;
@@ -247,18 +202,27 @@ class AttendanceController {
             if (scannedList.includes(studentIdStr)) {
                 return res.status(400).json({ error: 'Attendance already recorded for this session! Duplicate entries are not allowed.' });
             }
-            // Mark Attendance
+            // Mark Attendance (P0-6: Session-based identity)
             const log = await repo_service_1.RepoService.markAttendance({
                 studentId: student._id || student.id,
                 courseId: session.courseId,
                 date: session.date,
+                sessionId: session.sessionId,
+                attendanceMethod: 'QR',
+                lectureTitle: session.lectureTitle,
                 status: 'Present',
                 markedBy: requester.userId
             });
             // Add to QR session
             await repo_service_1.RepoService.addStudentToQrSession(sessionId, student._id || student.id);
             // Notify real-time counters
-            (0, socket_1.emitLiveUpdate)('attendance_update', { studentId: student._id || student.id, courseId: session.courseId, date: session.date, status: 'Present' });
+            (0, socket_1.emitLiveUpdate)('attendance_update', {
+                studentId: student._id || student.id,
+                courseId: session.courseId,
+                date: session.date,
+                sessionId: session.sessionId,
+                status: 'Present'
+            });
             return res.json({
                 message: `Attendance confirmed successfully for ${session.courseName} - ${session.lectureTitle}!`,
                 attendance: log
@@ -403,6 +367,17 @@ class AttendanceController {
             if (!courseId || !lectureTitle) {
                 return res.status(400).json({ error: 'Course ID and Lecture Title are required.' });
             }
+            // P0-5: If Faculty, verify they are assigned to teach this course
+            if (requester.role === 'Faculty') {
+                const facultyProfile = await repo_service_1.RepoService.findFacultyByUserId(requester.userId);
+                if (!facultyProfile) {
+                    return res.status(404).json({ error: 'Faculty profile not found.' });
+                }
+                const assignedCourses = (facultyProfile.assignedCourses || []).map((c) => (c._id || c.id || c).toString());
+                if (!assignedCourses.includes(courseId.toString())) {
+                    return res.status(403).json({ error: 'Access denied: You are not assigned to teach this course.' });
+                }
+            }
             let name = courseName;
             if (!name) {
                 const courseObj = await repo_service_1.RepoService.findCourseById(courseId);
@@ -478,6 +453,17 @@ class AttendanceController {
             const { sessionId } = req.body;
             if (!sessionId) {
                 return res.status(400).json({ error: 'Session ID is required.' });
+            }
+            // P0-5: Verify session exists and requester has ownership
+            const existingSession = await repo_service_1.RepoService.findFaceSessionById(sessionId);
+            if (!existingSession) {
+                return res.status(404).json({ error: 'Session not found.' });
+            }
+            if (requester.role === 'Faculty') {
+                const sessionFacultyId = (existingSession.facultyId?._id || existingSession.facultyId?.id || existingSession.facultyId || '').toString();
+                if (sessionFacultyId && sessionFacultyId !== requester.userId.toString()) {
+                    return res.status(403).json({ error: 'Access denied: You can only end attendance sessions created by you.' });
+                }
             }
             const closed = await repo_service_1.RepoService.endFaceSession(sessionId);
             if (!closed) {

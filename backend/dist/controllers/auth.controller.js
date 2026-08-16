@@ -18,6 +18,13 @@ class AuthController {
         try {
             const { name, email, password, role } = req.body;
             const cleanEmail = email.toLowerCase().trim();
+            // P0-2 Security: Public registration is strictly for Students only
+            if (role && role !== 'Student') {
+                return res.status(403).json({
+                    error: 'Public registration is restricted to students only. Faculty and Administrator accounts must be created by an Administrator.'
+                });
+            }
+            const assignedRole = 'Student';
             // Check if user exists
             const existingUser = await repo_service_1.RepoService.findUserByEmail(cleanEmail);
             if (existingUser) {
@@ -34,40 +41,29 @@ class AuthController {
                 name,
                 email: cleanEmail,
                 password: passwordHash,
-                role,
+                role: assignedRole,
                 isVerified,
                 verificationToken: isVerified ? null : verificationToken
             });
             const userId = user._id || user.id;
             // Handle role profile initialization
-            if (role === 'Student') {
-                const enrollmentNo = 'ENR' + Date.now().toString().slice(-8);
-                await repo_service_1.RepoService.createStudent({
-                    userId,
-                    name,
-                    email: cleanEmail,
-                    enrollmentNo,
-                    age: 18,
-                    gender: 'Male',
-                    grade: 'Freshman',
-                    department: 'General Sciences',
-                    semester: 1,
-                    parentName: 'Not Specified',
-                    parentPhone: '0000000000',
-                    address: 'Not Specified'
-                });
-                // Send registration email notification and trigger stub alerts
-                notification_service_1.NotificationService.sendStudentRegistrationNotification(cleanEmail, name, enrollmentNo).catch(err => console.error(err));
-            }
-            else if (role === 'Faculty') {
-                await repo_service_1.RepoService.createFaculty({
-                    userId,
-                    name,
-                    email: cleanEmail,
-                    department: 'General Sciences',
-                    designation: 'Assistant Professor'
-                });
-            }
+            const enrollmentNo = 'ENR' + Date.now().toString().slice(-8);
+            await repo_service_1.RepoService.createStudent({
+                userId,
+                name,
+                email: cleanEmail,
+                enrollmentNo,
+                age: 18,
+                gender: 'Male',
+                grade: 'Freshman',
+                department: 'General Sciences',
+                semester: 1,
+                parentName: 'Not Specified',
+                parentPhone: '0000000000',
+                address: 'Not Specified'
+            });
+            // Send registration email notification and trigger stub alerts
+            notification_service_1.NotificationService.sendStudentRegistrationNotification(cleanEmail, name, enrollmentNo).catch(err => console.error(err));
             // Log Activity
             await repo_service_1.RepoService.createLog({
                 userId,

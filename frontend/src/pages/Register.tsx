@@ -64,21 +64,19 @@ export default function Register() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Select System Role</label>
-            <div className="relative">
-              <UserCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 focus:border-[#f97316] focus:ring-1 focus:ring-[#f97316]/20 rounded-xl text-sm text-black focus:outline-none transition-all appearance-none cursor-pointer"
-              >
-                <option value="Student" className="bg-white">Student</option>
-                <option value="Faculty" className="bg-white">Faculty Member</option>
-                <option value="Admin" className="bg-white">Administrator</option>
-                <option value="Super Admin" className="bg-white">Super Administrator</option>
-              </select>
+          <div className="p-3 bg-orange-50/70 border border-orange-200/80 rounded-2xl flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-[#f97316]/10 text-[#f97316] flex items-center justify-center font-bold text-xs">
+                <UserCheck size={16} />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-800">Student Account</p>
+                <p className="text-[10px] text-slate-500">Public registration is for students</p>
+              </div>
             </div>
+            <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-extrabold rounded-full">
+              STUDENT
+            </span>
           </div>
 
           <div className="space-y-1.5">

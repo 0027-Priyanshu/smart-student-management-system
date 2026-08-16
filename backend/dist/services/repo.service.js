@@ -649,9 +649,13 @@ class RepoService {
         }
     }
     static async markAttendance(attendanceData) {
+        const safeMarkedBy = (attendanceData.markedBy && mongoose_1.default.isValidObjectId(attendanceData.markedBy))
+            ? attendanceData.markedBy
+            : undefined;
         const dataToSave = {
             ...attendanceData,
-            attendanceMethod: attendanceData.attendanceMethod || 'MANUAL'
+            attendanceMethod: attendanceData.attendanceMethod || 'MANUAL',
+            markedBy: safeMarkedBy
         };
         if (db_1.isMongoConnected) {
             // 1. Check if attendance already exists for this student on this date (or session)
@@ -670,8 +674,8 @@ class RepoService {
                     existing.sessionId = attendanceData.sessionId;
                 if (attendanceData.lectureTitle)
                     existing.lectureTitle = attendanceData.lectureTitle;
-                if (attendanceData.markedBy)
-                    existing.markedBy = attendanceData.markedBy;
+                if (safeMarkedBy)
+                    existing.markedBy = safeMarkedBy;
                 if (attendanceData.recognitionConfidence)
                     existing.recognitionConfidence = attendanceData.recognitionConfidence;
                 await existing.save();
@@ -694,6 +698,8 @@ class RepoService {
                             fallback.sessionId = attendanceData.sessionId;
                         if (attendanceData.lectureTitle)
                             fallback.lectureTitle = attendanceData.lectureTitle;
+                        if (safeMarkedBy)
+                            fallback.markedBy = safeMarkedBy;
                         await fallback.save();
                         return fallback;
                     }
@@ -1123,7 +1129,7 @@ class RepoService {
                         attendanceMethod: 'FACE',
                         lectureTitle: session.lectureTitle,
                         sessionId: session.sessionId,
-                        markedBy: session.facultyName || 'Faculty'
+                        markedBy: session.facultyId ? session.facultyId.toString() : undefined
                     });
                 }
             }
@@ -1161,7 +1167,7 @@ class RepoService {
                             status: 'Absent',
                             attendanceMethod: 'FACE',
                             lectureTitle: session.lectureTitle,
-                            markedBy: session.facultyName || 'Faculty',
+                            markedBy: session.facultyId ? session.facultyId.toString() : undefined,
                             createdAt: new Date().toISOString()
                         });
                     }
@@ -1246,7 +1252,7 @@ class RepoService {
             attendanceMethod: 'FACE',
             recognitionConfidence: confidence,
             lectureTitle: session.lectureTitle,
-            markedBy: session.facultyName || 'Faculty'
+            markedBy: session.facultyId ? session.facultyId.toString() : undefined
         });
         // Record in Session Verified List
         const verifiedEntry = {

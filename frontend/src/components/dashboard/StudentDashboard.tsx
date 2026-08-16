@@ -15,9 +15,11 @@ import {
   ChevronRight,
   Camera,
   Trash2,
-  Upload
+  Upload,
+  QrCode
 } from 'lucide-react';
 import { StudentAvatar } from '../common/StudentAvatar';
+import StudentQrScannerModal from '../StudentQrScannerModal';
 import { 
   AreaChart, 
   Area, 
@@ -55,6 +57,7 @@ export default function StudentDashboard() {
   const [aiLoading, setAiLoading] = useState(false);
 
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [showQrScanner, setShowQrScanner] = useState(false);
 
   const student = user?.studentProfile;
   const studentId = student?._id || student?.id;
@@ -325,6 +328,14 @@ export default function StudentDashboard() {
                   <span className="text-xs font-semibold text-slate-700">Status: {overallPerformance}</span>
                 </div>
 
+                <button
+                  onClick={() => setShowQrScanner(true)}
+                  className="px-3.5 py-1.5 bg-gradient-to-r from-[#f97316] to-[#ef4444] hover:opacity-95 text-white rounded-xl flex items-center gap-1.5 text-xs font-bold shadow-sm transition-all cursor-pointer"
+                >
+                  <QrCode size={14} />
+                  <span>Scan QR</span>
+                </button>
+
                 <label className="px-3.5 py-1.5 bg-white hover:bg-slate-50 border border-slate-300 rounded-xl flex items-center gap-1.5 text-xs font-bold text-slate-800 cursor-pointer shadow-2xs transition-colors">
                   <Upload size={14} className="text-[#f97316]" />
                   {uploadingAvatar ? 'Uploading...' : student?.avatarUrl ? 'Change Photo' : 'Upload Photo'}
@@ -570,6 +581,15 @@ export default function StudentDashboard() {
 
         </div>
       </div>
+
+      {/* QR Scanner Modal */}
+      <StudentQrScannerModal
+        isOpen={showQrScanner}
+        onClose={() => setShowQrScanner(false)}
+        onSuccess={() => {
+          fetchData();
+        }}
+      />
     </div>
   );
 }

@@ -14,7 +14,16 @@ import {
   BarChart2, 
   Search,
   ChevronRight,
-  Clock
+  Clock,
+  ShieldCheck,
+  AlertTriangle,
+  Info,
+  CheckCircle2,
+  Database,
+  Bot,
+  Activity,
+  Layers,
+  GraduationCap
 } from 'lucide-react';
 import DashboardShell from '../components/layout/DashboardShell';
 import api from '../utils/api';
@@ -81,9 +90,15 @@ export default function AcademicIntelligence() {
   const [parentEmailDraft, setParentEmailDraft] = useState('');
   const [sendingEmail, setSendingEmail] = useState(false);
 
-  // Tab 4: Institution Insights States
+  // Tab 4: Database-First + LLM-Interpretation Institution Insights States
+  const [structuredMetrics, setStructuredMetrics] = useState<any>(null);
+  const [insightsPayload, setInsightsPayload] = useState<{
+    summary: string;
+    observations: Array<{ title: string; description: string; severity: 'positive' | 'neutral' | 'warning' | 'critical'; metric?: string }>;
+    recommendations: Array<{ title: string; action: string; priority: 'low' | 'medium' | 'high'; targetArea?: string }>;
+  } | null>(null);
+  const [insightSource, setInsightSource] = useState<'AI' | 'DETERMINISTIC_FALLBACK'>('DETERMINISTIC_FALLBACK');
   const [insightsText, setInsightsText] = useState('');
-  const [instituteChartData, setInstituteChartData] = useState<any[]>([]);
   const [insightsLoading, setInsightsLoading] = useState(false);
 
   const canSelectStudent = isAdmin || user?.role === 'Faculty';
@@ -183,8 +198,11 @@ export default function AcademicIntelligence() {
     setInsightsLoading(true);
     try {
       const res = await api.get('/ai/academic-insights');
-      setInsightsText(res.data.insights || '');
-      setInstituteChartData(Array.isArray(res.data.chartData) ? res.data.chartData : []);
+      const data = res.data;
+      setStructuredMetrics(data.metrics || null);
+      setInsightsPayload(data.insights || null);
+      setInsightSource(data.insightSource || 'DETERMINISTIC_FALLBACK');
+      setInsightsText(data.insights?.summary || data.text || '');
     } catch (err) {
       console.error('Error loading institutional insights:', err);
       toast.error('Failed to load institutional insights.');
@@ -681,50 +699,323 @@ export default function AcademicIntelligence() {
             </div>
           )}
 
-          {/* TAB 4: INSTITUTION INSIGHTS */}
+          {/* TAB 4: INSTITUTION INSIGHTS (Database-First + LLM-Interpretation) */}
           {activeTab === 'insights' && (
             <div className="space-y-6 animate-fadeIn">
               {insightsLoading ? (
                 <CardSkeleton />
               ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="space-y-6">
                   
-                  {/* Left: Administrative Insight Summary */}
-                  <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card space-y-4">
-                    <h3 className="font-title font-extrabold text-xs text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                      <BrainCircuit size={18} className="text-[#f97316]" />
-                      AI Institutional Report
-                    </h3>
-                    <div className="text-xs text-slate-700 leading-relaxed space-y-2">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={customMarkdownComponents}>
-                        {insightsText || 'Generating institutional strategic summary...'}
-                      </ReactMarkdown>
+                  {/* SECTION 1: VERIFIED INSTITUTIONAL METRICS (Database Source of Truth) */}
+                  <div className="space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-4 bg-slate-900 text-white rounded-3xl shadow-sm">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-white/10 rounded-2xl text-[#f97316]">
+                          <Database size={20} />
+                        </div>
+                        <div>
+                          <h3 className="font-title font-extrabold text-sm text-white flex items-center gap-2">
+                            Verified Institutional Metrics
+                            <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 text-[10px] font-mono rounded-full font-bold">
+                              MongoDB Source of Truth
+                            </span>
+                          </h3>
+                          <p className="text-[11px] text-slate-400 font-medium">
+                            Deterministic quantitative metrics calculated directly from database records.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-[10px] font-mono text-slate-400 self-end sm:self-center">
+                        Calculated: {structuredMetrics?.generatedAt ? new Date(structuredMetrics.generatedAt).toLocaleTimeString() : 'Live'}
+                      </div>
                     </div>
+
+                    {/* Quantitative Metric Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      
+                      {/* 1. Total Students */}
+                      <div className="p-5 bg-white border border-slate-200 rounded-3xl shadow-card space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Active Students</span>
+                          <div className="p-2 bg-blue-100 text-blue-600 rounded-xl">
+                            <Users size={16} />
+                          </div>
+                        </div>
+                        <h3 className="text-3xl font-extrabold text-slate-900 font-mono">
+                          {structuredMetrics?.institution?.totalStudents ?? 0}
+                        </h3>
+                        <p className="text-[11px] text-slate-500 font-medium">
+                          {structuredMetrics?.institution?.totalFaculty ?? 0} Faculty • {structuredMetrics?.institution?.totalCourses ?? 0} Courses
+                        </p>
+                      </div>
+
+                      {/* 2. Cumulative GPA */}
+                      <div className="p-5 bg-white border border-slate-200 rounded-3xl shadow-card space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Cumulative GPA</span>
+                          <div className="p-2 bg-orange-100 text-[#f97316] rounded-xl">
+                            <GraduationCap size={16} />
+                          </div>
+                        </div>
+                        <h3 className="text-3xl font-extrabold text-slate-900 font-mono">
+                          {structuredMetrics?.academics?.averageGpa !== null && structuredMetrics?.academics?.averageGpa !== undefined
+                            ? `${Number(structuredMetrics.academics.averageGpa).toFixed(2)}`
+                            : <span className="text-slate-400 text-xl">N/A</span>}
+                          {structuredMetrics?.academics?.averageGpa !== null && (
+                            <span className="text-xs font-normal text-slate-400 ml-1">/ 4.00</span>
+                          )}
+                        </h3>
+                        <p className="text-[11px] text-slate-500 font-medium">
+                          Based on {structuredMetrics?.academics?.gpaSampleSize ?? 0} of {structuredMetrics?.institution?.totalStudents ?? 0} graded students
+                        </p>
+                      </div>
+
+                      {/* 3. Average Attendance */}
+                      <div className="p-5 bg-white border border-slate-200 rounded-3xl shadow-card space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Average Attendance</span>
+                          <div className="p-2 bg-cyan-100 text-cyan-600 rounded-xl">
+                            <Clock size={16} />
+                          </div>
+                        </div>
+                        <h3 className="text-3xl font-extrabold text-slate-900 font-mono">
+                          {structuredMetrics?.attendance?.averageAttendance !== null && structuredMetrics?.attendance?.averageAttendance !== undefined
+                            ? `${Number(structuredMetrics.attendance.averageAttendance).toFixed(1)}%`
+                            : <span className="text-slate-400 text-xl">N/A</span>}
+                        </h3>
+                        <p className="text-[11px] text-slate-500 font-medium">
+                          Across {structuredMetrics?.attendance?.attendanceSampleSize ?? 0} active student attendance logs
+                        </p>
+                      </div>
+
+                      {/* 4. Academic Risk Index */}
+                      <div className="p-5 bg-white border border-slate-200 rounded-3xl shadow-card space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">At-Risk Rate</span>
+                          <div className="p-2 bg-red-100 text-red-600 rounded-xl">
+                            <ShieldAlert size={16} />
+                          </div>
+                        </div>
+                        <h3 className="text-3xl font-extrabold text-slate-900 font-mono">
+                          {structuredMetrics?.risk?.atRiskPercentage ?? 0}%
+                        </h3>
+                        <p className="text-[11px] text-slate-500 font-medium">
+                          {structuredMetrics?.risk?.atRiskStudents ?? 0} flagged ({structuredMetrics?.risk?.highRisk ?? 0} High, {structuredMetrics?.risk?.mediumRisk ?? 0} Med)
+                        </p>
+                      </div>
+
+                    </div>
+
+                    {/* Data Quality & Statistical Completeness Bar */}
+                    {structuredMetrics?.dataQuality && (
+                      <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-xs">
+                        <div className="flex items-center gap-2">
+                          <Activity size={15} className="text-[#f97316]" />
+                          <span className="font-bold text-slate-800">Data Sample Health:</span>
+                          <span className="font-mono text-slate-600 font-bold">
+                            {structuredMetrics.dataQuality.dataCompletenessPercentage}% Evaluated
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-4 text-[11px] text-slate-500">
+                          <span>Pending Grades: <strong className="text-slate-800">{structuredMetrics.dataQuality.studentsWithoutGpa}</strong></span>
+                          <span>Pending Attendance: <strong className="text-slate-800">{structuredMetrics.dataQuality.studentsWithoutAttendance}</strong></span>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Right: Aggregate 6-Month Institute Chart */}
-                  <div className="lg:col-span-2 p-6 bg-white border border-slate-200 rounded-3xl shadow-card space-y-4">
+                  {/* SECTION 2: AI STRATEGIC INTERPRETATION (Constrained to verified metrics) */}
+                  <div className="space-y-4">
+                    
+                    {/* Section Header with Source Pill */}
                     <div className="flex items-center justify-between">
-                      <h3 className="font-title font-extrabold text-xs text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                        <BarChart2 size={18} className="text-[#f97316]" />
-                        Institute GPA & Attendance 6-Month Trend
-                      </h3>
+                      <div className="flex items-center gap-2">
+                        <BrainCircuit size={18} className="text-[#f97316]" />
+                        <h3 className="font-title font-extrabold text-sm text-slate-900 uppercase tracking-wider">
+                          Strategic Institutional Interpretation
+                        </h3>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold font-mono inline-flex items-center gap-1.5 ${
+                        insightSource === 'AI'
+                          ? 'bg-purple-100 text-purple-800 border border-purple-200'
+                          : 'bg-slate-100 text-slate-700 border border-slate-300'
+                      }`}>
+                        {insightSource === 'AI' ? <Bot size={13} /> : <Database size={13} />}
+                        <span>{insightSource === 'AI' ? 'AI Strategic Analysis' : 'Automated Database Analysis'}</span>
+                      </span>
                     </div>
 
-                    <div className="h-72">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={instituteChartData}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                          <XAxis dataKey="month" stroke="#94a3b8" fontSize={11} />
-                          <YAxis yAxisId="gpa" domain={[0, 4.0]} stroke="#f97316" fontSize={11} />
-                          <YAxis yAxisId="att" orientation="right" domain={[0, 100]} stroke="#06b6d4" fontSize={11} />
-                          <Tooltip contentStyle={{ borderRadius: '12px', fontSize: '12px' }} />
-                          <Legend />
-                          <Line yAxisId="gpa" type="monotone" dataKey="gpa" name="Avg GPA (4.0)" stroke="#f97316" strokeWidth={3} />
-                          <Line yAxisId="att" type="monotone" dataKey="attendance" name="Avg Attendance %" stroke="#06b6d4" strokeWidth={3} />
-                        </LineChart>
-                      </ResponsiveContainer>
+                    {/* Executive Summary Markdown Card */}
+                    <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card space-y-3">
+                      <h4 className="font-title font-bold text-xs text-slate-900 uppercase tracking-wider flex items-center gap-2 text-slate-500">
+                        <Sparkles size={14} className="text-[#f97316]" />
+                        Executive Strategic Narrative
+                      </h4>
+                      <div className="text-xs text-slate-700 leading-relaxed space-y-2">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={customMarkdownComponents}>
+                          {insightsText || insightsPayload?.summary || 'Generating verified institutional strategic interpretation...'}
+                        </ReactMarkdown>
+                      </div>
                     </div>
+
+                    {/* Key Strategic Observations Grid */}
+                    {insightsPayload?.observations && insightsPayload.observations.length > 0 && (
+                      <div className="space-y-3">
+                        <h4 className="font-title font-bold text-xs text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                          <Layers size={14} className="text-[#f97316]" />
+                          Key Strategic Observations
+                        </h4>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {insightsPayload.observations.map((obs, idx) => {
+                            const isCrit = obs.severity === 'critical';
+                            const isWarn = obs.severity === 'warning';
+                            const isPos = obs.severity === 'positive';
+
+                            return (
+                              <div
+                                key={idx}
+                                className={`p-5 rounded-3xl border transition-all space-y-2.5 ${
+                                  isCrit
+                                    ? 'bg-red-50/70 border-red-200'
+                                    : isWarn
+                                    ? 'bg-amber-50/70 border-amber-200'
+                                    : isPos
+                                    ? 'bg-emerald-50/70 border-emerald-200'
+                                    : 'bg-slate-50 border-slate-200'
+                                }`}
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full font-mono ${
+                                    isCrit
+                                      ? 'bg-red-200 text-red-800'
+                                      : isWarn
+                                      ? 'bg-amber-200 text-amber-800'
+                                      : isPos
+                                      ? 'bg-emerald-200 text-emerald-800'
+                                      : 'bg-slate-200 text-slate-700'
+                                  }`}>
+                                    {isCrit ? '🔴 Critical' : isWarn ? '🟡 Warning' : isPos ? '🟢 Positive' : '🔵 Informational'}
+                                  </span>
+                                  {obs.metric && (
+                                    <span className="text-[10px] font-mono font-bold text-slate-500 bg-white/80 px-2 py-0.5 rounded-md border border-slate-200">
+                                      {obs.metric}
+                                    </span>
+                                  )}
+                                </div>
+                                <h5 className="font-bold text-xs text-slate-900">{obs.title}</h5>
+                                <p className="text-[11px] text-slate-600 font-medium leading-relaxed">
+                                  {obs.description}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Actionable Leadership Interventions */}
+                    {insightsPayload?.recommendations && insightsPayload.recommendations.length > 0 && (
+                      <div className="space-y-3">
+                        <h4 className="font-title font-bold text-xs text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                          <ShieldCheck size={14} className="text-emerald-600" />
+                          Recommended Academic Interventions
+                        </h4>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {insightsPayload.recommendations.map((rec, idx) => (
+                            <div key={idx} className="p-5 bg-white border border-slate-200 rounded-3xl shadow-card space-y-2 flex flex-col justify-between">
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full font-mono ${
+                                    rec.priority === 'high'
+                                      ? 'bg-red-100 text-red-700'
+                                      : rec.priority === 'medium'
+                                      ? 'bg-amber-100 text-amber-700'
+                                      : 'bg-blue-100 text-blue-700'
+                                  }`}>
+                                    {rec.priority.toUpperCase()} PRIORITY
+                                  </span>
+                                  {rec.targetArea && (
+                                    <span className="text-[10px] font-bold text-slate-400">
+                                      {rec.targetArea}
+                                    </span>
+                                  )}
+                                </div>
+                                <h5 className="font-bold text-xs text-slate-900">{rec.title}</h5>
+                                <p className="text-[11px] text-slate-600 font-medium leading-relaxed">
+                                  {rec.action}
+                                </p>
+                              </div>
+                              <div className="pt-2 border-t border-slate-100 text-[10px] font-bold text-[#f97316] flex items-center gap-1">
+                                <span>Action Item #{idx + 1}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                  </div>
+
+                  {/* SECTION 3: VERIFIED DEPARTMENT & COURSE DISTRIBUTIONS */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+                    
+                    {/* Department Distribution */}
+                    <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card space-y-4">
+                      <h4 className="font-title font-extrabold text-xs text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                        <BookOpen size={16} className="text-[#f97316]" />
+                        Department Academic Breakdown
+                      </h4>
+
+                      {structuredMetrics?.departmentDistribution && structuredMetrics.departmentDistribution.length > 0 ? (
+                        <div className="space-y-2">
+                          {structuredMetrics.departmentDistribution.map((dept: any, idx: number) => (
+                            <div key={idx} className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between">
+                              <div>
+                                <span className="font-bold text-xs text-slate-900 block">{dept.name}</span>
+                                <span className="text-[10px] text-slate-500 font-medium">{dept.count} Registered Student(s)</span>
+                              </div>
+                              <div className="text-right">
+                                <span className="font-mono text-xs font-bold text-slate-900 block">
+                                  {dept.averageGpa !== null ? `${dept.averageGpa.toFixed(2)} GPA` : 'Pending Grades'}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-400 italic">No department distribution recorded.</p>
+                      )}
+                    </div>
+
+                    {/* Course Enrollments */}
+                    <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-card space-y-4">
+                      <h4 className="font-title font-extrabold text-xs text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                        <BarChart2 size={16} className="text-[#f97316]" />
+                        Active Course Enrollments
+                      </h4>
+
+                      {structuredMetrics?.courseDistribution && structuredMetrics.courseDistribution.length > 0 ? (
+                        <div className="space-y-2">
+                          {structuredMetrics.courseDistribution.map((course: any, idx: number) => (
+                            <div key={idx} className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between">
+                              <div>
+                                <span className="font-bold text-xs text-slate-900 block">{course.name}</span>
+                                <span className="text-[10px] font-mono text-slate-500 font-bold">{course.code}</span>
+                              </div>
+                              <div className="px-2.5 py-1 bg-white border border-slate-200 rounded-xl font-mono text-xs font-bold text-slate-800">
+                                {course.enrolledCount} Enrolled
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-400 italic">No courses currently assigned.</p>
+                      )}
+                    </div>
+
                   </div>
 
                 </div>

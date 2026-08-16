@@ -2,6 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateStudentSummary = generateStudentSummary;
 exports.generateRecommendations = generateRecommendations;
+exports.generateDeterministicInstitutionalInsights = generateDeterministicInstitutionalInsights;
+exports.generateInstitutionalInsights = generateInstitutionalInsights;
 exports.generateAcademicInsights = generateAcademicInsights;
 exports.adminChatAssistant = adminChatAssistant;
 exports.predictRisk = predictRisk;
@@ -45,11 +47,244 @@ async function generateRecommendations(studentName, gpa, attendanceRate, weakSub
         weakSubjects: weakSubjectNames
     };
 }
-// 3. AI Academic Report Insights
-async function generateAcademicInsights(totalStudents, avgGpa, avgAttendance, departmentCounts) {
+function generateDeterministicInstitutionalInsights(metrics) {
+    const gpa = metrics.academics?.averageGpa;
+    const gpaSampleSize = metrics.academics?.gpaSampleSize || 0;
+    const totalStudents = metrics.institution?.totalStudents || 0;
+    const att = metrics.attendance?.averageAttendance;
+    const attSampleSize = metrics.attendance?.attendanceSampleSize || 0;
+    const atRiskCount = metrics.risk?.atRiskStudents || 0;
+    const atRiskPct = metrics.risk?.atRiskPercentage || 0;
+    const highRisk = metrics.risk?.highRisk || 0;
+    const mediumRisk = metrics.risk?.mediumRisk || 0;
+    // Executive summary
+    let summary = '';
+    if (totalStudents === 0) {
+        summary = 'No student enrollments are currently registered in the database. As students enroll and academic sessions commence, institutional performance benchmarks will automatically calibrate.';
+    }
+    else {
+        const gpaPart = gpa !== null
+            ? `an institutional average CGPA of **${gpa.toFixed(2)}** (evaluated across ${gpaSampleSize} of ${totalStudents} students)`
+            : `grade evaluations currently pending across ${totalStudents} registered students`;
+        const attPart = att !== null
+            ? `an aggregate attendance compliance rate of **${att.toFixed(1)}%**`
+            : `no attendance sessions logged yet`;
+        const riskPart = atRiskCount > 0
+            ? `**${atRiskCount} student(s)** (${atRiskPct}%) currently meet academic risk criteria requiring targeted counseling or monitoring`
+            : `all currently evaluated students maintain satisfactory academic standing`;
+        summary = `Database records reflect ${gpaPart} alongside ${attPart}. From an academic risk standpoint, ${riskPart}.`;
+    }
+    // Key Observations
+    const observations = [];
+    // Attendance Observation
+    if (att !== null) {
+        if (att >= 85) {
+            observations.push({
+                title: 'Strong Attendance Compliance',
+                description: `Institutional attendance stands at ${att.toFixed(1)}%, comfortably surpassing the 75% regulatory benchmark across ${attSampleSize} student record(s).`,
+                severity: 'positive',
+                metric: `${att.toFixed(1)}% Attendance`
+            });
+        }
+        else if (att >= 75) {
+            observations.push({
+                title: 'Moderate Attendance Standing',
+                description: `Institutional attendance averages ${att.toFixed(1)}%, meeting baseline requirements but requiring close monitoring to avoid drop-offs.`,
+                severity: 'neutral',
+                metric: `${att.toFixed(1)}% Attendance`
+            });
+        }
+        else {
+            observations.push({
+                title: 'Attendance Below Target Benchmark',
+                description: `Institutional attendance (${att.toFixed(1)}%) is below the mandatory 75% threshold, signaling absenteeism risks across class cohorts.`,
+                severity: 'critical',
+                metric: `${att.toFixed(1)}% Attendance`
+            });
+        }
+    }
+    else {
+        observations.push({
+            title: 'Attendance Data Collection in Progress',
+            description: 'Zero attendance sessions have been logged to date. Institutional compliance indicators will activate once lectures record check-ins.',
+            severity: 'neutral',
+            metric: 'N/A'
+        });
+    }
+    // Academic Performance Observation
+    if (gpa !== null) {
+        if (gpa >= 3.5) {
+            observations.push({
+                title: 'Superior Academic Achievement',
+                description: `Cumulative grade point average of ${gpa.toFixed(2)} / 4.00 demonstrates robust course mastery across evaluated cohorts.`,
+                severity: 'positive',
+                metric: `${gpa.toFixed(2)} CGPA`
+            });
+        }
+        else if (gpa >= 2.75) {
+            observations.push({
+                title: 'Consistent Academic Progress',
+                description: `Average CGPA of ${gpa.toFixed(2)} reflects steady scholastic performance with opportunities for enrichment in foundational courses.`,
+                severity: 'neutral',
+                metric: `${gpa.toFixed(2)} CGPA`
+            });
+        }
+        else {
+            observations.push({
+                title: 'Academic Performance Requires Reinforcement',
+                description: `Average CGPA of ${gpa.toFixed(2)} is nearing probationary levels. Core prerequisite subject reinforcement is advised.`,
+                severity: 'warning',
+                metric: `${gpa.toFixed(2)} CGPA`
+            });
+        }
+    }
+    else {
+        observations.push({
+            title: 'Grade Evaluations Pending',
+            description: 'Formal semester assessment marks have not yet been published for this academic term.',
+            severity: 'neutral',
+            metric: 'N/A'
+        });
+    }
+    // Risk Distribution Observation
+    if (atRiskCount > 0) {
+        observations.push({
+            title: `${atRiskCount} Student(s) Flagged for Academic Risk`,
+            description: `${highRisk} student(s) exhibit high-risk indicators and ${mediumRisk} exhibit medium-risk indicators driven by attendance dips or lower GPA.`,
+            severity: highRisk > 0 ? 'critical' : 'warning',
+            metric: `${atRiskPct}% At-Risk`
+        });
+    }
+    else if (totalStudents > 0) {
+        observations.push({
+            title: 'Zero Academic At-Risk Flags',
+            description: 'No students currently breach critical attendance (<75%) or grade (<2.50 GPA) thresholds.',
+            severity: 'positive',
+            metric: '0 At-Risk'
+        });
+    }
+    // Recommendations
+    const recommendations = [];
+    if (atRiskCount > 0) {
+        recommendations.push({
+            title: 'Initiate Academic Advising & Counseling',
+            action: `Deploy faculty advisors to engage with the ${atRiskCount} flagged student(s) to address specific attendance or grade impediments.`,
+            priority: 'high',
+            targetArea: 'Student Retention'
+        });
+    }
+    if (att !== null && att < 75) {
+        recommendations.push({
+            title: 'Activate Automated Attendance Alerts',
+            action: 'Trigger parent notifications and direct student warnings for course sessions with recurring absence clusters.',
+            priority: 'high',
+            targetArea: 'Attendance Compliance'
+        });
+    }
+    if (metrics.dataQuality?.studentsWithoutGpa > 0) {
+        recommendations.push({
+            title: 'Finalize Semester Grade Entry',
+            action: `Coordinate with department instructors to submit pending assessment marks for ${metrics.dataQuality.studentsWithoutGpa} unevaluated student(s).`,
+            priority: 'medium',
+            targetArea: 'Assessment Administration'
+        });
+    }
+    if (recommendations.length === 0) {
+        recommendations.push({
+            title: 'Maintain Curriculum Delivery Standards',
+            action: 'Continue active lecture delivery, formative weekly quizzes, and regular biometric attendance logging.',
+            priority: 'low',
+            targetArea: 'Academic Excellence'
+        });
+    }
     return {
-        text: getDefaultInsights(avgGpa, avgAttendance),
-        chartData: [] // P2-5: Do not return fake fabricated curves; real historical trends are rendered per student from Result records
+        summary,
+        observations,
+        recommendations
+    };
+}
+async function generateInstitutionalInsights(metrics) {
+    try {
+        const provider = (0, ai_provider_1.getAIProvider)();
+        const systemInstruction = `You are an academic analytics executive advisor for EduManager.
+The following quantitative institutional metrics were calculated directly from MongoDB database records.
+Treat these metrics as the immutable single source of truth.
+CRITICAL RULES:
+1. DO NOT calculate, modify, estimate, or invent academic numbers.
+2. DO NOT introduce student counts, percentages, GPA values, attendance values, or risk counts that are not present in the provided metrics.
+3. Your job is strictly to interpret the verified metrics and provide strategic observations and actionable recommendations.
+4. If data is partial (e.g. some students lack GPA or attendance), note data limits honestly.
+5. Return ONLY a valid JSON object matching this schema:
+{
+  "summary": "Concise 1-2 paragraph executive strategic summary",
+  "observations": [
+    { "title": "string", "description": "string", "severity": "positive"|"neutral"|"warning"|"critical", "metric": "string" }
+  ],
+  "recommendations": [
+    { "title": "string", "action": "string", "priority": "high"|"medium"|"low", "targetArea": "string" }
+  ]
+}`;
+        const userPrompt = `Institutional Metrics (Source of Truth):\n${JSON.stringify({
+            institution: metrics.institution,
+            academics: metrics.academics,
+            attendance: metrics.attendance,
+            risk: metrics.risk,
+            dataQuality: metrics.dataQuality,
+            departmentDistribution: metrics.departmentDistribution
+        }, null, 2)}`;
+        // Call LLM with 8-second timeout
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('AI_INSIGHTS_TIMEOUT')), 8000);
+        });
+        const aiPromise = provider.chat({
+            systemInstruction,
+            messages: [{ role: 'user', content: userPrompt }]
+        });
+        const response = await Promise.race([aiPromise, timeoutPromise]);
+        const rawContent = response.content.trim();
+        // Clean JSON markdown wraps if present
+        const jsonMatch = rawContent.match(/```(?:json)?\s*([\s\S]*?)\s*```/) || [null, rawContent];
+        const parsed = JSON.parse(jsonMatch[1] || rawContent);
+        if (parsed && typeof parsed.summary === 'string' && Array.isArray(parsed.observations) && Array.isArray(parsed.recommendations)) {
+            return {
+                insights: {
+                    summary: parsed.summary,
+                    observations: parsed.observations.map((o) => ({
+                        title: String(o.title || 'Observation'),
+                        description: String(o.description || ''),
+                        severity: ['positive', 'neutral', 'warning', 'critical'].includes(o.severity) ? o.severity : 'neutral',
+                        metric: o.metric ? String(o.metric) : undefined
+                    })),
+                    recommendations: parsed.recommendations.map((r) => ({
+                        title: String(r.title || 'Recommendation'),
+                        action: String(r.action || ''),
+                        priority: ['high', 'medium', 'low'].includes(r.priority) ? r.priority : 'medium',
+                        targetArea: r.targetArea ? String(r.targetArea) : undefined
+                    }))
+                },
+                insightSource: 'AI'
+            };
+        }
+    }
+    catch (err) {
+        console.warn(`[AcademicInsights] LLM generation failed (${err?.message || err}). Engaging deterministic fallback.`);
+    }
+    return {
+        insights: generateDeterministicInstitutionalInsights(metrics),
+        insightSource: 'DETERMINISTIC_FALLBACK'
+    };
+}
+// Backwards-compatible legacy signature
+async function generateAcademicInsights(totalStudents, avgGpa, avgAttendance, departmentCounts) {
+    const fallback = generateDeterministicInstitutionalInsights({
+        institution: { totalStudents },
+        academics: { averageGpa: avgGpa, gpaSampleSize: totalStudents },
+        attendance: { averageAttendance: avgAttendance, attendanceSampleSize: totalStudents },
+        risk: { atRiskStudents: 0, atRiskPercentage: 0 }
+    });
+    return {
+        text: fallback.summary,
+        chartData: []
     };
 }
 // 4. Provider-Independent Copilot Iterative Tool Loop

@@ -8,6 +8,7 @@ import {
   generateStudentSummary, 
   generateRecommendations, 
   generateAcademicInsights, 
+  generateInstitutionalInsights,
   adminChatAssistant,
   predictRisk,
   translateNlSearch,
@@ -147,48 +148,22 @@ export class AIController {
     try {
       const requester = (req as any).user;
       
-      // Faculty-scoped insights
-      if (requester?.role === 'Faculty') {
-        const facData = await AcademicMetricsService.getFacultyAcademicOverview(requester.userId);
-        const { text, chartData } = await generateAcademicInsights(
-          facData.enrolledStudentsCount,
-          null,
-          facData.averageAttendance,
-          {}
-        );
+      // Calculate database-first verified metrics
+      const metrics = requester?.role === 'Faculty'
+        ? await AcademicMetricsService.getStructuredFacultyMetrics(requester.userId)
+        : await AcademicMetricsService.getStructuredInstitutionalMetrics();
 
-        return res.json({
-          insights: text,
-          chartData,
-          metrics: {
-            totalStudents: facData.enrolledStudentsCount,
-            avgGpa: null,
-            avgAttendance: facData.averageAttendance,
-            assignedCourses: facData.assignedCoursesCount
-          },
-          weakStudents: facData.atRiskStudents
-        });
-      }
-
-      // Institutional insights (Admin)
-      const overview = await AcademicMetricsService.getInstitutionAcademicOverview();
-      const { text, chartData } = await generateAcademicInsights(
-        overview.metrics.totalStudents,
-        overview.metrics.averageGpa,
-        overview.metrics.attendanceToday,
-        overview.departmentWiseData
-      );
+      // Pass verified metrics to LLM for strategic interpretation with deterministic fallback
+      const { insights, insightSource } = await generateInstitutionalInsights(metrics);
 
       return res.json({
-        insights: text,
-        chartData,
-        metrics: {
-          totalStudents: overview.metrics.totalStudents,
-          avgGpa: overview.metrics.averageGpa,
-          avgAttendance: overview.metrics.attendanceToday,
-          departmentCounts: overview.departmentWiseData
-        },
-        weakStudents: overview.atRiskStudents
+        metrics,
+        insights,
+        // Legacy compatibility fields
+        text: insights.summary,
+        chartData: metrics.departmentDistribution || [],
+        insightSource,
+        generatedAt: metrics.generatedAt
       });
     } catch (error) {
       next(error);

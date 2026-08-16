@@ -360,5 +360,269 @@ class AcademicMetricsService {
             monthlyRegistrationData
         };
     }
+    /**
+     * Generates a fully calculated, structured InstitutionalMetrics object directly from MongoDB.
+     * Single source of quantitative truth for Institution Insights.
+     */
+    static async getStructuredInstitutionalMetrics() {
+        const { students } = await repo_service_1.RepoService.findStudents({ isDeleted: false }, 1, 2000);
+        const faculties = await repo_service_1.RepoService.findFaculties({ isDeleted: false });
+        const courses = await repo_service_1.RepoService.findCourses({ isDeleted: false });
+        const totalStudents = students.length;
+        const totalFaculty = faculties.length;
+        const totalCourses = courses.length;
+        const departments = new Set([...students.map(s => s.department), ...courses.map(c => c.department)].filter(Boolean));
+        const totalDepartments = departments.size;
+        let totalEnrollments = 0;
+        const courseEnrollmentCounts = {};
+        students.forEach((s) => {
+            const sCourses = s.enrolledCourses?.map((c) => (c._id || c.id || c).toString()) || [];
+            totalEnrollments += sCourses.length;
+            sCourses.forEach((cid) => {
+                courseEnrollmentCounts[cid] = (courseEnrollmentCounts[cid] || 0) + 1;
+            });
+        });
+        // Today's attendance
+        const today = new Date().toISOString().split('T')[0];
+        const todayAttendance = await repo_service_1.RepoService.findAttendance({ date: today });
+        let attendanceTodayPct = null;
+        if (todayAttendance.length > 0) {
+            const presentToday = todayAttendance.filter(a => a.status === 'Present' || a.status === 'Late').length;
+            attendanceTodayPct = Math.round((presentToday / todayAttendance.length) * 100);
+        }
+        // Evaluate each student
+        let totalGpaSum = 0;
+        let gpaSampleSize = 0;
+        let totalAttSum = 0;
+        let attSampleSize = 0;
+        let highRiskCount = 0;
+        let mediumRiskCount = 0;
+        let lowRiskCount = 0;
+        let insufficientDataCount = 0;
+        const atRiskList = [];
+        const deptGpaSums = {};
+        const deptCounts = {};
+        for (const student of students) {
+            const sId = (student._id || student.id).toString();
+            const sDept = student.department || 'General';
+            deptCounts[sDept] = (deptCounts[sDept] || 0) + 1;
+            const risk = await this.calculateStudentRisk(sId);
+            if (risk.gpa !== null) {
+                totalGpaSum += risk.gpa;
+                gpaSampleSize++;
+                if (!deptGpaSums[sDept])
+                    deptGpaSums[sDept] = { sum: 0, count: 0 };
+                deptGpaSums[sDept].sum += risk.gpa;
+                deptGpaSums[sDept].count++;
+            }
+            if (risk.attendanceRate !== null) {
+                totalAttSum += risk.attendanceRate;
+                attSampleSize++;
+            }
+            if (risk.status === 'insufficient_data') {
+                insufficientDataCount++;
+            }
+            else {
+                if (risk.riskLevel === 'High')
+                    highRiskCount++;
+                else if (risk.riskLevel === 'Medium')
+                    mediumRiskCount++;
+                else
+                    lowRiskCount++;
+                if (risk.riskLevel === 'High' || risk.riskLevel === 'Medium' || (risk.gpa !== null && risk.gpa < 2.5) || (risk.attendanceRate !== null && risk.attendanceRate < 75)) {
+                    atRiskList.push({
+                        id: sId,
+                        name: student.name,
+                        enrollmentNo: student.enrollmentNo,
+                        department: student.department || 'N/A',
+                        gpa: risk.gpa,
+                        attendanceRate: risk.attendanceRate,
+                        riskLevel: risk.riskLevel,
+                        riskScore: risk.riskScore
+                    });
+                }
+            }
+        }
+        const averageGpa = gpaSampleSize > 0 ? Number((totalGpaSum / gpaSampleSize).toFixed(2)) : null;
+        const averageAttendance = attSampleSize > 0 ? Number((totalAttSum / attSampleSize).toFixed(1)) : null;
+        const atRiskPercentage = totalStudents > 0 ? Number(((atRiskList.length / totalStudents) * 100).toFixed(1)) : 0;
+        const gradedPercentage = totalStudents > 0 ? Number(((gpaSampleSize / totalStudents) * 100).toFixed(1)) : 0;
+        const departmentDistribution = Object.keys(deptCounts).map(dept => ({
+            name: dept,
+            count: deptCounts[dept],
+            averageGpa: deptGpaSums[dept]?.count > 0 ? Number((deptGpaSums[dept].sum / deptGpaSums[dept].count).toFixed(2)) : null
+        }));
+        const courseDistribution = courses.map(c => {
+            const idStr = (c._id || c.id).toString();
+            return {
+                id: idStr,
+                name: c.name,
+                code: c.code,
+                enrolledCount: courseEnrollmentCounts[idStr] || 0
+            };
+        });
+        const studentsWithoutGpa = totalStudents - gpaSampleSize;
+        const studentsWithoutAttendance = totalStudents - attSampleSize;
+        const dataCompletenessPercentage = totalStudents > 0
+            ? Number((((gpaSampleSize + attSampleSize) / (totalStudents * 2)) * 100).toFixed(1))
+            : 0;
+        return {
+            generatedAt: new Date().toISOString(),
+            scope: 'INSTITUTION',
+            institution: {
+                totalStudents,
+                totalFaculty,
+                totalCourses,
+                totalDepartments,
+                totalEnrollments
+            },
+            academics: {
+                averageGpa,
+                gpaSampleSize,
+                totalStudents,
+                gradedPercentage
+            },
+            attendance: {
+                averageAttendance,
+                attendanceSampleSize: attSampleSize,
+                attendanceToday: attendanceTodayPct
+            },
+            risk: {
+                atRiskStudents: atRiskList.length,
+                atRiskPercentage,
+                highRisk: highRiskCount,
+                mediumRisk: mediumRiskCount,
+                lowRisk: lowRiskCount,
+                insufficientDataCount
+            },
+            dataQuality: {
+                studentsWithoutGpa,
+                studentsWithoutAttendance,
+                dataCompletenessPercentage
+            },
+            departmentDistribution,
+            courseDistribution,
+            atRiskList
+        };
+    }
+    /**
+     * Generates structured metrics scoped strictly to courses taught by a faculty member.
+     */
+    static async getStructuredFacultyMetrics(facultyUserId) {
+        const facultyProfile = await repo_service_1.RepoService.findFacultyByUserId(facultyUserId);
+        if (!facultyProfile) {
+            return {
+                generatedAt: new Date().toISOString(),
+                scope: 'FACULTY',
+                institution: { totalStudents: 0, totalFaculty: 1, totalCourses: 0, totalDepartments: 0, totalEnrollments: 0 },
+                academics: { averageGpa: null, gpaSampleSize: 0, totalStudents: 0, gradedPercentage: 0 },
+                attendance: { averageAttendance: null, attendanceSampleSize: 0, attendanceToday: null },
+                risk: { atRiskStudents: 0, atRiskPercentage: 0, highRisk: 0, mediumRisk: 0, lowRisk: 0, insufficientDataCount: 0 },
+                dataQuality: { studentsWithoutGpa: 0, studentsWithoutAttendance: 0, dataCompletenessPercentage: 0 },
+                departmentDistribution: [],
+                courseDistribution: [],
+                atRiskList: []
+            };
+        }
+        const assignedCourses = facultyProfile.assignedCourses || [];
+        const courseIds = assignedCourses.map((c) => (c._id || c.id || c).toString());
+        const { students: allStudents } = await repo_service_1.RepoService.findStudents({ isDeleted: false }, 1, 2000);
+        const facultyStudents = allStudents.filter((s) => {
+            const studentCourses = (s.enrolledCourses || []).map((c) => (c._id || c.id || c).toString());
+            return studentCourses.some((cid) => courseIds.includes(cid));
+        });
+        const totalStudents = facultyStudents.length;
+        let totalGpaSum = 0;
+        let gpaSampleSize = 0;
+        let totalAttSum = 0;
+        let attSampleSize = 0;
+        let highRiskCount = 0;
+        let mediumRiskCount = 0;
+        let lowRiskCount = 0;
+        let insufficientDataCount = 0;
+        const atRiskList = [];
+        for (const student of facultyStudents) {
+            const sId = (student._id || student.id).toString();
+            const risk = await this.calculateStudentRisk(sId);
+            if (risk.gpa !== null) {
+                totalGpaSum += risk.gpa;
+                gpaSampleSize++;
+            }
+            if (risk.attendanceRate !== null) {
+                totalAttSum += risk.attendanceRate;
+                attSampleSize++;
+            }
+            if (risk.status === 'insufficient_data') {
+                insufficientDataCount++;
+            }
+            else {
+                if (risk.riskLevel === 'High')
+                    highRiskCount++;
+                else if (risk.riskLevel === 'Medium')
+                    mediumRiskCount++;
+                else
+                    lowRiskCount++;
+                if (risk.riskLevel === 'High' || risk.riskLevel === 'Medium' || (risk.gpa !== null && risk.gpa < 2.5) || (risk.attendanceRate !== null && risk.attendanceRate < 75)) {
+                    atRiskList.push({
+                        id: sId,
+                        name: student.name,
+                        enrollmentNo: student.enrollmentNo,
+                        department: student.department || 'N/A',
+                        gpa: risk.gpa,
+                        attendanceRate: risk.attendanceRate,
+                        riskLevel: risk.riskLevel,
+                        riskScore: risk.riskScore
+                    });
+                }
+            }
+        }
+        const averageGpa = gpaSampleSize > 0 ? Number((totalGpaSum / gpaSampleSize).toFixed(2)) : null;
+        const averageAttendance = attSampleSize > 0 ? Number((totalAttSum / attSampleSize).toFixed(1)) : null;
+        const atRiskPercentage = totalStudents > 0 ? Number(((atRiskList.length / totalStudents) * 100).toFixed(1)) : 0;
+        const gradedPercentage = totalStudents > 0 ? Number(((gpaSampleSize / totalStudents) * 100).toFixed(1)) : 0;
+        return {
+            generatedAt: new Date().toISOString(),
+            scope: 'FACULTY',
+            institution: {
+                totalStudents,
+                totalFaculty: 1,
+                totalCourses: assignedCourses.length,
+                totalDepartments: 1,
+                totalEnrollments: totalStudents
+            },
+            academics: {
+                averageGpa,
+                gpaSampleSize,
+                totalStudents,
+                gradedPercentage
+            },
+            attendance: {
+                averageAttendance,
+                attendanceSampleSize: attSampleSize,
+                attendanceToday: null
+            },
+            risk: {
+                atRiskStudents: atRiskList.length,
+                atRiskPercentage,
+                highRisk: highRiskCount,
+                mediumRisk: mediumRiskCount,
+                lowRisk: lowRiskCount,
+                insufficientDataCount
+            },
+            dataQuality: {
+                studentsWithoutGpa: totalStudents - gpaSampleSize,
+                studentsWithoutAttendance: totalStudents - attSampleSize,
+                dataCompletenessPercentage: totalStudents > 0 ? Number((((gpaSampleSize + attSampleSize) / (totalStudents * 2)) * 100).toFixed(1)) : 0
+            },
+            departmentDistribution: [],
+            courseDistribution: assignedCourses.map((c) => ({
+                id: c._id || c.id || c,
+                name: c.name || 'Course',
+                code: c.code || 'CODE',
+                enrolledCount: facultyStudents.filter((s) => (s.enrolledCourses || []).some((ec) => (ec._id || ec.id || ec).toString() === (c._id || c.id || c).toString())).length
+            })),
+            atRiskList
+        };
+    }
 }
 exports.AcademicMetricsService = AcademicMetricsService;

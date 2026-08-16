@@ -114,6 +114,33 @@ export default function Attendance() {
     fetchActiveStudentSession();
   }, [fetchActiveStudentSession]);
 
+  // Handle QR session confirmation from URL (student scans QR code)
+  useEffect(() => {
+    if (!isStudent) return;
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get('session');
+    if (!sessionId) return;
+
+    // Remove session param from URL to prevent re-triggering
+    const url = new URL(window.location.href);
+    url.searchParams.delete('session');
+    window.history.replaceState({}, '', url.toString());
+
+    (async () => {
+      try {
+        setActionLoading(true);
+        const res = await api.post('/attendance/qr/confirm', { sessionId });
+        toast.success(res.data.message || 'QR Attendance confirmed successfully!');
+        fetchAttendanceRecords();
+      } catch (err: any) {
+        const errMsg = err.response?.data?.error || 'Failed to confirm QR attendance';
+        toast.error(errMsg);
+      } finally {
+        setActionLoading(false);
+      }
+    })();
+  }, [isStudent, fetchAttendanceRecords]);
+
   // Fetch Dropdowns (Courses & Students)
   useEffect(() => {
     async function init() {
@@ -126,7 +153,7 @@ export default function Attendance() {
           setQrCourseId(loadedCourses[0]._id || loadedCourses[0].id);
         }
         
-        if (isAdmin) {
+        if (isAdmin || isFaculty) {
           const studentsRes = await api.get('/students?limit=200');
           const loadedStudents = studentsRes.data.students || [];
           setStudents(loadedStudents);
@@ -141,7 +168,7 @@ export default function Attendance() {
       }
     }
     init();
-  }, [isAdmin]);
+  }, [isAdmin, isFaculty]);
 
   // Socket Listener for Real-Time Session Updates & Notifications
   useEffect(() => {
@@ -1006,7 +1033,10 @@ export default function Attendance() {
                 <p className="text-xs text-slate-400 italic text-center py-12">Please select an academic course to load students.</p>
               ) : (
                 <div className="space-y-3 max-h-[460px] overflow-y-auto">
-                  {students.filter(s => (s.enrolledCourses || []).includes(selectedCourse)).map(s => {
+                  {students.filter(s => {
+                    const courseIds = (s.enrolledCourses || []).map((c: any) => typeof c === 'object' ? (c._id || c.id) : c);
+                    return courseIds.includes(selectedCourse);
+                  }).map(s => {
                     const stId = s._id || s.id;
                     const stStatus = studentStatuses[stId] || 'Absent';
                     return (

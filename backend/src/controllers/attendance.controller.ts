@@ -45,6 +45,17 @@ export class AttendanceController {
       const requester = (req as any).user;
       const { studentId, courseId, date, status } = req.body;
 
+      // Faculty RBAC: only allow marking attendance for assigned courses
+      if (requester.role === 'Faculty') {
+        const facultyProfile = await RepoService.findFacultyByUserId(requester.userId);
+        if (facultyProfile) {
+          const assignedCourses = facultyProfile.assignedCourses?.map((c: any) => (c._id || c.id || c).toString()) || [];
+          if (!assignedCourses.includes(courseId)) {
+            return res.status(403).json({ error: 'Access denied: You are not assigned to this course.' });
+          }
+        }
+      }
+
       const log = await RepoService.markAttendance({
         studentId,
         courseId,
@@ -185,6 +196,17 @@ export class AttendanceController {
         return res.status(404).json({ error: 'Course not found' });
       }
 
+      // Faculty RBAC: only allow QR session for assigned courses
+      if (requester.role === 'Faculty') {
+        const facultyProfile = await RepoService.findFacultyByUserId(requester.userId);
+        if (facultyProfile) {
+          const assignedCourses = facultyProfile.assignedCourses?.map((c: any) => (c._id || c.id || c).toString()) || [];
+          if (!assignedCourses.includes(courseId)) {
+            return res.status(403).json({ error: 'Access denied: You are not assigned to this course.' });
+          }
+        }
+      }
+
       const duration = parseInt(durationMinutes || '10', 10);
       const sessionId = 'QR_' + Math.random().toString(36).substring(2, 9).toUpperCase();
       const expiresAt = new Date(Date.now() + duration * 60 * 1000);
@@ -251,16 +273,16 @@ export class AttendanceController {
         return res.status(400).json({ error: 'This QR Code session has expired. Please ask your instructor for a new QR code.' });
       }
 
-      let student = await RepoService.findStudentByUserId(requester.userId);
-      if (!student) {
-        const { students } = await RepoService.findStudents({}, 1, 1);
-        if (students && students.length > 0) {
-          student = students[0];
-        }
-      }
-
+      const student = await RepoService.findStudentByUserId(requester.userId);
       if (!student) {
         return res.status(404).json({ error: 'Student profile not found. Please create a student profile first.' });
+      }
+
+      // Verify student is enrolled in the course
+      const studentCourses: string[] = student.enrolledCourses?.map((c: any) => (c._id || c.id || c).toString()) || [];
+      const sessionCourseStr = (session.courseId?._id || session.courseId?.id || session.courseId).toString();
+      if (!studentCourses.includes(sessionCourseStr)) {
+        return res.status(403).json({ error: 'You are not enrolled in this course.' });
       }
 
       const studentIdStr = (student._id || student.id).toString();

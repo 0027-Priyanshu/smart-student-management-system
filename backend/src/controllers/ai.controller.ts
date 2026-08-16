@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import PDFDocument from 'pdfkit';
 import { RepoService } from '../services/repo.service';
 import { RetrievalService } from '../services/retrieval.service';
+import { AcademicMetricsService } from '../services/metrics.service';
+import { NotificationService } from '../services/notification.service';
 import { 
   generateStudentSummary, 
   generateRecommendations, 
@@ -13,6 +15,24 @@ import {
 } from '../services/ai.service';
 import { getAIProvider } from '../services/ai.provider';
 
+async function authorizeStudentAccess(requester: any, student: any): Promise<boolean> {
+  if (!requester || !student) return false;
+  if (requester.role === 'Super Admin' || requester.role === 'Admin') return true;
+  
+  const sUserId = (student.userId?._id || student.userId?.id || student.userId || '').toString();
+  if (requester.role === 'Student') {
+    return sUserId === requester.userId.toString();
+  }
+  if (requester.role === 'Faculty') {
+    const fac = await RepoService.findFacultyByUserId(requester.userId);
+    if (!fac) return false;
+    const assignedIds = (fac.assignedCourses || []).map((c: any) => (c._id || c.id || c).toString());
+    const sCourses = (student.enrolledCourses || []).map((c: any) => (c._id || c.id || c).toString());
+    return sCourses.some((cid: string) => assignedIds.includes(cid));
+  }
+  return false;
+}
+
 export class AIController {
   static async getHealth(req: Request, res: Response) {
     try {
@@ -21,7 +41,7 @@ export class AIController {
       res.status(200).json(status);
     } catch (err: any) {
       console.error("[AI Health Check Error]:", err.message);
-      res.status(500).json({ available: false, provider: 'unknown', reason: 'INTERNAL_ERROR', message: err.message });
+      res.status(500).json({ available: false, provider: 'unknown', reason: 'INTERNAL_ERROR', message: 'AI service is temporarily unavailable.' });
     }
   }
 
@@ -33,48 +53,32 @@ export class AIController {
         return res.status(404).json({ error: 'Student profile not found' });
       }
 
-      if (requester.role === 'Student') {
-        const studentUserId = (student.userId?._id || student.userId?.id || student.userId || '').toString();
-        const studentId = (student._id || student.id || '').toString();
-        if (studentUserId !== requester.userId.toString() && studentId !== req.params.studentId) {
-          return res.status(403).json({ error: 'Access denied: You can only view your own AI summary.' });
-        }
+      const isAuthorized = await authorizeStudentAccess(requester, student);
+      if (!isAuthorized) {
+        return res.status(403).json({ error: 'Access denied: You do not have permission to view this student AI summary.' });
       }
 
-      const courseCodes = student.enrolledCourses?.map((c: any) => c.code) || [];
-      const results = await RepoService.findResults(req.params.studentId);
-      
-      let totalGradePoints = 0;
-      let totalCredits = 0;
-      results.forEach(r => {
-        const courseCredits = r.courseId?.credits || 3;
-        totalGradePoints += r.gpa * courseCredits;
-        totalCredits += courseCredits;
-      });
-      const gpa = totalCredits > 0 ? totalGradePoints / totalCredits : 0.0;
+      const sId = (student._id || student.id).toString();
+      const [gpaData, attData] = await Promise.all([
+        AcademicMetricsService.calculateStudentGpa(sId),
+        AcademicMetricsService.calculateStudentAttendance(sId)
+      ]);
 
-      const attendanceLogs = await RepoService.findAttendance({ studentId: req.params.studentId });
-      const validLogs = attendanceLogs.filter(a => a.status !== 'On Leave');
-      const totalDays = validLogs.length;
-      const presentDays = validLogs.filter(a => a.status === 'Present' || a.status === 'Late').length;
-      const attendanceRate = totalDays > 0 ? (presentDays / totalDays) * 100 : 100.0;
+      const courseCodes = (student.enrolledCourses || []).map((c: any) => c.code || c.name || c);
 
       const summary = await generateStudentSummary(
         student.name,
         student.grade,
-        gpa,
-        parseFloat(attendanceRate.toFixed(1)),
+        gpaData.gpa,
+        attData.attendanceRate,
         courseCodes
       );
 
-      // Mock Historical Trend Data (Last 5 Semesters)
-      const trendData = [
-        { name: 'Sem 1', gpa: Math.min(4.0, gpa * 0.85) },
-        { name: 'Sem 2', gpa: Math.min(4.0, gpa * 0.90) },
-        { name: 'Sem 3', gpa: Math.min(4.0, gpa * 0.95) },
-        { name: 'Sem 4', gpa: Math.min(4.0, gpa * 0.98) },
-        { name: 'Sem 5', gpa: gpa }
-      ];
+      // Real historical trend data (empty array if no historical semesters exist - NO fake curves)
+      const trendData = gpaData.semesterTrend.map(st => ({
+        name: `Sem ${st.semester}`,
+        gpa: st.gpa
+      }));
 
       return res.json({ summary, trendData });
     } catch (error) {
@@ -90,44 +94,25 @@ export class AIController {
         return res.status(404).json({ error: 'Student profile not found' });
       }
 
-      if (requester.role === 'Student') {
-        const studentUserId = (student.userId?._id || student.userId?.id || student.userId || '').toString();
-        const studentId = (student._id || student.id || '').toString();
-        if (studentUserId !== requester.userId.toString() && studentId !== req.params.studentId) {
-          return res.status(403).json({ error: 'Access denied: You can only view your own AI recommendations.' });
-        }
+      const isAuthorized = await authorizeStudentAccess(requester, student);
+      if (!isAuthorized) {
+        return res.status(403).json({ error: 'Access denied: You do not have permission to view recommendations for this student.' });
       }
 
-      const results = await RepoService.findResults(req.params.studentId);
-      let totalGradePoints = 0;
-      let totalCredits = 0;
-      
-      const marksData = results.map(r => {
-        const courseCredits = r.courseId?.credits || 3;
-        totalGradePoints += r.gpa * courseCredits;
-        totalCredits += courseCredits;
-        
-        return {
-          courseName: r.courseId?.name || 'Course',
-          internal: r.internal,
-          external: r.external,
-          assignment: r.assignment,
-          practical: r.practical
-        };
-      });
-      const gpa = totalCredits > 0 ? totalGradePoints / totalCredits : 0.0;
+      const sId = (student._id || student.id).toString();
+      const [gpaData, attData, weakSubjects] = await Promise.all([
+        AcademicMetricsService.calculateStudentGpa(sId),
+        AcademicMetricsService.calculateStudentAttendance(sId),
+        AcademicMetricsService.calculateWeakSubjects(sId)
+      ]);
 
-      const attendanceLogs = await RepoService.findAttendance({ studentId: req.params.studentId });
-      const validLogs = attendanceLogs.filter(a => a.status !== 'On Leave');
-      const totalDays = validLogs.length;
-      const presentDays = validLogs.filter(a => a.status === 'Present' || a.status === 'Late').length;
-      const attendanceRate = totalDays > 0 ? (presentDays / totalDays) * 100 : 100.0;
+      const weakSubjectNames = weakSubjects.map(w => `${w.courseName} (${w.courseCode})`);
 
       const analysis = await generateRecommendations(
         student.name,
-        gpa,
-        parseFloat(attendanceRate.toFixed(1)),
-        marksData
+        gpaData.gpa,
+        attData.attendanceRate,
+        weakSubjectNames
       );
 
       return res.json(analysis);
@@ -144,45 +129,13 @@ export class AIController {
         return res.status(404).json({ error: 'Student profile not found' });
       }
 
-      if (requester.role === 'Student') {
-        const studentUserId = (student.userId?._id || student.userId?.id || student.userId || '').toString();
-        const studentId = (student._id || student.id || '').toString();
-        if (studentUserId !== requester.userId.toString() && studentId !== req.params.studentId) {
-          return res.status(403).json({ error: 'Access denied: You can only view your own risk predictions.' });
-        }
+      const isAuthorized = await authorizeStudentAccess(requester, student);
+      if (!isAuthorized) {
+        return res.status(403).json({ error: 'Access denied: You do not have permission to predict risk for this student.' });
       }
 
-      const results = await RepoService.findResults(req.params.studentId);
-      let totalGradePoints = 0;
-      let totalCredits = 0;
-      
-      const marksData = results.map(r => {
-        const courseCredits = r.courseId?.credits || 3;
-        totalGradePoints += r.gpa * courseCredits;
-        totalCredits += courseCredits;
-        
-        return {
-          courseName: r.courseId?.name || 'Course',
-          internal: r.internal,
-          external: r.external,
-          assignment: r.assignment,
-          practical: r.practical
-        };
-      });
-      const gpa = totalCredits > 0 ? totalGradePoints / totalCredits : 0.0;
-
-      const attendanceLogs = await RepoService.findAttendance({ studentId: req.params.studentId });
-      const validLogs = attendanceLogs.filter(a => a.status !== 'On Leave');
-      const totalDays = validLogs.length;
-      const presentDays = validLogs.filter(a => a.status === 'Present' || a.status === 'Late').length;
-      const attendanceRate = totalDays > 0 ? (presentDays / totalDays) * 100 : 100.0;
-
-      const riskData = await predictRisk(
-        student.name,
-        gpa,
-        parseFloat(attendanceRate.toFixed(1)),
-        marksData
-      );
+      const sId = (student._id || student.id).toString();
+      const riskData = await AcademicMetricsService.calculateStudentRisk(sId);
 
       return res.json(riskData);
     } catch (error) {
@@ -192,122 +145,50 @@ export class AIController {
 
   static async getAcademicInsights(req: Request, res: Response, next: NextFunction) {
     try {
-      const [{ students }, allResults, allAttendance] = await Promise.all([
-        RepoService.findStudents({}, 1, 1000),
-        RepoService.findResults(),
-        RepoService.findAttendance({})
-      ]);
-
-      const totalStudents = students.length;
+      const requester = (req as any).user;
       
-      const departmentCounts: { [key: string]: number } = {};
-      let totalGpaSum = 0;
-      let studentWithGradesCount = 0;
+      // Faculty-scoped insights
+      if (requester?.role === 'Faculty') {
+        const facData = await AcademicMetricsService.getFacultyAcademicOverview(requester.userId);
+        const { text, chartData } = await generateAcademicInsights(
+          facData.enrolledStudentsCount,
+          null,
+          facData.averageAttendance,
+          {}
+        );
 
-      // Group results
-      const resultsByStudent: Record<string, any[]> = {};
-      allResults.forEach(r => {
-        const sId = r.studentId?._id?.toString() || r.studentId?.toString() || r.studentId;
-        if (sId) {
-          if (!resultsByStudent[sId]) resultsByStudent[sId] = [];
-          resultsByStudent[sId].push(r);
-        }
-      });
-
-      // Group attendance
-      const attendanceByStudent: Record<string, any[]> = {};
-      allAttendance.forEach(a => {
-        const sId = a.studentId?._id?.toString() || a.studentId?.toString() || a.studentId;
-        if (sId) {
-          if (!attendanceByStudent[sId]) attendanceByStudent[sId] = [];
-          attendanceByStudent[sId].push(a);
-        }
-      });
-
-      for (const student of students) {
-        departmentCounts[student.department] = (departmentCounts[student.department] || 0) + 1;
-        
-        const sId = student._id?.toString() || student.id?.toString();
-        const results = resultsByStudent[sId] || [];
-        if (results.length > 0) {
-          let totalGradePoints = 0;
-          let totalCredits = 0;
-          results.forEach(r => {
-            const courseCredits = r.courseId?.credits || 3;
-            totalGradePoints += r.gpa * courseCredits;
-            totalCredits += courseCredits;
-          });
-          const gpa = totalCredits > 0 ? totalGradePoints / totalCredits : 0.0;
-          totalGpaSum += gpa;
-          studentWithGradesCount++;
-        }
+        return res.json({
+          insights: text,
+          chartData,
+          metrics: {
+            totalStudents: facData.enrolledStudentsCount,
+            avgGpa: null,
+            avgAttendance: facData.averageAttendance,
+            assignedCourses: facData.assignedCoursesCount
+          },
+          weakStudents: facData.atRiskStudents
+        });
       }
 
-      const avgGpa = studentWithGradesCount > 0 ? totalGpaSum / studentWithGradesCount : 3.0;
-
-      const validLogs = allAttendance.filter(a => a.status !== 'On Leave');
-      const totalDays = validLogs.length;
-      const presentDays = validLogs.filter(a => a.status === 'Present' || a.status === 'Late').length;
-      const avgAttendance = totalDays > 0 ? (presentDays / totalDays) * 100 : 85.0;
-
+      // Institutional insights (Admin)
+      const overview = await AcademicMetricsService.getInstitutionAcademicOverview();
       const { text, chartData } = await generateAcademicInsights(
-        totalStudents,
-        avgGpa,
-        avgAttendance,
-        departmentCounts
+        overview.metrics.totalStudents,
+        overview.metrics.averageGpa,
+        overview.metrics.attendanceToday,
+        overview.departmentWiseData
       );
 
-      // Detect weak students dynamically (GPA < 2.5 or Attendance < 75%)
-      const weakStudents: any[] = [];
-      for (const student of students) {
-        const sId = student._id?.toString() || student.id?.toString();
-        
-        // Attendance check
-        const sAttendanceLogs = attendanceByStudent[sId] || [];
-        const sValidLogs = sAttendanceLogs.filter(a => a.status !== 'On Leave');
-        const sTotalDays = sValidLogs.length;
-        const sPresentDays = sValidLogs.filter(a => a.status === 'Present' || a.status === 'Late').length;
-        const sAttendanceRate = sTotalDays > 0 ? (sPresentDays / sTotalDays) * 100 : 100.0;
-
-        // GPA check
-        const sResults = resultsByStudent[sId] || [];
-        let sTotalGradePoints = 0;
-        let sTotalCredits = 0;
-        sResults.forEach(r => {
-          const courseCredits = r.courseId?.credits || 3;
-          sTotalGradePoints += r.gpa * courseCredits;
-          sTotalCredits += courseCredits;
-        });
-        const sGpa = sTotalCredits > 0 ? sTotalGradePoints / sTotalCredits : 4.0; // default to perfect if no results marked
-
-        if (sGpa < 2.5 || sAttendanceRate < 75) {
-          weakStudents.push({
-            id: sId,
-            name: student.name,
-            email: student.email,
-            enrollmentNo: student.enrollmentNo,
-            department: student.department,
-            gpa: parseFloat(sGpa.toFixed(2)),
-            attendance: parseFloat(sAttendanceRate.toFixed(1)),
-            reason: sGpa < 2.5 && sAttendanceRate < 75 
-              ? 'Low GPA & Low Attendance' 
-              : sGpa < 2.5 
-              ? 'Low GPA (< 2.5)' 
-              : 'Low Attendance (< 75%)'
-          });
-        }
-      }
-
-      return res.json({ 
+      return res.json({
         insights: text,
         chartData,
         metrics: {
-          totalStudents,
-          avgGpa: parseFloat(avgGpa.toFixed(2)),
-          avgAttendance: parseFloat(avgAttendance.toFixed(1)),
-          departmentCounts
+          totalStudents: overview.metrics.totalStudents,
+          avgGpa: overview.metrics.averageGpa,
+          avgAttendance: overview.metrics.attendanceToday,
+          departmentCounts: overview.departmentWiseData
         },
-        weakStudents
+        weakStudents: overview.atRiskStudents
       });
     } catch (error) {
       next(error);
@@ -324,38 +205,23 @@ export class AIController {
         return res.status(400).json({ error: 'Could not understand the search intent.' });
       }
 
-      const { students } = await RepoService.findStudents({}, 1, 1000);
-      let filteredStudents = [];
+      const { students } = await RepoService.findStudents({ isDeleted: false }, 1, 1000);
+      const filteredStudents: any[] = [];
 
       for (const student of students) {
-        if (intent.type === 'department') {
-          if (student.department.toLowerCase() === String(intent.value).toLowerCase()) {
-            filteredStudents.push(student);
+        const sId = (student._id || student.id).toString();
+
+        if (intent.type === 'attendance') {
+          const attData = await AcademicMetricsService.calculateStudentAttendance(sId);
+          if (attData.attendanceRate !== null) {
+            const val = Number(intent.value);
+            const rate = attData.attendanceRate;
+            if (intent.operator === '<' && rate < val) filteredStudents.push(student);
+            else if (intent.operator === '<=' && rate <= val) filteredStudents.push(student);
+            else if (intent.operator === '>' && rate > val) filteredStudents.push(student);
+            else if (intent.operator === '>=' && rate >= val) filteredStudents.push(student);
+            else if (intent.operator === '=' && rate === val) filteredStudents.push(student);
           }
-        } else if (intent.type === 'attendance') {
-          const logs = await RepoService.findAttendance({ studentId: student._id || student.id });
-          const total = logs.length;
-          const present = logs.filter(a => a.status === 'Present' || a.status === 'Late').length;
-          const rate = total > 0 ? (present / total) * 100 : 100;
-          const val = Number(intent.value);
-          
-          if (intent.operator === '<' && rate < val) filteredStudents.push(student);
-          else if (intent.operator === '<=' && rate <= val) filteredStudents.push(student);
-          else if (intent.operator === '>' && rate > val) filteredStudents.push(student);
-          else if (intent.operator === '>=' && rate >= val) filteredStudents.push(student);
-          else if (intent.operator === '=' && rate === val) filteredStudents.push(student);
-        } else if (intent.type === 'gpa') {
-          const results = await RepoService.findResults(student._id || student.id);
-          let tp = 0, tc = 0;
-          results.forEach(r => { tp += r.gpa * (r.courseId?.credits || 3); tc += (r.courseId?.credits || 3); });
-          const gpa = tc > 0 ? tp / tc : 0;
-          const val = Number(intent.value);
-          
-          if (intent.operator === '<' && gpa < val) filteredStudents.push(student);
-          else if (intent.operator === '<=' && gpa <= val) filteredStudents.push(student);
-          else if (intent.operator === '>' && gpa > val) filteredStudents.push(student);
-          else if (intent.operator === '>=' && gpa >= val) filteredStudents.push(student);
-          else if (intent.operator === '=' && gpa === val) filteredStudents.push(student);
         }
       }
 
@@ -387,37 +253,56 @@ export class AIController {
 
   static async sendParentEmail(req: Request, res: Response, next: NextFunction) {
     try {
+      const requester = (req as any).user;
       const student = await RepoService.findStudentById(req.params.studentId);
       if (!student) {
         return res.status(404).json({ error: 'Student not found' });
       }
-      
-      const parentName = student.parentName || 'Parent/Guardian';
-      const results = await RepoService.findResults(student._id || student.id);
-      
-      let totalGradePoints = 0, totalCredits = 0;
-      const weakSubjects: string[] = [];
-      results.forEach(r => {
-        const c = r.courseId?.credits || 3;
-        totalGradePoints += r.gpa * c;
-        totalCredits += c;
-        if (((r.internal || 0) + (r.external || 0) + (r.assignment || 0) + (r.practical || 0)) < 65) {
-          weakSubjects.push(r.courseId?.name || 'Course');
-        }
+
+      const isAuthorized = await authorizeStudentAccess(requester, student);
+      if (!isAuthorized) {
+        return res.status(403).json({ error: 'Access denied: You do not have permission to draft or send parent emails for this student.' });
+      }
+
+      const sId = (student._id || student.id).toString();
+      const [gpaData, attData, weakSubjects] = await Promise.all([
+        AcademicMetricsService.calculateStudentGpa(sId),
+        AcademicMetricsService.calculateStudentAttendance(sId),
+        AcademicMetricsService.calculateWeakSubjects(sId)
+      ]);
+
+      const parentName = student.parentName || 'Parent / Guardian';
+      const weakSubjectNames = weakSubjects.map(w => w.courseName);
+
+      const emailDraft = await generateParentEmail(
+        student.name,
+        gpaData.gpa,
+        attData.attendanceRate,
+        weakSubjectNames,
+        parentName
+      );
+
+      const shouldSend = req.body?.send === true;
+      if (shouldSend && student.email) {
+        const sendResult = await NotificationService.sendEmail(
+          student.email,
+          `Academic Performance Update for ${student.name}`,
+          `<p>${emailDraft.draft.replace(/\n/g, '<br/>')}</p>`,
+          emailDraft.draft
+        );
+        return res.json({
+          status: sendResult.success ? 'SENT' : 'SIMULATED',
+          message: sendResult.success ? 'Email successfully transmitted to parent.' : 'Email transmission simulated (SMTP credentials pending).',
+          content: emailDraft.draft,
+          messageId: sendResult.messageId
+        });
+      }
+
+      return res.json({
+        status: 'DRAFT_GENERATED',
+        message: 'Parent communication draft generated successfully.',
+        content: emailDraft.draft
       });
-      const gpa = totalCredits > 0 ? totalGradePoints / totalCredits : 0;
-      
-      const attendanceLogs = await RepoService.findAttendance({ studentId: req.params.studentId });
-      const presentDays = attendanceLogs.filter(a => a.status === 'Present' || a.status === 'Late').length;
-      const attendance = attendanceLogs.length > 0 ? (presentDays / attendanceLogs.length) * 100 : 100;
-      
-      const emailContent = await generateParentEmail(student.name, gpa, attendance, weakSubjects, parentName);
-      
-      // MOCK sending email
-      console.log(`[EMAIL DISPATCHER] Sending email to ${student.parentPhone || 'Parent'}...`);
-      console.log(`\n--- MOCK EMAIL TO PARENT ---\n${emailContent}\n----------------------------\n`);
-      
-      return res.json({ message: 'Email drafted and sent successfully via AI', content: emailContent });
     } catch (error) {
       next(error);
     }
@@ -520,95 +405,15 @@ export class AIController {
 
   static async getAtRiskStudents(req: Request, res: Response, next: NextFunction) {
     try {
-      const [{ students }, allResults, allAttendance] = await Promise.all([
-        RepoService.findStudents({}, 1, 1000),
-        RepoService.findResults(),
-        RepoService.findAttendance({})
-      ]);
-
-      // Group results
-      const resultsByStudent: Record<string, any[]> = {};
-      allResults.forEach(r => {
-        const sId = r.studentId?._id?.toString() || r.studentId?.toString() || r.studentId;
-        if (sId) {
-          if (!resultsByStudent[sId]) resultsByStudent[sId] = [];
-          resultsByStudent[sId].push(r);
-        }
-      });
-
-      // Group attendance
-      const attendanceByStudent: Record<string, any[]> = {};
-      allAttendance.forEach(a => {
-        const sId = a.studentId?._id?.toString() || a.studentId?.toString() || a.studentId;
-        if (sId) {
-          if (!attendanceByStudent[sId]) attendanceByStudent[sId] = [];
-          attendanceByStudent[sId].push(a);
-        }
-      });
-
-      const atRiskStudents = [];
-
-      for (const student of students) {
-        const studentId = student._id?.toString() || student.id?.toString();
-        if (!studentId) continue;
-
-        // Fetch stats
-        const results = resultsByStudent[studentId] || [];
-        let totalGradePoints = 0;
-        let totalCredits = 0;
-        const marksData = results.map(r => {
-          const courseCredits = r.courseId?.credits || 3;
-          totalGradePoints += r.gpa * courseCredits;
-          totalCredits += courseCredits;
-          return {
-            courseName: r.courseId?.name,
-            internal: r.internal,
-            external: r.external,
-            assignment: r.assignment,
-            practical: r.practical,
-            grade: r.grade,
-            gpa: r.gpa
-          };
-        });
-        const gpa = totalCredits > 0 
-          ? totalGradePoints / totalCredits 
-          : (student.cgpa !== undefined && student.cgpa !== null ? student.cgpa : 3.20);
-
-        const attendanceLogs = attendanceByStudent[studentId] || [];
-        const validLogs = attendanceLogs.filter(a => a.status !== 'On Leave');
-        const totalDays = validLogs.length;
-        const presentDays = validLogs.filter(a => a.status === 'Present' || a.status === 'Late').length;
-        const attendanceRate = totalDays > 0 
-          ? (presentDays / totalDays) * 100 
-          : (student.attendanceRate !== undefined && student.attendanceRate !== null ? student.attendanceRate : 85.0);
-
-        const riskData = await predictRisk(
-          student.name,
-          gpa,
-          parseFloat(attendanceRate.toFixed(1)),
-          marksData
-        );
-
-        if (riskData.riskLevel === 'High' || riskData.riskLevel === 'Medium') {
-          atRiskStudents.push({
-            id: studentId,
-            name: student.name,
-            enrollmentNo: student.enrollmentNo,
-            department: student.department,
-            semester: student.semester,
-            gpa: parseFloat(gpa.toFixed(2)),
-            attendance: parseFloat(attendanceRate.toFixed(1)),
-            riskLevel: riskData.riskLevel,
-            riskScore: riskData.riskScore,
-            warning: riskData.warningMessage
-          });
-        }
+      const requester = (req as any).user;
+      
+      if (requester?.role === 'Faculty') {
+        const facData = await AcademicMetricsService.getFacultyAcademicOverview(requester.userId);
+        return res.json({ atRiskStudents: facData.atRiskStudents });
       }
 
-      // Sort by risk score descending
-      atRiskStudents.sort((a, b) => b.riskScore - a.riskScore);
-
-      return res.json({ atRiskStudents });
+      const overview = await AcademicMetricsService.getInstitutionAcademicOverview();
+      return res.json({ atRiskStudents: overview.atRiskStudents });
     } catch (error) {
       next(error);
     }
@@ -643,12 +448,25 @@ export class AIController {
         const student = await RepoService.findStudentById(studentId);
         if (!student) return res.status(404).json({ error: 'Student profile not found.' });
 
+        const isAuthorized = await authorizeStudentAccess(requester, student);
+        if (!isAuthorized) return res.status(403).json({ error: 'Access denied: You cannot dispatch emails for this student.' });
+
+        const sId = (student._id || student.id).toString();
+        const [gpaData, attData, weakSubjects] = await Promise.all([
+          AcademicMetricsService.calculateStudentGpa(sId),
+          AcademicMetricsService.calculateStudentAttendance(sId),
+          AcademicMetricsService.calculateWeakSubjects(sId)
+        ]);
+
         const parentName = student.parentName || 'Parent/Guardian';
-        const emailContent = await generateParentEmail(student.name, student.cgpa || 3.0, student.attendanceRate || 75, [], parentName);
+        const weakSubjectNames = weakSubjects.map(w => w.courseName);
+        const emailDraft = await generateParentEmail(student.name, gpaData.gpa, attData.attendanceRate, weakSubjectNames, parentName);
+        
         return res.json({
           success: true,
-          message: `Parent notification email dispatched to ${parentName}!`,
-          content: emailContent
+          status: 'DRAFT_GENERATED',
+          message: `Parent notification draft prepared for ${parentName}.`,
+          content: emailDraft.draft
         });
       }
 
@@ -677,61 +495,38 @@ export class AIController {
         return res.status(404).json({ error: 'Student profile not found' });
       }
 
-      if (requester.role === 'Student') {
-        const studentUserId = (student.userId?._id || student.userId?.id || student.userId || '').toString();
-        const sId = (student._id || student.id || '').toString();
-        if (studentUserId !== requester.userId.toString() && sId !== studentId) {
-          return res.status(403).json({ error: 'Access denied: You can only download your own AI report.' });
-        }
+      const isAuthorized = await authorizeStudentAccess(requester, student);
+      if (!isAuthorized) {
+        return res.status(403).json({ error: 'Access denied: You do not have permission to download the AI report for this student.' });
       }
 
-      // Fetch stats
-      const results = await RepoService.findResults(studentId);
-      let totalGradePoints = 0;
-      let totalCredits = 0;
-      const marksData = results.map(r => {
-        const courseCredits = r.courseId?.credits || 3;
-        totalGradePoints += r.gpa * courseCredits;
-        totalCredits += courseCredits;
-        return {
-          code: r.courseId?.code || 'CS',
-          name: r.courseId?.name || 'Course',
-          internal: r.internal,
-          external: r.external,
-          assignment: r.assignment,
-          practical: r.practical,
-          grade: r.grade,
-          gpa: r.gpa
-        };
-      });
-      const gpa = totalCredits > 0 ? totalGradePoints / totalCredits : 0.0;
+      const sId = (student._id || student.id).toString();
+      const [gpaData, attData, weakSubjects, results, riskData] = await Promise.all([
+        AcademicMetricsService.calculateStudentGpa(sId),
+        AcademicMetricsService.calculateStudentAttendance(sId),
+        AcademicMetricsService.calculateWeakSubjects(sId),
+        RepoService.findResults(sId),
+        AcademicMetricsService.calculateStudentRisk(sId)
+      ]);
 
-      const attendanceLogs = await RepoService.findAttendance({ studentId });
-      const validLogs = attendanceLogs.filter(a => a.status !== 'On Leave');
-      const totalDays = validLogs.length;
-      const presentDays = validLogs.filter(a => a.status === 'Present' || a.status === 'Late').length;
-      const attendanceRate = totalDays > 0 ? (presentDays / totalDays) * 100 : 100.0;
+      const gpa = gpaData.gpa;
+      const attendanceRate = attData.attendanceRate;
+      const courseCodes = (student.enrolledCourses || []).map((c: any) => c.code || c.name || c);
 
       const summary = await generateStudentSummary(
         student.name,
         student.grade,
         gpa,
-        parseFloat(attendanceRate.toFixed(1)),
-        student.enrolledCourses?.map((c: any) => c.code) || []
+        attendanceRate,
+        courseCodes
       );
 
+      const weakSubjectNames = weakSubjects.map(w => `${w.courseName} (${w.courseCode})`);
       const analysis = await generateRecommendations(
         student.name,
         gpa,
-        parseFloat(attendanceRate.toFixed(1)),
-        marksData
-      );
-
-      const riskData = await predictRisk(
-        student.name,
-        gpa,
-        parseFloat(attendanceRate.toFixed(1)),
-        marksData
+        attendanceRate,
+        weakSubjectNames
       );
 
       const doc = new PDFDocument({ margin: 40, size: 'A4', bufferPages: true });
@@ -785,8 +580,8 @@ export class AIController {
       doc.text('Academic Level:', startX + 280, y + 55);
 
       doc.font('Helvetica').fillColor(textColor);
-      doc.text(gpa.toFixed(2), startX + 380, y + 15);
-      doc.text(`${attendanceRate.toFixed(1)}%`, startX + 380, y + 35);
+      doc.text(gpa !== null ? gpa.toFixed(2) : 'N/A', startX + 380, y + 15);
+      doc.text(attendanceRate !== null ? `${attendanceRate.toFixed(1)}%` : 'N/A', startX + 380, y + 35);
       doc.text(student.grade || 'N/A', startX + 380, y + 55);
       
       y += 100;
@@ -803,43 +598,51 @@ export class AIController {
       y += summaryHeight + 25;
 
       // ================= PERFORMANCE BREAKDOWN TABLE =================
-      checkPageBreak(100);
-      doc.fontSize(14).font('Helvetica-Bold').fillColor(primaryColor).text('Course Performance Breakdown', startX, y);
-      y += 20;
+      const marksData = results.map((r: any) => ({
+        code: r.courseId?.code || 'CRS',
+        name: r.courseId?.name || 'Course',
+        internal: r.internal || 0,
+        external: r.external || 0,
+        grade: r.grade || 'N/A',
+        gpa: r.gpa || 0.0
+      }));
 
-      const colWidths = { code: 60, name: 200, marks: 50, grade: 50, gpa: 40 };
-      const rowHeight = 25;
+      if (marksData.length > 0) {
+        checkPageBreak(100);
+        doc.fontSize(14).font('Helvetica-Bold').fillColor(primaryColor).text('Course Performance Breakdown', startX, y);
+        y += 20;
 
-      // Table Header
-      doc.rect(startX, y, contentWidth, rowHeight).fill(darkColor);
-      doc.fontSize(10).font('Helvetica-Bold').fillColor('#ffffff');
-      doc.text('Code', startX + 5, y + 8, { width: colWidths.code });
-      doc.text('Course Name', startX + colWidths.code + 5, y + 8, { width: colWidths.name });
-      doc.text('Int', startX + colWidths.code + colWidths.name + 5, y + 8, { width: colWidths.marks });
-      doc.text('Ext', startX + colWidths.code + colWidths.name + colWidths.marks + 5, y + 8, { width: colWidths.marks });
-      doc.text('Grade', startX + colWidths.code + colWidths.name + colWidths.marks * 2 + 5, y + 8, { width: colWidths.grade });
-      doc.text('GPA', startX + colWidths.code + colWidths.name + colWidths.marks * 2 + colWidths.grade + 5, y + 8, { width: colWidths.gpa });
-      y += rowHeight;
+        const colWidths = { code: 60, name: 200, marks: 50, grade: 50, gpa: 40 };
+        const rowHeight = 25;
 
-      let altRow = false;
-      marksData.forEach((item) => {
-        checkPageBreak(rowHeight);
-        if (altRow) doc.rect(startX, y, contentWidth, rowHeight).fill(lightGray);
-
-        doc.fontSize(9).font('Helvetica').fillColor(darkColor);
-        doc.text(item.code, startX + 5, y + 8, { width: colWidths.code });
-        doc.text(item.name, startX + colWidths.code + 5, y + 8, { width: colWidths.name });
-        doc.text(item.internal.toString(), startX + colWidths.code + colWidths.name + 5, y + 8, { width: colWidths.marks });
-        doc.text(item.external.toString(), startX + colWidths.code + colWidths.name + colWidths.marks + 5, y + 8, { width: colWidths.marks });
-        doc.text(item.grade, startX + colWidths.code + colWidths.name + colWidths.marks * 2 + 5, y + 8, { width: colWidths.grade });
-        doc.text(item.gpa.toFixed(1), startX + colWidths.code + colWidths.name + colWidths.marks * 2 + colWidths.grade + 5, y + 8, { width: colWidths.gpa });
-        
-        doc.rect(startX, y, contentWidth, rowHeight).strokeColor('#e5e7eb').lineWidth(0.5).stroke();
-        
+        // Table Header
+        doc.rect(startX, y, contentWidth, rowHeight).fill(darkColor);
+        doc.fontSize(10).font('Helvetica-Bold').fillColor('#ffffff');
+        doc.text('Code', startX + 5, y + 8, { width: colWidths.code });
+        doc.text('Course Name', startX + colWidths.code + 5, y + 8, { width: colWidths.name });
+        doc.text('Int', startX + colWidths.code + colWidths.name + 5, y + 8, { width: colWidths.marks });
+        doc.text('Ext', startX + colWidths.code + colWidths.name + colWidths.marks + 5, y + 8, { width: colWidths.marks });
+        doc.text('Grade', startX + colWidths.code + colWidths.name + colWidths.marks * 2 + 5, y + 8, { width: colWidths.grade });
+        doc.text('GPA', startX + colWidths.code + colWidths.name + colWidths.marks * 2 + colWidths.grade + 5, y + 8, { width: colWidths.gpa });
         y += rowHeight;
-        altRow = !altRow;
-      });
-      y += 25;
+
+        let altRow = false;
+        marksData.forEach((item: any) => {
+          checkPageBreak(rowHeight);
+          if (altRow) doc.rect(startX, y, contentWidth, rowHeight).fill(lightGray);
+
+          doc.fontSize(9).font('Helvetica').fillColor(darkColor);
+          doc.text(item.code, startX + 5, y + 8, { width: colWidths.code });
+          doc.text(item.name, startX + colWidths.code + 5, y + 8, { width: colWidths.name });
+          doc.text(item.internal.toString(), startX + colWidths.code + colWidths.name + 5, y + 8, { width: colWidths.marks });
+          doc.text(item.external.toString(), startX + colWidths.code + colWidths.name + colWidths.marks + 5, y + 8, { width: colWidths.marks });
+          doc.text(item.grade, startX + colWidths.code + colWidths.name + colWidths.marks * 2 + 5, y + 8, { width: colWidths.grade });
+          doc.text(item.gpa.toFixed(1), startX + colWidths.code + colWidths.name + colWidths.marks * 2 + colWidths.grade + 5, y + 8, { width: colWidths.gpa });
+          y += rowHeight;
+          altRow = !altRow;
+        });
+        y += 25;
+      }
 
       // ================= RECOMMENDATIONS & WEAKNESSES =================
       checkPageBreak(150);

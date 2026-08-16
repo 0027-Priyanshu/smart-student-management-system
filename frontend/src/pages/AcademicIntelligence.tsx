@@ -500,7 +500,7 @@ export default function AcademicIntelligence() {
                   >
                     {students.map((s: any) => (
                       <option key={s._id || s.id} value={s._id || s.id}>
-                        {s.name} ({s.enrollmentNo}) - CGPA: {(s.cgpa || 3.2).toFixed(2)}
+                        {s.name} ({s.enrollmentNo}){s.cgpa ? ` - CGPA: ${s.cgpa.toFixed(2)}` : ''}
                       </option>
                     ))}
                   </select>
@@ -626,22 +626,30 @@ export default function AcademicIntelligence() {
                     <div className="flex items-center justify-between">
                       <h3 className="font-title font-extrabold text-xs text-slate-900 uppercase tracking-wider flex items-center gap-2">
                         <TrendingUp size={16} className="text-[#f97316]" />
-                        Semester GPA Trajectory (5-Semester Trend)
+                        Semester GPA Trajectory
                       </h3>
                       <span className="text-xs font-mono font-extrabold text-[#f97316]">Scale: 4.00 CGPA</span>
                     </div>
 
-                    <div className="h-64">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={trendData}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                          <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} />
-                          <YAxis domain={[0, 4.0]} stroke="#94a3b8" fontSize={11} />
-                          <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }} />
-                          <Line type="monotone" dataKey="gpa" stroke="#f97316" strokeWidth={3} dot={{ fill: '#f97316', r: 5 }} />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
+                    {trendData.length > 0 ? (
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={trendData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                            <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} />
+                            <YAxis domain={[0, 4.0]} stroke="#94a3b8" fontSize={11} />
+                            <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' }} />
+                            <Line type="monotone" dataKey="gpa" stroke="#f97316" strokeWidth={3} dot={{ fill: '#f97316', r: 5 }} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
+                    ) : (
+                      <div className="h-64 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-2xl text-slate-400">
+                        <TrendingUp size={28} className="mb-2 text-slate-300" />
+                        <p className="text-xs font-bold text-slate-500">Historical Trend Pending</p>
+                        <p className="text-[11px] text-slate-400">Semester trajectory will populate automatically once course grades are finalized.</p>
+                      </div>
+                    )}
                   </div>
 
                 </div>

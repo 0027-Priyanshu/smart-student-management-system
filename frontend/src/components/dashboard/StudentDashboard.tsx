@@ -218,16 +218,21 @@ export default function StudentDashboard() {
     }
   });
 
-  const averageMarks = results.length > 0 ? totalMarks / results.length : 0;
+  const averageMarks = results.length > 0 ? totalMarks / results.length : null;
   
   // Attendance
   const totalDays = attendanceLogs.length;
-  const presentDays = attendanceLogs.filter(a => a.status === 'Present' || a.status === 'Late' || a.status === 'On Leave').length;
-  const attendanceRate = totalDays > 0 ? (presentDays / totalDays) * 100 : 100;
+  const validLogs = attendanceLogs.filter(a => a.status !== 'On Leave');
+  const presentDays = validLogs.filter(a => a.status === 'Present' || a.status === 'Late').length;
+  const attendanceRate = validLogs.length > 0 ? (presentDays / validLogs.length) * 100 : null;
 
-  let overallPerformance = 'Needs Improvement';
-  if (cgpa >= 3.5) overallPerformance = 'Excellent';
-  else if (cgpa >= 2.5) overallPerformance = 'Good';
+  let overallPerformance = 'Good';
+  if (cgpa > 0) {
+    if (cgpa >= 3.5) overallPerformance = 'Excellent';
+    else if (cgpa < 2.5) overallPerformance = 'Needs Attention';
+  } else {
+    overallPerformance = 'Enrolled';
+  }
 
   // Chart Data Preparation
   const gpaTrendData = results.reduce((acc, r) => {
@@ -279,34 +284,27 @@ export default function StudentDashboard() {
             <div className="relative group shrink-0">
               <StudentAvatar
                 src={student?.avatarUrl}
-                name={user?.name || student?.name}
-                className="h-20 w-20 rounded-full object-cover border-4 border-white shadow-md transition-transform group-hover:scale-105"
-                fallbackClassName="h-20 w-20 rounded-full bg-gradient-to-tr from-[#f97316] to-[#ef4444] text-white flex items-center justify-center font-black text-2xl border-4 border-white shadow-md"
+                name={user?.name || 'Student'}
+                className="w-20 h-20 rounded-2xl object-cover border-2 border-white shadow-md group-hover:opacity-90 transition-opacity"
+                fallbackClassName="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#f97316] to-[#ef4444] text-white font-extrabold text-2xl flex items-center justify-center border-2 border-white shadow-md"
               />
-
-              {/* Hover overlay actions */}
-              <label 
-                className="absolute inset-0 rounded-full bg-slate-900/60 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity text-white text-xs font-bold gap-1"
-                title="Change or Upload Profile Picture"
-              >
-                <Camera size={18} />
+              <label className="absolute inset-0 bg-slate-900/60 rounded-2xl flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                <Camera size={20} />
                 <input type="file" accept="image/png, image/jpeg, image/jpg, image/webp" onChange={handleAvatarUpload} className="hidden" />
               </label>
-
               {student?.avatarUrl && (
                 <button
-                  type="button"
                   onClick={handleRemoveAvatar}
                   disabled={uploadingAvatar}
-                  className="absolute -bottom-1 -right-1 p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-md border-2 border-white transition-colors"
                   title="Remove Profile Photo"
+                  className="absolute -top-1.5 -right-1.5 p-1 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-md transition-all cursor-pointer"
                 >
-                  <Trash2 size={12} />
+                  <Trash2 size={11} />
                 </button>
               )}
             </div>
 
-            <div>
+            <div className="space-y-1.5">
               <div className="flex items-center gap-2">
                 <h1 className="text-3xl font-title font-extrabold text-slate-900">
                   Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#f97316] to-[#ef4444]">{user?.name}</span> 👋
@@ -321,7 +319,7 @@ export default function StudentDashboard() {
                 </div>
                 <div className="px-3.5 py-1.5 bg-white/70 rounded-xl border border-slate-200 flex items-center gap-2">
                   <BookOpen size={15} className="text-[#ef4444]" />
-                  <span className="text-xs font-semibold text-slate-700">Sem: {student?.semester}</span>
+                  <span className="text-xs font-semibold text-slate-700">Sem: {student?.semester || 1}</span>
                 </div>
                 <div className="px-3.5 py-1.5 bg-white/70 rounded-xl border border-slate-200 flex items-center gap-2">
                   <Award size={15} className="text-[#eab308]" />
@@ -348,12 +346,16 @@ export default function StudentDashboard() {
           <div className="flex items-center gap-6 bg-white p-6 rounded-2xl border border-slate-200 backdrop-blur-md">
             <div className="text-center">
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Overall CGPA</p>
-              <h2 className="text-4xl font-extrabold text-slate-900 drop-shadow-lg">{cgpa.toFixed(2)}</h2>
+              <h2 className="text-4xl font-extrabold text-slate-900 drop-shadow-lg">
+                {results.length > 0 && cgpa > 0 ? cgpa.toFixed(2) : 'N/A'}
+              </h2>
             </div>
             <div className="w-px h-12 bg-white/10" />
             <div className="text-center">
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Attendance</p>
-              <h2 className="text-4xl font-extrabold text-[#ef4444] drop-shadow-lg">{attendanceRate.toFixed(1)}%</h2>
+              <h2 className="text-4xl font-extrabold text-[#ef4444] drop-shadow-lg">
+                {attendanceRate !== null ? `${attendanceRate.toFixed(1)}%` : 'N/A'}
+              </h2>
             </div>
           </div>
         </div>

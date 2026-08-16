@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useEffect, lazy, Suspense } from 'react';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import ToastContainer from './components/layout/ToastContainer';
+import ErrorBoundary from './components/common/ErrorBoundary';
 import { useAuthStore } from './stores/authStore';
 
 // Lazy Loaded Page Components for Maximum Speed & Split Bundles
@@ -46,7 +47,8 @@ export default function App() {
   return (
     <Router>
       <ToastContainer />
-      <Suspense fallback={<PageLoader />}>
+      <ErrorBoundary fallbackTitle="Application Runtime Error" fallbackMessage="An unexpected issue occurred while rendering the page.">
+        <Suspense fallback={<PageLoader />}>
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
@@ -141,7 +143,8 @@ export default function App() {
           {/* Catch-All 404 Route */}
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </Suspense>
+        </Suspense>
+      </ErrorBoundary>
     </Router>
   );
 }

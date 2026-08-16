@@ -194,14 +194,20 @@ class AcademicMetricsService {
             if (risk.status === 'evaluated' && (risk.riskLevel === 'High' || risk.riskLevel === 'Medium' || (risk.gpa !== null && risk.gpa < 2.5) || (risk.attendanceRate !== null && risk.attendanceRate < 75))) {
                 atRiskStudents.push({
                     id: sId,
+                    studentId: sId,
                     name: student.name,
+                    studentName: student.name,
                     enrollmentNo: student.enrollmentNo,
-                    department: student.department,
-                    semester: student.semester,
+                    department: student.department || 'N/A',
+                    semester: student.semester || 1,
                     gpa: risk.gpa,
+                    attendance: risk.attendanceRate,
                     attendanceRate: risk.attendanceRate,
                     riskLevel: risk.riskLevel,
-                    factors: risk.factors
+                    riskScore: risk.riskScore,
+                    warning: risk.warningMessage || (risk.factors && risk.factors[0]) || 'Academic monitoring required',
+                    reason: risk.warningMessage || (risk.factors && risk.factors[0]) || 'Academic monitoring required',
+                    factors: risk.factors || []
                 });
             }
             if (risk.attendanceRate !== null) {
@@ -268,14 +274,20 @@ class AcademicMetricsService {
             if (risk.status === 'evaluated' && (risk.riskLevel === 'High' || risk.riskLevel === 'Medium' || (risk.gpa !== null && risk.gpa < 2.5) || (risk.attendanceRate !== null && risk.attendanceRate < 75))) {
                 atRiskStudents.push({
                     id: sId,
+                    studentId: sId,
                     name: student.name,
+                    studentName: student.name,
                     enrollmentNo: student.enrollmentNo,
-                    department: student.department,
-                    semester: student.semester,
+                    department: student.department || 'N/A',
+                    semester: student.semester || 1,
                     gpa: risk.gpa,
+                    attendance: risk.attendanceRate,
                     attendanceRate: risk.attendanceRate,
                     riskLevel: risk.riskLevel,
-                    factors: risk.factors
+                    riskScore: risk.riskScore,
+                    warning: risk.warningMessage || (risk.factors && risk.factors[0]) || 'Academic monitoring required',
+                    reason: risk.warningMessage || (risk.factors && risk.factors[0]) || 'Academic monitoring required',
+                    factors: risk.factors || []
                 });
             }
         }

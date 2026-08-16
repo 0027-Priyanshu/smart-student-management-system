@@ -12,8 +12,6 @@ interface StudentQrScannerModalProps {
 
 export default function StudentQrScannerModal({ isOpen, onClose, onSuccess }: StudentQrScannerModalProps) {
   const [activeTab, setActiveTab] = useState<'camera' | 'upload' | 'manual'>('camera');
-  const [cameras, setCameras] = useState<Array<{ id: string; label: string }>>([]);
-  const [selectedCameraId, setSelectedCameraId] = useState<string>('');
   const [isScanning, setIsScanning] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [manualCode, setManualCode] = useState('');
@@ -72,7 +70,7 @@ export default function StudentQrScannerModal({ isOpen, onClose, onSuccess }: St
         handleClose();
       }, 1800);
     } catch (err: any) {
-      const errMsg = err.response?.data?.error || 'Failed to confirm QR attendance';
+      const errMsg = err.response?.data?.error || err.message || 'Failed to confirm QR attendance';
       toast.error(errMsg);
       setProcessing(false);
       // If in camera tab, restart scanner for another try
@@ -82,31 +80,21 @@ export default function StudentQrScannerModal({ isOpen, onClose, onSuccess }: St
     }
   };
 
-  // Start Camera Scanner
-  const startScanner = async (cameraIdToUse?: string) => {
+  // Start Camera Scanner (Back camera only: facingMode 'environment')
+  const startScanner = async () => {
     if (isScanning || isStoppingRef.current) return;
     setCameraError(null);
 
     try {
       const element = document.getElementById(scannerContainerId);
       if (!element) {
-        setTimeout(() => startScanner(cameraIdToUse), 100);
+        setTimeout(() => startScanner(), 100);
         return;
       }
 
       if (!html5QrCodeRef.current) {
         html5QrCodeRef.current = new Html5Qrcode(scannerContainerId);
       }
-
-      const availableCameras = await Html5Qrcode.getCameras();
-      if (!availableCameras || availableCameras.length === 0) {
-        setCameraError('No camera detected on this device. You can upload a QR image or enter the code manually.');
-        return;
-      }
-
-      setCameras(availableCameras);
-      const camId = cameraIdToUse || selectedCameraId || availableCameras[availableCameras.length - 1].id;
-      setSelectedCameraId(camId);
 
       setIsScanning(true);
 
@@ -116,16 +104,36 @@ export default function StudentQrScannerModal({ isOpen, onClose, onSuccess }: St
         aspectRatio: 1.0
       };
 
-      await html5QrCodeRef.current.start(
-        camId,
-        config,
-        (decodedText) => {
-          handleConfirmAttendance(decodedText);
-        },
-        () => {
-          // ignore scan frame errors
+      try {
+        // Exclusively request the back camera
+        await html5QrCodeRef.current.start(
+          { facingMode: 'environment' },
+          config,
+          (decodedText) => {
+            handleConfirmAttendance(decodedText);
+          },
+          () => {
+            // ignore scan frame errors
+          }
+        );
+      } catch (backCamErr) {
+        // Fallback for laptops / desktop webcams where environment camera does not exist
+        const availableCameras = await Html5Qrcode.getCameras().catch(() => []);
+        if (availableCameras && availableCameras.length > 0) {
+          const rearCam = availableCameras.find(c => c.label.toLowerCase().includes('back') || c.label.toLowerCase().includes('rear') || c.label.toLowerCase().includes('environment'));
+          const camIdToUse = rearCam ? rearCam.id : availableCameras[0].id;
+          await html5QrCodeRef.current.start(
+            camIdToUse,
+            config,
+            (decodedText) => {
+              handleConfirmAttendance(decodedText);
+            },
+            () => {}
+          );
+        } else {
+          throw backCamErr;
         }
-      );
+      }
     } catch (err: any) {
       console.error('Camera QR scanner error:', err);
       setIsScanning(false);
@@ -341,28 +349,6 @@ export default function StudentQrScannerModal({ isOpen, onClose, onSuccess }: St
                           </div>
                         </div>
                       </div>
-
-                      {cameras.length > 1 && (
-                        <div className="flex items-center justify-center gap-2">
-                          <span className="text-[11px] text-slate-500 font-bold">Camera:</span>
-                          <select
-                            value={selectedCameraId}
-                            onChange={async (e) => {
-                              const newId = e.target.value;
-                              setSelectedCameraId(newId);
-                              await stopScanner();
-                              startScanner(newId);
-                            }}
-                            className="text-xs px-2.5 py-1 bg-slate-100 border border-slate-200 rounded-lg text-slate-700 font-medium"
-                          >
-                            {cameras.map((c) => (
-                              <option key={c.id} value={c.id}>
-                                {c.label || `Camera ${c.id.slice(0, 5)}`}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      )}
 
                       <p className="text-[11px] text-center text-slate-500 font-medium">
                         Center the instructor's classroom QR code in the box above to scan automatically.

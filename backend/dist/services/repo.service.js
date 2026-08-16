@@ -654,10 +654,52 @@ class RepoService {
             attendanceMethod: attendanceData.attendanceMethod || 'MANUAL'
         };
         if (db_1.isMongoConnected) {
-            const query = attendanceData.sessionId
-                ? { studentId: attendanceData.studentId, sessionId: attendanceData.sessionId }
-                : { studentId: attendanceData.studentId, courseId: attendanceData.courseId, date: attendanceData.date, lectureTitle: attendanceData.lectureTitle || '' };
-            return await Attendance_1.default.findOneAndUpdate(query, dataToSave, { upsert: true, new: true });
+            // 1. Check if attendance already exists for this student on this date (or session)
+            const existing = await Attendance_1.default.findOne(attendanceData.sessionId
+                ? {
+                    $or: [
+                        { studentId: attendanceData.studentId, sessionId: attendanceData.sessionId },
+                        { studentId: attendanceData.studentId, courseId: attendanceData.courseId, date: attendanceData.date }
+                    ]
+                }
+                : { studentId: attendanceData.studentId, courseId: attendanceData.courseId, date: attendanceData.date });
+            if (existing) {
+                existing.status = attendanceData.status || 'Present';
+                existing.attendanceMethod = attendanceData.attendanceMethod || existing.attendanceMethod;
+                if (attendanceData.sessionId)
+                    existing.sessionId = attendanceData.sessionId;
+                if (attendanceData.lectureTitle)
+                    existing.lectureTitle = attendanceData.lectureTitle;
+                if (attendanceData.markedBy)
+                    existing.markedBy = attendanceData.markedBy;
+                if (attendanceData.recognitionConfidence)
+                    existing.recognitionConfidence = attendanceData.recognitionConfidence;
+                await existing.save();
+                return existing;
+            }
+            try {
+                return await Attendance_1.default.create(dataToSave);
+            }
+            catch (err) {
+                if (err.code === 11000 || err.message?.includes('E11000') || err.name === 'MongoServerError') {
+                    const fallback = await Attendance_1.default.findOne({
+                        studentId: attendanceData.studentId,
+                        courseId: attendanceData.courseId,
+                        date: attendanceData.date
+                    });
+                    if (fallback) {
+                        fallback.status = attendanceData.status || 'Present';
+                        fallback.attendanceMethod = attendanceData.attendanceMethod || fallback.attendanceMethod;
+                        if (attendanceData.sessionId)
+                            fallback.sessionId = attendanceData.sessionId;
+                        if (attendanceData.lectureTitle)
+                            fallback.lectureTitle = attendanceData.lectureTitle;
+                        await fallback.save();
+                        return fallback;
+                    }
+                }
+                throw err;
+            }
         }
         else {
             const db = (0, db_1.readJsonDb)();

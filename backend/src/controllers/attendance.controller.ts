@@ -278,7 +278,13 @@ export class AttendanceController {
         message: `Attendance confirmed successfully for ${session.courseName} - ${session.lectureTitle}!`,
         attendance: log
       });
-    } catch (error) {
+    } catch (error: any) {
+      if (error?.code === 11000 || error?.message?.includes('E11000') || error?.message?.includes('duplicate key')) {
+        return res.json({
+          message: 'Attendance already recorded for this session today!',
+          attendance: { status: 'Present' }
+        });
+      }
       next(error);
     }
   }
